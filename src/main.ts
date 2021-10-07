@@ -8,9 +8,24 @@ import * as identity from 'oci-identity';
 import common = require('oci-common');
 
 async function getOcirRepo(): Promise<void> {
-  const cp = new common.ConfigFileAuthenticationDetailsProvider(process.env.OCI_CLI_CONFIG_FILE);
-  const ac = new artifacts.ArtifactsClient({authenticationDetailsProvider: cp});
-  const ic = new identity.IdentityClient({authenticationDetailsProvider: cp});
+  // Required environment variables
+  const tenancy = process.env.OCI_CLI_TENANCY || '';
+  const user = process.env.OCI_CLI_USER || '';
+  const fingerprint = process.env.OCI_CLI_FINGERPRINT || '';
+  const privateKey = process.env.OCI_CLI_KEY_CONTENT || '';
+  const region = common.Region.fromRegionId(process.env.OCI_CLI_REGION || '');
+
+  const authProvider = new common.SimpleAuthenticationDetailsProvider(
+    tenancy,
+    user,
+    fingerprint,
+    privateKey,
+    null,
+    region
+  );
+
+  const ac = new artifacts.ArtifactsClient({authenticationDetailsProvider: authProvider});
+  const ic = new identity.IdentityClient({authenticationDetailsProvider: authProvider});
 
   const compartmentId: string = core.getInput('compartment', {required: true});
   const displayName: string = core.getInput('name', {required: true});
@@ -18,7 +33,7 @@ async function getOcirRepo(): Promise<void> {
   const namespace = (await ac.getContainerConfiguration({compartmentId: compartmentId})).containerConfiguration
     .namespace;
   const regionCode = (await ic.listRegions({})).items
-    .find(x => x.name === cp.getRegion().regionId)
+    .find(x => x.name === authProvider.getRegion().regionId)
     ?.key?.toLocaleLowerCase();
   const ocir = regionCode ? `${regionCode}.ocir.io` : '';
 
