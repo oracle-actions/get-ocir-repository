@@ -4,10 +4,20 @@ Use this GitHub Action to return the OCID and full URI for the specified Oracle
 Cloud Infrastructure Registry (OCIR) repository. If the repository does not exist,
 it will be created automatically.
 
-## Prerequisites
+## Required environment variables
 
-* The **[configure OCI credentials][1]** action must be used in a preceeding step
-  of the current workflow job.
+The following [OCI CLI environment variables][1] must be defined for at least
+the `run-oci-cli-command` task:
+
+* `OCI_CLI_USER`
+* `OCI_CLI_TENANCY`
+* `OCI_CLI_FINGERPRINT`
+* `OCI_CLI_KEY_CONTENT`
+* `OCI_CLI_REGION`
+
+We recommend using GitHub Secrets to store these values. If you have more than
+one tas that requires these values, consider [defining your environment variables][2]
+at the job or workflow level.
 
 ## Inputs
 

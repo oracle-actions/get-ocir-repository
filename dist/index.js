@@ -1,97 +1,5 @@
-require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
+/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
-
-/***/ 3109:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-/* Copyright (c) 2021, Oracle and/or its affiliates.
- * Licensed under the Universal Permissive License v1.0 as shown at https://oss.oracle.com/licenses/upl.
- */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(2186));
-const artifacts = __importStar(__nccwpck_require__(5758));
-const identity = __importStar(__nccwpck_require__(6408));
-const common = __nccwpck_require__(5049);
-function getOcirRepo() {
-    var _a, _b;
-    return __awaiter(this, void 0, void 0, function* () {
-        // Required environment variables
-        const tenancy = process.env.OCI_CLI_TENANCY || '';
-        const user = process.env.OCI_CLI_USER || '';
-        const fingerprint = process.env.OCI_CLI_FINGERPRINT || '';
-        const privateKey = process.env.OCI_CLI_KEY_CONTENT || '';
-        const region = common.Region.fromRegionId(process.env.OCI_CLI_REGION || '');
-        const authProvider = new common.SimpleAuthenticationDetailsProvider(tenancy, user, fingerprint, privateKey, null, region);
-        const ac = new artifacts.ArtifactsClient({ authenticationDetailsProvider: authProvider });
-        const ic = new identity.IdentityClient({ authenticationDetailsProvider: authProvider });
-        const compartmentId = core.getInput('compartment', { required: true });
-        const displayName = core.getInput('name', { required: true });
-        const namespace = (yield ac.getContainerConfiguration({ compartmentId: compartmentId })).containerConfiguration
-            .namespace;
-        const regionCode = (_b = (_a = (yield ic.listRegions({})).items
-            .find(x => x.name === authProvider.getRegion().regionId)) === null || _a === void 0 ? void 0 : _a.key) === null || _b === void 0 ? void 0 : _b.toLocaleLowerCase();
-        const ocir = regionCode ? `${regionCode}.ocir.io` : '';
-        if (ocir) {
-            const repo = (yield ac.listContainerRepositories({ compartmentId: compartmentId })).containerRepositoryCollection.items.find(x => x.displayName === displayName);
-            if (repo) {
-                core.setOutput('repo_path', `${ocir}/${namespace}/${repo.displayName}`);
-                core.setOutput('repo_ocid', `${repo.id}`);
-            }
-            else {
-                const containerRepository = (yield ac.createContainerRepository({
-                    createContainerRepositoryDetails: {
-                        compartmentId: compartmentId,
-                        displayName: displayName,
-                        isImmutable: false,
-                        isPublic: false
-                    }
-                })).containerRepository;
-                core.setOutput('repo_path', `${ocir}/${namespace}/${containerRepository.displayName}`);
-                core.setOutput('repo_ocid', `${containerRepository.id}`);
-            }
-        }
-        else {
-            core.setFailed('Failed to identify OCIR endpoint.');
-        }
-    });
-}
-getOcirRepo().catch(e => {
-    if (e instanceof Error)
-        core.setFailed(e.message);
-});
-
-
-/***/ }),
 
 /***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
@@ -119,7 +27,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.issue = exports.issueCommand = void 0;
-const os = __importStar(__nccwpck_require__(2087));
+const os = __importStar(__nccwpck_require__(2037));
 const utils_1 = __nccwpck_require__(5278);
 /**
  * Commands
@@ -230,8 +138,8 @@ exports.getIDToken = exports.getState = exports.saveState = exports.group = expo
 const command_1 = __nccwpck_require__(7351);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
-const os = __importStar(__nccwpck_require__(2087));
-const path = __importStar(__nccwpck_require__(5622));
+const os = __importStar(__nccwpck_require__(2037));
+const path = __importStar(__nccwpck_require__(1017));
 const oidc_utils_1 = __nccwpck_require__(8041);
 /**
  * The code to exit an action
@@ -540,8 +448,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.issueCommand = void 0;
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const fs = __importStar(__nccwpck_require__(5747));
-const os = __importStar(__nccwpck_require__(2087));
+const fs = __importStar(__nccwpck_require__(7147));
+const os = __importStar(__nccwpck_require__(2037));
 const utils_1 = __nccwpck_require__(5278);
 function issueCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
@@ -763,8 +671,8 @@ exports.PersonalAccessTokenCredentialHandler = PersonalAccessTokenCredentialHand
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const http = __nccwpck_require__(8605);
-const https = __nccwpck_require__(7211);
+const http = __nccwpck_require__(3685);
+const https = __nccwpck_require__(5687);
 const pm = __nccwpck_require__(6443);
 let tunnel;
 var HttpCodes;
@@ -1426,8 +1334,8 @@ for (var e in errors) {
 
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
-var assert = __nccwpck_require__(2357);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var assert = __nccwpck_require__(9491);
+var Buffer = (__nccwpck_require__(5118).Buffer);
 
 var ASN1 = __nccwpck_require__(2473);
 var errors = __nccwpck_require__(9348);
@@ -1738,8 +1646,8 @@ module.exports = {
 
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
-var assert = __nccwpck_require__(2357);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var assert = __nccwpck_require__(9491);
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var ASN1 = __nccwpck_require__(2473);
 var errors = __nccwpck_require__(9348);
 
@@ -2090,9 +1998,9 @@ module.exports = {
 // Copyright (c) 2012, Mark Cavage. All rights reserved.
 // Copyright 2015 Joyent, Inc.
 
-var assert = __nccwpck_require__(2357);
-var Stream = __nccwpck_require__(2413).Stream;
-var util = __nccwpck_require__(1669);
+var assert = __nccwpck_require__(9491);
+var Stream = (__nccwpck_require__(2781).Stream);
+var util = __nccwpck_require__(3837);
 
 
 ///--- Globals
@@ -2308,7 +2216,7 @@ module.exports = _setExports(process.env.NODE_NDEBUG);
 "use strict";
 
 
-var crypto_hash_sha512 = __nccwpck_require__(8729).lowlevel.crypto_hash;
+var crypto_hash_sha512 = (__nccwpck_require__(8729).lowlevel.crypto_hash);
 
 /*
  * This file is a 1:1 port from the OpenBSD blowfish.c and bcrypt_pbkdf.c. As a
@@ -2872,8 +2780,8 @@ module.exports = {
 "use strict";
 /*jshint node:true */
 
-var Buffer = __nccwpck_require__(4293).Buffer; // browserify
-var SlowBuffer = __nccwpck_require__(4293).SlowBuffer;
+var Buffer = (__nccwpck_require__(4300).Buffer); // browserify
+var SlowBuffer = (__nccwpck_require__(4300).SlowBuffer);
 
 module.exports = bufferEq;
 
@@ -3033,10 +2941,10 @@ function objectToString(o) {
 /***/ 9865:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
-var crypto = __nccwpck_require__(6417);
-var BigInteger = __nccwpck_require__(5587).BigInteger;
-var ECPointFp = __nccwpck_require__(3943).ECPointFp;
-var Buffer = __nccwpck_require__(5118).Buffer;
+var crypto = __nccwpck_require__(6113);
+var BigInteger = (__nccwpck_require__(5587).BigInteger);
+var ECPointFp = (__nccwpck_require__(3943).ECPointFp);
+var Buffer = (__nccwpck_require__(5118).Buffer);
 exports.ECCurves = __nccwpck_require__(1452);
 
 // zero prepad
@@ -3103,7 +3011,7 @@ exports.ECKey = function(curve, key, isPublic)
 // Only Fp curves implemented for now
 
 // Requires jsbn.js and jsbn2.js
-var BigInteger = __nccwpck_require__(5587).BigInteger
+var BigInteger = (__nccwpck_require__(5587).BigInteger)
 var Barrett = BigInteger.prototype.Barrett
 
 // ----------------
@@ -3669,8 +3577,8 @@ module.exports = exports
 // Named EC curves
 
 // Requires ec.js, jsbn.js, and jsbn2.js
-var BigInteger = __nccwpck_require__(5587).BigInteger
-var ECCurveFp = __nccwpck_require__(3943).ECCurveFp
+var BigInteger = (__nccwpck_require__(5587).BigInteger)
+var ECCurveFp = (__nccwpck_require__(3943).ECCurveFp)
 
 
 // ----------------
@@ -3846,7 +3754,7 @@ module.exports = {
 "use strict";
 
 
-var Buffer = __nccwpck_require__(1867).Buffer;
+var Buffer = (__nccwpck_require__(1867).Buffer);
 
 var getParamBytesForAlg = __nccwpck_require__(528);
 
@@ -5262,8 +5170,8 @@ return Promise$1;
  * extsprintf.js: extended POSIX-style sprintf
  */
 
-var mod_assert = __nccwpck_require__(2357);
-var mod_util = __nccwpck_require__(1669);
+var mod_assert = __nccwpck_require__(9491);
+var mod_util = __nccwpck_require__(3837);
 
 /*
  * Public interface
@@ -5487,7 +5395,7 @@ module.exports = {
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = __nccwpck_require__(6631);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 var utils = __nccwpck_require__(5689);
 
 
@@ -5813,13 +5721,13 @@ module.exports = {
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = __nccwpck_require__(6631);
-var crypto = __nccwpck_require__(6417);
-var util = __nccwpck_require__(1669);
+var crypto = __nccwpck_require__(6113);
+var util = __nccwpck_require__(3837);
 var sshpk = __nccwpck_require__(7022);
 var jsprim = __nccwpck_require__(6287);
 var utils = __nccwpck_require__(5689);
 
-var sprintf = __nccwpck_require__(1669).format;
+var sprintf = (__nccwpck_require__(3837).format);
 
 var HASH_ALGOS = utils.HASH_ALGOS;
 var PK_ALGOS = utils.PK_ALGOS;
@@ -6226,7 +6134,7 @@ module.exports = {
 
 var assert = __nccwpck_require__(6631);
 var sshpk = __nccwpck_require__(7022);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 
 var HASH_ALGOS = {
   'sha1': true,
@@ -6350,7 +6258,7 @@ module.exports = {
 // Copyright 2015 Joyent, Inc.
 
 var assert = __nccwpck_require__(6631);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 var sshpk = __nccwpck_require__(7022);
 var utils = __nccwpck_require__(5689);
 
@@ -8702,7 +8610,7 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
  */
 
 var mod_assert = __nccwpck_require__(6631);
-var mod_util = __nccwpck_require__(1669);
+var mod_util = __nccwpck_require__(3837);
 
 var mod_extsprintf = __nccwpck_require__(7264);
 var mod_verror = __nccwpck_require__(1692);
@@ -9492,10 +9400,10 @@ new a(c[56],1575990012),new a(c[57],1125592928),new a(c[58],2716904306),new a(c[
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var bufferEqual = __nccwpck_require__(9239);
-var Buffer = __nccwpck_require__(1867).Buffer;
-var crypto = __nccwpck_require__(6417);
+var Buffer = (__nccwpck_require__(1867).Buffer);
+var crypto = __nccwpck_require__(6113);
 var formatEcdsa = __nccwpck_require__(1728);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 
 var MSG_INVALID_ALGORITHM = '"%s" is not a valid algorithm.\n  Supported algorithms are:\n  "HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512" and "none".'
 var MSG_INVALID_SECRET = 'secret must be a string or buffer';
@@ -9780,9 +9688,9 @@ exports.createVerify = function createVerify(opts) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 /*global module, process*/
-var Buffer = __nccwpck_require__(1867).Buffer;
-var Stream = __nccwpck_require__(2413);
-var util = __nccwpck_require__(1669);
+var Buffer = (__nccwpck_require__(1867).Buffer);
+var Stream = __nccwpck_require__(2781);
+var util = __nccwpck_require__(3837);
 
 function DataStream(data) {
   this.buffer = null;
@@ -9842,12 +9750,12 @@ module.exports = DataStream;
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 /*global module*/
-var Buffer = __nccwpck_require__(1867).Buffer;
+var Buffer = (__nccwpck_require__(1867).Buffer);
 var DataStream = __nccwpck_require__(1868);
 var jwa = __nccwpck_require__(6010);
-var Stream = __nccwpck_require__(2413);
+var Stream = __nccwpck_require__(2781);
 var toString = __nccwpck_require__(5292);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 
 function base64url(string, encoding) {
   return Buffer
@@ -9927,7 +9835,7 @@ module.exports = SignStream;
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 /*global module*/
-var Buffer = __nccwpck_require__(4293).Buffer;
+var Buffer = (__nccwpck_require__(4300).Buffer);
 
 module.exports = function toString(obj) {
   if (typeof obj === 'string')
@@ -9944,12 +9852,12 @@ module.exports = function toString(obj) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 /*global module*/
-var Buffer = __nccwpck_require__(1867).Buffer;
+var Buffer = (__nccwpck_require__(1867).Buffer);
 var DataStream = __nccwpck_require__(1868);
 var jwa = __nccwpck_require__(6010);
-var Stream = __nccwpck_require__(2413);
+var Stream = __nccwpck_require__(2781);
 var toString = __nccwpck_require__(5292);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 var JWS_REGEX = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$/;
 
 function isObject(thing) {
@@ -11982,11 +11890,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var Stream = _interopDefault(__nccwpck_require__(2413));
-var http = _interopDefault(__nccwpck_require__(8605));
-var Url = _interopDefault(__nccwpck_require__(8835));
-var https = _interopDefault(__nccwpck_require__(7211));
-var zlib = _interopDefault(__nccwpck_require__(8761));
+var Stream = _interopDefault(__nccwpck_require__(2781));
+var http = _interopDefault(__nccwpck_require__(3685));
+var Url = _interopDefault(__nccwpck_require__(7310));
+var https = _interopDefault(__nccwpck_require__(5687));
+var zlib = _interopDefault(__nccwpck_require__(9796));
 
 // Based on https://github.com/tmpvar/jsdom/blob/aa85b2abf07766ff7bf5c1f6daafb3726f2f2db5/lib/jsdom/living/blob.js
 
@@ -12137,7 +12045,7 @@ FetchError.prototype.name = 'FetchError';
 
 let convert;
 try {
-	convert = __nccwpck_require__(2877).convert;
+	convert = (__nccwpck_require__(2877).convert);
 } catch (e) {}
 
 const INTERNALS = Symbol('Body internals');
@@ -13620,7 +13528,7 @@ fetch.Promise = global.Promise;
 
 module.exports = exports = fetch;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.default = exports;
+exports["default"] = exports;
 exports.Headers = Headers;
 exports.Request = Request;
 exports.Response = Response;
@@ -13645,7 +13553,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -13676,14 +13584,14 @@ exports.models = models;
 const responses = __importStar(__nccwpck_require__(9929));
 exports.responses = responses;
 const client = __importStar(__nccwpck_require__(8580));
-const artifacts_waiter = __importStar(__nccwpck_require__(7147));
+const artifacts_waiter = __importStar(__nccwpck_require__(4494));
 exports.ArtifactsClient = client.ArtifactsClient;
 exports.ArtifactsWaiter = artifacts_waiter.ArtifactsWaiter;
 //# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 7147:
+/***/ 4494:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -13699,7 +13607,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -13809,7 +13717,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -13844,7 +13752,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ArtifactsClient = exports.ArtifactsApiKeys = void 0;
 const common = __nccwpck_require__(5049);
 const model = __importStar(__nccwpck_require__(2972));
-const artifacts_waiter_1 = __nccwpck_require__(7147);
+const artifacts_waiter_1 = __nccwpck_require__(4494);
 const oci_common_1 = __nccwpck_require__(5049);
 // ===============================================
 // This file is autogenerated - Please do not edit
@@ -13852,6 +13760,9 @@ const oci_common_1 = __nccwpck_require__(5049);
 var ArtifactsApiKeys;
 (function (ArtifactsApiKeys) {
 })(ArtifactsApiKeys = exports.ArtifactsApiKeys || (exports.ArtifactsApiKeys = {}));
+/**
+ * This service client uses {@link common.CircuitBreaker.DefaultConfiguration} for all the operations by default if no circuit breaker configuration is defined by the user.
+ */
 class ArtifactsClient {
     constructor(params, clientConfiguration) {
         this["_endpoint"] = "";
@@ -13865,6 +13776,13 @@ class ArtifactsClient {
             this._circuitBreaker = clientConfiguration.circuitBreaker
                 ? clientConfiguration.circuitBreaker.circuit
                 : null;
+        }
+        // if circuit breaker is not created, check if circuit breaker system is enabled to use default circuit breaker
+        const specCircuitBreakerEnabled = true;
+        if (!this._circuitBreaker &&
+            common.utils.isCircuitBreakerSystemEnabled(clientConfiguration) &&
+            (specCircuitBreakerEnabled || common.CircuitBreaker.DefaultCircuitBreakerOverriden)) {
+            this._circuitBreaker = new common.CircuitBreaker().circuit;
         }
         this._httpClient =
             params.httpClient || new common.FetchHttpClient(requestSigner, this._circuitBreaker);
@@ -13940,10 +13858,11 @@ class ArtifactsClient {
      * resources between compartments, see
      * [Moving Resources to a Different Compartment](https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ChangeContainerRepositoryCompartmentRequest
      * @return ChangeContainerRepositoryCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/ChangeContainerRepositoryCompartment.ts.html |here} to see how to use ChangeContainerRepositoryCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/ChangeContainerRepositoryCompartment.ts.html |here} to see how to use ChangeContainerRepositoryCompartment API.
      */
     changeContainerRepositoryCompartment(changeContainerRepositoryCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -13959,7 +13878,8 @@ class ArtifactsClient {
                 "opc-request-id": changeContainerRepositoryCompartmentRequest.opcRequestId,
                 "opc-retry-token": changeContainerRepositoryCompartmentRequest.opcRetryToken
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, changeContainerRepositoryCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, changeContainerRepositoryCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -13996,10 +13916,11 @@ class ArtifactsClient {
      * resources between compartments, see
      * [Moving Resources to a Different Compartment](https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ChangeRepositoryCompartmentRequest
      * @return ChangeRepositoryCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/ChangeRepositoryCompartment.ts.html |here} to see how to use ChangeRepositoryCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/ChangeRepositoryCompartment.ts.html |here} to see how to use ChangeRepositoryCompartment API.
      */
     changeRepositoryCompartment(changeRepositoryCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14015,7 +13936,8 @@ class ArtifactsClient {
                 "opc-request-id": changeRepositoryCompartmentRequest.opcRequestId,
                 "opc-retry-token": changeRepositoryCompartmentRequest.opcRetryToken
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, changeRepositoryCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, changeRepositoryCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14049,10 +13971,11 @@ class ArtifactsClient {
     }
     /**
      * Upload a signature to an image.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param CreateContainerImageSignatureRequest
      * @return CreateContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/CreateContainerImageSignature.ts.html |here} to see how to use CreateContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/CreateContainerImageSignature.ts.html |here} to see how to use CreateContainerImageSignature API.
      */
     createContainerImageSignature(createContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14066,7 +13989,8 @@ class ArtifactsClient {
                 "opc-retry-token": createContainerImageSignatureRequest.opcRetryToken,
                 "if-match": createContainerImageSignatureRequest.ifMatch
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createContainerImageSignatureRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createContainerImageSignatureRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14109,10 +14033,11 @@ class ArtifactsClient {
     }
     /**
      * Create a new empty container repository. Avoid entering confidential information.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param CreateContainerRepositoryRequest
      * @return CreateContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/CreateContainerRepository.ts.html |here} to see how to use CreateContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/CreateContainerRepository.ts.html |here} to see how to use CreateContainerRepository API.
      */
     createContainerRepository(createContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14125,7 +14050,8 @@ class ArtifactsClient {
                 "opc-request-id": createContainerRepositoryRequest.opcRequestId,
                 "opc-retry-token": createContainerRepositoryRequest.opcRetryToken
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createContainerRepositoryRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createContainerRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14168,10 +14094,11 @@ class ArtifactsClient {
     }
     /**
      * Creates a new repository for storing artifacts.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param CreateRepositoryRequest
      * @return CreateRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/CreateRepository.ts.html |here} to see how to use CreateRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/CreateRepository.ts.html |here} to see how to use CreateRepository API.
      */
     createRepository(createRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14184,7 +14111,8 @@ class ArtifactsClient {
                 "opc-request-id": createRepositoryRequest.opcRequestId,
                 "opc-retry-token": createRepositoryRequest.opcRetryToken
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createRepositoryRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14227,10 +14155,11 @@ class ArtifactsClient {
     }
     /**
      * Delete a container image.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteContainerImageRequest
      * @return DeleteContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/DeleteContainerImage.ts.html |here} to see how to use DeleteContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/DeleteContainerImage.ts.html |here} to see how to use DeleteContainerImage API.
      */
     deleteContainerImage(deleteContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14245,7 +14174,8 @@ class ArtifactsClient {
                 "if-match": deleteContainerImageRequest.ifMatch,
                 "opc-request-id": deleteContainerImageRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteContainerImageRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteContainerImageRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14278,10 +14208,11 @@ class ArtifactsClient {
     }
     /**
      * Delete a container image signature.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteContainerImageSignatureRequest
      * @return DeleteContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/DeleteContainerImageSignature.ts.html |here} to see how to use DeleteContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/DeleteContainerImageSignature.ts.html |here} to see how to use DeleteContainerImageSignature API.
      */
     deleteContainerImageSignature(deleteContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14296,7 +14227,8 @@ class ArtifactsClient {
                 "opc-request-id": deleteContainerImageSignatureRequest.opcRequestId,
                 "if-match": deleteContainerImageSignatureRequest.ifMatch
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteContainerImageSignatureRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteContainerImageSignatureRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14329,10 +14261,11 @@ class ArtifactsClient {
     }
     /**
      * Delete container repository.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteContainerRepositoryRequest
      * @return DeleteContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/DeleteContainerRepository.ts.html |here} to see how to use DeleteContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/DeleteContainerRepository.ts.html |here} to see how to use DeleteContainerRepository API.
      */
     deleteContainerRepository(deleteContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14347,7 +14280,8 @@ class ArtifactsClient {
                 "if-match": deleteContainerRepositoryRequest.ifMatch,
                 "opc-request-id": deleteContainerRepositoryRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteContainerRepositoryRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteContainerRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14380,10 +14314,11 @@ class ArtifactsClient {
     }
     /**
      * Deletes an artifact with a specified [OCID](https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm).
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteGenericArtifactRequest
      * @return DeleteGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/DeleteGenericArtifact.ts.html |here} to see how to use DeleteGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/DeleteGenericArtifact.ts.html |here} to see how to use DeleteGenericArtifact API.
      */
     deleteGenericArtifact(deleteGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14398,7 +14333,8 @@ class ArtifactsClient {
                 "if-match": deleteGenericArtifactRequest.ifMatch,
                 "opc-request-id": deleteGenericArtifactRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteGenericArtifactRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteGenericArtifactRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14431,10 +14367,11 @@ class ArtifactsClient {
     }
     /**
      * Deletes an artifact with a specified `artifactPath` and `version`.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteGenericArtifactByPathRequest
      * @return DeleteGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/DeleteGenericArtifactByPath.ts.html |here} to see how to use DeleteGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/DeleteGenericArtifactByPath.ts.html |here} to see how to use DeleteGenericArtifactByPath API.
      */
     deleteGenericArtifactByPath(deleteGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14451,7 +14388,8 @@ class ArtifactsClient {
                 "if-match": deleteGenericArtifactByPathRequest.ifMatch,
                 "opc-request-id": deleteGenericArtifactByPathRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteGenericArtifactByPathRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteGenericArtifactByPathRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14484,10 +14422,11 @@ class ArtifactsClient {
     }
     /**
      * Deletes the specified repository. This operation fails unless all associated artifacts are in a DELETED state. You must delete all associated artifacts before deleting a repository.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteRepositoryRequest
      * @return DeleteRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/DeleteRepository.ts.html |here} to see how to use DeleteRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/DeleteRepository.ts.html |here} to see how to use DeleteRepository API.
      */
     deleteRepository(deleteRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14502,7 +14441,8 @@ class ArtifactsClient {
                 "if-match": deleteRepositoryRequest.ifMatch,
                 "opc-request-id": deleteRepositoryRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteRepositoryRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14535,10 +14475,11 @@ class ArtifactsClient {
     }
     /**
      * Get container configuration.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetContainerConfigurationRequest
      * @return GetContainerConfigurationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/GetContainerConfiguration.ts.html |here} to see how to use GetContainerConfiguration API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/GetContainerConfiguration.ts.html |here} to see how to use GetContainerConfiguration API.
      */
     getContainerConfiguration(getContainerConfigurationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14552,7 +14493,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getContainerConfigurationRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getContainerConfigurationRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getContainerConfigurationRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14594,10 +14536,11 @@ class ArtifactsClient {
     }
     /**
      * Get container image metadata.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetContainerImageRequest
      * @return GetContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/GetContainerImage.ts.html |here} to see how to use GetContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/GetContainerImage.ts.html |here} to see how to use GetContainerImage API.
      */
     getContainerImage(getContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14611,7 +14554,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getContainerImageRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getContainerImageRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getContainerImageRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14653,10 +14597,11 @@ class ArtifactsClient {
     }
     /**
      * Get container image signature metadata.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetContainerImageSignatureRequest
      * @return GetContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/GetContainerImageSignature.ts.html |here} to see how to use GetContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/GetContainerImageSignature.ts.html |here} to see how to use GetContainerImageSignature API.
      */
     getContainerImageSignature(getContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14670,7 +14615,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getContainerImageSignatureRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getContainerImageSignatureRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getContainerImageSignatureRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14712,10 +14658,11 @@ class ArtifactsClient {
     }
     /**
      * Get container repository.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetContainerRepositoryRequest
      * @return GetContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/GetContainerRepository.ts.html |here} to see how to use GetContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/GetContainerRepository.ts.html |here} to see how to use GetContainerRepository API.
      */
     getContainerRepository(getContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14729,7 +14676,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getContainerRepositoryRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getContainerRepositoryRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getContainerRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14771,10 +14719,11 @@ class ArtifactsClient {
     }
     /**
      * Gets information about an artifact with a specified [OCID](https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm).
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetGenericArtifactRequest
      * @return GetGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/GetGenericArtifact.ts.html |here} to see how to use GetGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/GetGenericArtifact.ts.html |here} to see how to use GetGenericArtifact API.
      */
     getGenericArtifact(getGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14788,7 +14737,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getGenericArtifactRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getGenericArtifactRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getGenericArtifactRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14830,10 +14780,11 @@ class ArtifactsClient {
     }
     /**
      * Gets information about an artifact with a specified `artifactPath` and `version`.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetGenericArtifactByPathRequest
      * @return GetGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/GetGenericArtifactByPath.ts.html |here} to see how to use GetGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/GetGenericArtifactByPath.ts.html |here} to see how to use GetGenericArtifactByPath API.
      */
     getGenericArtifactByPath(getGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14849,7 +14800,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getGenericArtifactByPathRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getGenericArtifactByPathRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getGenericArtifactByPathRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14891,10 +14843,11 @@ class ArtifactsClient {
     }
     /**
      * Gets the specified repository's information.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetRepositoryRequest
      * @return GetRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/GetRepository.ts.html |here} to see how to use GetRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/GetRepository.ts.html |here} to see how to use GetRepository API.
      */
     getRepository(getRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14908,7 +14861,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getRepositoryRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getRepositoryRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -14950,10 +14904,11 @@ class ArtifactsClient {
     }
     /**
      * List container image signatures in an image.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListContainerImageSignaturesRequest
      * @return ListContainerImageSignaturesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/ListContainerImageSignatures.ts.html |here} to see how to use ListContainerImageSignatures API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/ListContainerImageSignatures.ts.html |here} to see how to use ListContainerImageSignatures API.
      */
     listContainerImageSignatures(listContainerImageSignaturesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -14980,7 +14935,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listContainerImageSignaturesRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listContainerImageSignaturesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listContainerImageSignaturesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15022,10 +14978,11 @@ class ArtifactsClient {
     }
     /**
      * List container images in a compartment.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListContainerImagesRequest
      * @return ListContainerImagesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/ListContainerImages.ts.html |here} to see how to use ListContainerImages API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/ListContainerImages.ts.html |here} to see how to use ListContainerImages API.
      */
     listContainerImages(listContainerImagesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15051,7 +15008,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listContainerImagesRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listContainerImagesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listContainerImagesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15093,10 +15051,11 @@ class ArtifactsClient {
     }
     /**
      * List container repositories in a compartment.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListContainerRepositoriesRequest
      * @return ListContainerRepositoriesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/ListContainerRepositories.ts.html |here} to see how to use ListContainerRepositories API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/ListContainerRepositories.ts.html |here} to see how to use ListContainerRepositories API.
      */
     listContainerRepositories(listContainerRepositoriesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15119,7 +15078,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listContainerRepositoriesRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listContainerRepositoriesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listContainerRepositoriesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15161,10 +15121,11 @@ class ArtifactsClient {
     }
     /**
      * Lists artifacts in the specified repository.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListGenericArtifactsRequest
      * @return ListGenericArtifactsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/ListGenericArtifacts.ts.html |here} to see how to use ListGenericArtifacts API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/ListGenericArtifacts.ts.html |here} to see how to use ListGenericArtifacts API.
      */
     listGenericArtifacts(listGenericArtifactsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15189,7 +15150,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listGenericArtifactsRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listGenericArtifactsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listGenericArtifactsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15231,10 +15193,11 @@ class ArtifactsClient {
     }
     /**
      * Lists repositories in the specified compartment.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListRepositoriesRequest
      * @return ListRepositoriesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/ListRepositories.ts.html |here} to see how to use ListRepositories API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/ListRepositories.ts.html |here} to see how to use ListRepositories API.
      */
     listRepositories(listRepositoriesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15256,7 +15219,8 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listRepositoriesRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listRepositoriesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listRepositoriesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15298,10 +15262,11 @@ class ArtifactsClient {
     }
     /**
      * Remove version from container image.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param RemoveContainerVersionRequest
      * @return RemoveContainerVersionResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/RemoveContainerVersion.ts.html |here} to see how to use RemoveContainerVersion API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/RemoveContainerVersion.ts.html |here} to see how to use RemoveContainerVersion API.
      */
     removeContainerVersion(removeContainerVersionRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15317,7 +15282,8 @@ class ArtifactsClient {
                 "opc-request-id": removeContainerVersionRequest.opcRequestId,
                 "opc-retry-token": removeContainerVersionRequest.opcRetryToken
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, removeContainerVersionRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, removeContainerVersionRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15360,10 +15326,11 @@ class ArtifactsClient {
     }
     /**
      * Restore a container image.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param RestoreContainerImageRequest
      * @return RestoreContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/RestoreContainerImage.ts.html |here} to see how to use RestoreContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/RestoreContainerImage.ts.html |here} to see how to use RestoreContainerImage API.
      */
     restoreContainerImage(restoreContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15379,7 +15346,8 @@ class ArtifactsClient {
                 "opc-request-id": restoreContainerImageRequest.opcRequestId,
                 "opc-retry-token": restoreContainerImageRequest.opcRetryToken
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, restoreContainerImageRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, restoreContainerImageRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15422,10 +15390,11 @@ class ArtifactsClient {
     }
     /**
      * Update container configuration.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateContainerConfigurationRequest
      * @return UpdateContainerConfigurationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/UpdateContainerConfiguration.ts.html |here} to see how to use UpdateContainerConfiguration API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/UpdateContainerConfiguration.ts.html |here} to see how to use UpdateContainerConfiguration API.
      */
     updateContainerConfiguration(updateContainerConfigurationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15440,7 +15409,8 @@ class ArtifactsClient {
                 "if-match": updateContainerConfigurationRequest.ifMatch,
                 "opc-request-id": updateContainerConfigurationRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateContainerConfigurationRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateContainerConfigurationRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15483,10 +15453,11 @@ class ArtifactsClient {
     }
     /**
      * Modify the properties of a container repository. Avoid entering confidential information.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateContainerRepositoryRequest
      * @return UpdateContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/UpdateContainerRepository.ts.html |here} to see how to use UpdateContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/UpdateContainerRepository.ts.html |here} to see how to use UpdateContainerRepository API.
      */
     updateContainerRepository(updateContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15501,7 +15472,8 @@ class ArtifactsClient {
                 "if-match": updateContainerRepositoryRequest.ifMatch,
                 "opc-request-id": updateContainerRepositoryRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateContainerRepositoryRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateContainerRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15544,10 +15516,11 @@ class ArtifactsClient {
     }
     /**
      * Updates the artifact with the specified [OCID](https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm). You can only update the tags of an artifact.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateGenericArtifactRequest
      * @return UpdateGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/UpdateGenericArtifact.ts.html |here} to see how to use UpdateGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/UpdateGenericArtifact.ts.html |here} to see how to use UpdateGenericArtifact API.
      */
     updateGenericArtifact(updateGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15562,7 +15535,8 @@ class ArtifactsClient {
                 "if-match": updateGenericArtifactRequest.ifMatch,
                 "opc-request-id": updateGenericArtifactRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateGenericArtifactRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateGenericArtifactRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15605,10 +15579,11 @@ class ArtifactsClient {
     }
     /**
      * Updates an artifact with a specified `artifactPath` and `version`. You can only update the tags of an artifact.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateGenericArtifactByPathRequest
      * @return UpdateGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/UpdateGenericArtifactByPath.ts.html |here} to see how to use UpdateGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/UpdateGenericArtifactByPath.ts.html |here} to see how to use UpdateGenericArtifactByPath API.
      */
     updateGenericArtifactByPath(updateGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15625,7 +15600,8 @@ class ArtifactsClient {
                 "if-match": updateGenericArtifactByPathRequest.ifMatch,
                 "opc-request-id": updateGenericArtifactByPathRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateGenericArtifactByPathRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateGenericArtifactByPathRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15668,10 +15644,11 @@ class ArtifactsClient {
     }
     /**
      * Updates the properties of a repository. You can update the `displayName` and  `description` properties.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateRepositoryRequest
      * @return UpdateRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/artifacts/UpdateRepository.ts.html |here} to see how to use UpdateRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/artifacts/UpdateRepository.ts.html |here} to see how to use UpdateRepository API.
      */
     updateRepository(updateRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15686,7 +15663,8 @@ class ArtifactsClient {
                 "if-match": updateRepositoryRequest.ifMatch,
                 "opc-request-id": updateRepositoryRequest.opcRequestId
             };
-            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateRepositoryRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_1.composeRequest({
@@ -15750,7 +15728,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -15788,7 +15766,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -15826,7 +15804,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -15864,7 +15842,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -15934,7 +15912,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -15972,7 +15950,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -16042,7 +16020,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16092,7 +16070,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16142,7 +16120,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16180,7 +16158,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -16271,7 +16249,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -16341,7 +16319,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16389,7 +16367,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16427,7 +16405,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -16502,7 +16480,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16540,7 +16518,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16585,7 +16563,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -16649,7 +16627,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -16712,7 +16690,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -16786,7 +16764,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -16856,7 +16834,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16894,7 +16872,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -16943,7 +16921,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17006,7 +16984,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17067,7 +17045,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17181,7 +17159,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -17219,7 +17197,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17289,7 +17267,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17363,7 +17341,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17448,7 +17426,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -17486,7 +17464,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -17524,7 +17502,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17588,7 +17566,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -17626,7 +17604,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -17664,7 +17642,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17727,7 +17705,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17801,7 +17779,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -17853,7 +17831,7 @@ exports.ListRepositoriesRequest = ListRepositoriesRequest.ListRepositoriesReques
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -17896,7 +17874,7 @@ var ListContainerImageSignaturesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -17932,7 +17910,7 @@ var ListContainerImagesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -17968,7 +17946,7 @@ var ListContainerRepositoriesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -18004,7 +17982,7 @@ var ListGenericArtifactsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -18042,7 +18020,7 @@ Use this API to manage resources such as container images and repositories.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -18082,7 +18060,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.utils = exports.getChunk = exports.CircuitBreaker = exports.Constants = exports.NoRetryConfigurationDetails = exports.MaxAttemptsTerminationStrategy = exports.FixedTimeDelayStrategy = exports.GenericRetrier = exports.LOG = exports.ResourcePrincipalAuthenticationDetailsProvider = exports.InstancePrincipalsAuthenticationDetailsProviderBuilder = exports.ConfigFileReader = exports.ConfigFileAuthenticationDetailsProvider = exports.composeResponse = exports.composeRequest = exports.genericPaginateResponses = exports.paginateResponses = exports.genericPaginateRecords = exports.paginatedRecordsWithLimit = exports.paginatedResponsesWithLimit = exports.paginateRecords = exports.genericTerminalConditionWaiter = exports.genericWaiter = exports.MaxTimeTerminationStrategy = exports.ExponentialBackoffDelayStrategy = exports.EndpointBuilder = exports.Realm = exports.Region = exports.Range = exports.byteLength = exports.ObjectSerializer = exports.convertStringToType = exports.handleErrorBody = exports.mapContainer = exports.handleErrorResponse = exports.getStringFromResponseBody = exports.DefaultRequestSigner = exports.OciError = exports.FetchHttpClient = exports.isRegionProvider = exports.SimpleAuthenticationDetailsProvider = void 0;
+exports.utils = exports.getChunk = exports.CircuitBreaker = exports.Constants = exports.OciSdkDefaultRetryConfiguration = exports.NoRetryConfigurationDetails = exports.MaxAttemptsTerminationStrategy = exports.FixedTimeDelayStrategy = exports.GenericRetrier = exports.LOG = exports.ResourcePrincipalAuthenticationDetailsProvider = exports.InstancePrincipalsAuthenticationDetailsProviderBuilder = exports.ConfigFileReader = exports.ConfigFileAuthenticationDetailsProvider = exports.composeResponse = exports.composeRequest = exports.genericPaginateResponses = exports.paginateResponses = exports.genericPaginateRecords = exports.paginatedRecordsWithLimit = exports.paginatedResponsesWithLimit = exports.paginateRecords = exports.genericTerminalConditionWaiter = exports.genericWaiter = exports.MaxTimeTerminationStrategy = exports.ExponentialBackoffDelayStrategy = exports.EndpointBuilder = exports.Realm = exports.Region = exports.Range = exports.byteLength = exports.ObjectSerializer = exports.convertStringToType = exports.handleErrorBody = exports.mapContainer = exports.handleErrorResponse = exports.getStringFromResponseBody = exports.DefaultRequestSigner = exports.OciError = exports.FetchHttpClient = exports.isRegionProvider = exports.SimpleAuthenticationDetailsProvider = void 0;
 const auth = __importStar(__nccwpck_require__(8154));
 const error = __importStar(__nccwpck_require__(2956));
 const signer = __importStar(__nccwpck_require__(484));
@@ -18114,6 +18092,7 @@ Object.defineProperty(exports, "FixedTimeDelayStrategy", ({ enumerable: true, ge
 const retrier_1 = __nccwpck_require__(4922);
 Object.defineProperty(exports, "GenericRetrier", ({ enumerable: true, get: function () { return retrier_1.GenericRetrier; } }));
 Object.defineProperty(exports, "NoRetryConfigurationDetails", ({ enumerable: true, get: function () { return retrier_1.NoRetryConfigurationDetails; } }));
+Object.defineProperty(exports, "OciSdkDefaultRetryConfiguration", ({ enumerable: true, get: function () { return retrier_1.OciSdkDefaultRetryConfiguration; } }));
 const instance_principals_authentication_detail_provider_1 = __importDefault(__nccwpck_require__(252));
 exports.InstancePrincipalsAuthenticationDetailsProviderBuilder = instance_principals_authentication_detail_provider_1.default;
 const resource_principal_authentication_details_provider_1 = __importDefault(__nccwpck_require__(5228));
@@ -18174,7 +18153,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const UrlParser = __nccwpck_require__(8835);
+const UrlParser = __nccwpck_require__(7310);
 const httpSignature = __nccwpck_require__(2479);
 const jssha = __nccwpck_require__(7656);
 const security_token_adapter_1 = __importDefault(__nccwpck_require__(84));
@@ -18357,7 +18336,7 @@ class X509FederationClient {
         });
     }
 }
-exports.default = X509FederationClient;
+exports["default"] = X509FederationClient;
 // A Signer class for FederationClient
 class AuthTokenRequestSigner {
     constructor(tenancyId, fingerprint, privateKey) {
@@ -18637,7 +18616,7 @@ class AbstractFederationClientAuthenticationDetailsProviderBuilder {
         return new url_based_x509_certificate_supplier_1.ResourceDetails(url, headers);
     }
 }
-exports.default = AbstractFederationClientAuthenticationDetailsProviderBuilder;
+exports["default"] = AbstractFederationClientAuthenticationDetailsProviderBuilder;
 //# sourceMappingURL=abstract-federation-client-authenticated-details-provider-builder.js.map
 
 /***/ }),
@@ -18681,7 +18660,7 @@ class AbstractRequestingAuthenticationDetailsProvider {
         return null;
     }
 }
-exports.default = AbstractRequestingAuthenticationDetailsProvider;
+exports["default"] = AbstractRequestingAuthenticationDetailsProvider;
 //# sourceMappingURL=abstract-requesting-authentication-detail-provider.js.map
 
 /***/ }),
@@ -18785,6 +18764,12 @@ class SimpleAuthenticationDetailsProvider {
         return this.region;
     }
     /**
+     * Set the region
+     */
+    setRegion(region) {
+        this.region = region;
+    }
+    /**
      * Get the authType
      */
     getAuthType() {
@@ -18839,7 +18824,7 @@ class CertificateAndPrivateKeyPair {
         return this.privateKey;
     }
 }
-exports.default = CertificateAndPrivateKeyPair;
+exports["default"] = CertificateAndPrivateKeyPair;
 //# sourceMappingURL=certificate-and-privatekey-pair.js.map
 
 /***/ }),
@@ -18867,7 +18852,7 @@ exports.ConfigFileAuthenticationDetailsProvider = void 0;
 const auth_1 = __nccwpck_require__(8154);
 const utils_1 = __nccwpck_require__(1563);
 const config_file_reader_1 = __nccwpck_require__(7407);
-const fs_1 = __nccwpck_require__(5747);
+const fs_1 = __nccwpck_require__(7147);
 const region_1 = __nccwpck_require__(263);
 const realm_1 = __nccwpck_require__(3755);
 class ConfigFileAuthenticationDetailsProvider {
@@ -18902,12 +18887,27 @@ class ConfigFileAuthenticationDetailsProvider {
     retrieveRegionFromRegionId(regionId) {
         let region;
         try {
-            return (region = region_1.Region.fromRegionId(regionId));
+            region = region_1.Region.fromRegionId(regionId);
+            if (!region) {
+                console.warn(`Found regionId ${regionId} in config file, but not supported by this version of the SDK`);
+                const fallbackSecondLevelDomain = process.env["OCI_DEFAULT_REALM"];
+                // Before defaulting to Realm.OC1, check if user defined a second level domain for unknown region fallback.
+                // If so, create a dummy realm with the second level domain set from the env.OCI_DEFAULT_REALM. Else default to OC1 realm.
+                if (fallbackSecondLevelDomain) {
+                    console.warn(`Falling back to using second level domain: ${fallbackSecondLevelDomain}`);
+                    const unknownRealm = realm_1.Realm.register("unknown", fallbackSecondLevelDomain);
+                    region = region_1.Region.register(regionId, unknownRealm);
+                }
+                else {
+                    // Proceed by assuming the region id in the config file belongs to OC1 realm.
+                    console.warn(`Falling back to using OC1 realm.`);
+                    region = region_1.Region.register(regionId, realm_1.Realm.OC1);
+                }
+            }
+            return region;
         }
         catch (e) {
-            console.warn(`Found regionId ${regionId} in config file, but not supported by this version of the SDK`);
-            // Proceed by assuming the region id in the config file belongs to OC1 realm.
-            return (region = region_1.Region.register(regionId, realm_1.Realm.OC1));
+            throw new Error(`Error from retrying to retrieve region from regionId: ${e}`);
         }
     }
     createConfigFileAuth(file) {
@@ -18988,10 +18988,16 @@ class ConfigFileAuthenticationDetailsProvider {
         return this.delegate.getFingerprint();
     }
     /**
-     * Get the rehion
+     * Get the region
      */
     getRegion() {
         return this.delegate.getRegion();
+    }
+    /**
+     * Set the region
+     */
+    setRegion(regionId) {
+        this.delegate.setRegion(this.retrieveRegionFromRegionId(regionId));
     }
     /**
      * Get the authType
@@ -19070,7 +19076,7 @@ class FileBasedKeySupplier {
         }
     }
 }
-exports.default = FileBasedKeySupplier;
+exports["default"] = FileBasedKeySupplier;
 //# sourceMappingURL=file-based-key-supplier.js.map
 
 /***/ }),
@@ -19097,7 +19103,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
  * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
-const fs_1 = __nccwpck_require__(5747);
+const fs_1 = __nccwpck_require__(7147);
 const security_token_adapter_1 = __importDefault(__nccwpck_require__(84));
 /**
  * This class gets a security token from file.
@@ -19172,7 +19178,7 @@ class FileBasedResourcePrincipalFederationClient {
         return new security_token_adapter_1.default(securityToken, this.sessionKeySupplier);
     }
 }
-exports.default = FileBasedResourcePrincipalFederationClient;
+exports["default"] = FileBasedResourcePrincipalFederationClient;
 //# sourceMappingURL=file-based-resource-principal-federation-client.js.map
 
 /***/ }),
@@ -19228,7 +19234,7 @@ class FixedContentKeySupplier {
     }
     refreshKeys() { }
 }
-exports.default = FixedContentKeySupplier;
+exports["default"] = FixedContentKeySupplier;
 //# sourceMappingURL=fixed-content-key-supplier.js.map
 
 /***/ }),
@@ -19285,7 +19291,7 @@ class FixedContentResourcePrincipalFederationClient {
         });
     }
 }
-exports.default = FixedContentResourcePrincipalFederationClient;
+exports["default"] = FixedContentResourcePrincipalFederationClient;
 //# sourceMappingURL=fixed-content-resource-principal-federation-client.js.map
 
 /***/ }),
@@ -19352,7 +19358,7 @@ class AuthUtils {
             .replace("\n", "");
     }
 }
-exports.default = AuthUtils;
+exports["default"] = AuthUtils;
 //# sourceMappingURL=auth-utils.js.map
 
 /***/ }),
@@ -19417,7 +19423,7 @@ exports.delegateAuthProvider = delegateAuthProvider;
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.loadPrivateKeyFromFile = void 0;
-const fs_1 = __nccwpck_require__(5747);
+const fs_1 = __nccwpck_require__(7147);
 const sshpk_1 = __nccwpck_require__(7022);
 function loadPrivateKeyFromFile(privateKeyPath, passphrasePath) {
     try {
@@ -19523,7 +19529,7 @@ class InstancePrincipalsAuthenticationDetailsProviderBuilder extends abstract_fe
         super._leafCertificateSupplier = leafCertificateSupplier;
     }
 }
-exports.default = InstancePrincipalsAuthenticationDetailsProviderBuilder;
+exports["default"] = InstancePrincipalsAuthenticationDetailsProviderBuilder;
 //# sourceMappingURL=instance-principals-authentication-detail-provider.js.map
 
 /***/ }),
@@ -19554,7 +19560,7 @@ class KeyPair {
         return this.privateKey;
     }
 }
-exports.default = KeyPair;
+exports["default"] = KeyPair;
 //# sourceMappingURL=key-pair.js.map
 
 /***/ }),
@@ -19615,7 +19621,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
  * </li>
  * </ul>
  */
-const path_1 = __importDefault(__nccwpck_require__(5622));
+const path_1 = __importDefault(__nccwpck_require__(1017));
 const region_1 = __nccwpck_require__(263);
 const fixed_content_key_supplier_1 = __importDefault(__nccwpck_require__(4024));
 const file_based_key_supplier_1 = __importDefault(__nccwpck_require__(2407));
@@ -19660,7 +19666,7 @@ class ResourcePrincipalAuthenticationDetailsProvider extends abstract_requesting
         return this.region;
     }
 }
-exports.default = ResourcePrincipalAuthenticationDetailsProvider;
+exports["default"] = ResourcePrincipalAuthenticationDetailsProvider;
 ResourcePrincipalAuthenticationDetailsProvider.OCI_RESOURCE_PRINCIPAL_VERSION = "OCI_RESOURCE_PRINCIPAL_VERSION";
 ResourcePrincipalAuthenticationDetailsProvider.RP_VERSION_2_2 = "2.2";
 ResourcePrincipalAuthenticationDetailsProvider.OCI_RESOURCE_PRINCIPAL_RPST = "OCI_RESOURCE_PRINCIPAL_RPST";
@@ -19819,7 +19825,7 @@ class SecurityTokenAdapter {
         return this.jwt.payload[key] ? this.jwt.payload[key] : null;
     }
 }
-exports.default = SecurityTokenAdapter;
+exports["default"] = SecurityTokenAdapter;
 //# sourceMappingURL=security-token-adapter.js.map
 
 /***/ }),
@@ -19842,7 +19848,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
  * <p>
  * The thread safety of this class is ensured
  */
-const crypto_1 = __nccwpck_require__(6417);
+const crypto_1 = __nccwpck_require__(6113);
 const key_pair_1 = __importDefault(__nccwpck_require__(3448));
 class SessionKeySupplierImpl {
     constructor() {
@@ -19879,7 +19885,7 @@ class SessionKeySupplierImpl {
         this.keyPair = new key_pair_1.default(publicKey, privateKey);
     }
 }
-exports.default = SessionKeySupplierImpl;
+exports["default"] = SessionKeySupplierImpl;
 //# sourceMappingURL=session-key-supplier.js.map
 
 /***/ }),
@@ -20005,9 +20011,13 @@ exports.ResourceDetails = ResourceDetails;
 
 "use strict";
 
+/**
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const stream_1 = __nccwpck_require__(2413);
-const buffer_1 = __nccwpck_require__(4293);
+const stream_1 = __nccwpck_require__(2781);
+const buffer_1 = __nccwpck_require__(4300);
 const helper_1 = __nccwpck_require__(7621);
 const ChunkBuffer_1 = __nccwpck_require__(7620);
 const ChunkStream_1 = __nccwpck_require__(1606);
@@ -20043,7 +20053,7 @@ function getChunk(data, partSize) {
         throw new Error("Body Data is unsupported format, expected data to be one of: string | Uint8Array | Buffer | Readable | ReadableStream | Blob;.");
     }
 }
-exports.default = getChunk;
+exports["default"] = getChunk;
 //# sourceMappingURL=chunker.js.map
 
 /***/ }),
@@ -20053,6 +20063,10 @@ exports.default = getChunk;
 
 "use strict";
 
+/**
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
 var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }
 var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _arguments, generator) {
     if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
@@ -20067,7 +20081,7 @@ var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _ar
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ChunkBuffer = void 0;
-const crypto_1 = __nccwpck_require__(6417);
+const crypto_1 = __nccwpck_require__(6113);
 const helper_1 = __nccwpck_require__(7621);
 function ChunkBuffer(data, partSize) {
     return __asyncGenerator(this, arguments, function* ChunkBuffer_1() {
@@ -20109,6 +20123,10 @@ exports.ChunkBuffer = ChunkBuffer;
 
 "use strict";
 
+/**
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
 var __asyncValues = (this && this.__asyncValues) || function (o) {
     if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
     var m = o[Symbol.asyncIterator], i;
@@ -20130,8 +20148,8 @@ var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _ar
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ChunkStream = void 0;
-const buffer_1 = __nccwpck_require__(4293);
-const crypto_1 = __nccwpck_require__(6417);
+const buffer_1 = __nccwpck_require__(4300);
+const crypto_1 = __nccwpck_require__(6113);
 const helper_1 = __nccwpck_require__(7621);
 function ChunkStream(data, partSize, getNextData) {
     return __asyncGenerator(this, arguments, function* ChunkStream_1() {
@@ -20192,6 +20210,10 @@ exports.ChunkStream = ChunkStream;
 
 "use strict";
 
+/**
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
 var __asyncValues = (this && this.__asyncValues) || function (o) {
     if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
     var m = o[Symbol.asyncIterator], i;
@@ -20213,7 +20235,7 @@ var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _ar
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getReadableData = void 0;
-const buffer_1 = __nccwpck_require__(4293);
+const buffer_1 = __nccwpck_require__(4300);
 function getReadableData(data) {
     return __asyncGenerator(this, arguments, function* getReadableData_1() {
         var e_1, _a;
@@ -20242,6 +20264,10 @@ exports.getReadableData = getReadableData;
 
 "use strict";
 
+/**
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
 var __await = (this && this.__await) || function (v) { return this instanceof __await ? (this.v = v, this) : new __await(v); }
 var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _arguments, generator) {
     if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
@@ -20256,7 +20282,7 @@ var __asyncGenerator = (this && this.__asyncGenerator) || function (thisArg, _ar
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getReadableStreamData = void 0;
-const buffer_1 = __nccwpck_require__(4293);
+const buffer_1 = __nccwpck_require__(4300);
 function getReadableStreamData(data) {
     return __asyncGenerator(this, arguments, function* getReadableStreamData_1() {
         const reader = data.getReader();
@@ -20358,18 +20384,29 @@ class CircuitBreaker {
             console.log("circuit breaker is now in CLOSE state");
         });
     }
+    static get envVariableCheckForDefaultCircuitBreaker() {
+        if (process.env.OCI_SDK_DEFAULT_CIRCUITBREAKER_ENABLED === "true") {
+            CircuitBreaker.DefaultCircuitBreakerOverriden = true;
+        }
+        else if (process.env.OCI_SDK_DEFAULT_CIRCUITBREAKER_ENABLED === "false") {
+            CircuitBreaker.DefaultCircuitBreakerOverriden = true;
+        }
+        return process.env.OCI_SDK_DEFAULT_CIRCUITBREAKER_ENABLED;
+    }
     static get defaultConfiguration() {
         return CircuitBreaker.DefaultConfiguration;
     }
     static set defaultConfiguration(circuitBreakerConfig) {
         CircuitBreaker.DefaultConfiguration = Object.assign(Object.assign({}, CircuitBreaker.DefaultConfiguration), circuitBreakerConfig);
+        CircuitBreaker.DefaultCircuitBreakerOverriden = true;
     }
 }
-exports.default = CircuitBreaker;
+exports["default"] = CircuitBreaker;
 CircuitBreaker.EnableGlobalCircuitBreaker = true; // Configuration to turn on/off the global circuit breaker.
-CircuitBreaker.EnableDefaultCircuitBreaker = process.env.OCI_SDK_DEFAULT_CIRCUITBREAKER_ENABLED;
+CircuitBreaker.EnableDefaultCircuitBreaker = CircuitBreaker.envVariableCheckForDefaultCircuitBreaker;
+CircuitBreaker.DefaultCircuitBreakerOverriden = false;
 CircuitBreaker.DefaultConfiguration = {
-    timeout: 10000,
+    timeout: 3600000,
     errorThresholdPercentage: 80,
     resetTimeout: 30000,
     rollingCountTimeout: 120000,
@@ -20397,7 +20434,7 @@ CircuitBreaker.internalCircuit = new Breaker(FetchWrapper, {
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ConfigAccumulator = exports.ConfigFile = exports.ConfigFileReader = void 0;
-const fs_1 = __nccwpck_require__(5747);
+const fs_1 = __nccwpck_require__(7147);
 class ConfigFileReader {
     /**
      * Creates a new ConfigFile instance using the configuration at the default location,
@@ -20433,7 +20470,7 @@ class ConfigFileReader {
         // Otherwise, leave as is to allow users to always be able to specify a path
         // without the SDK modifying it.
         if (path.startsWith("~/") || path.startsWith("~\\")) {
-            return (__nccwpck_require__(2087).homedir() +
+            return ((__nccwpck_require__(2037).homedir)() +
                 ConfigFileReader.correctPath(process.platform === "win32", path.substring(1)));
         }
         else {
@@ -20584,7 +20621,7 @@ var BooleanString;
     BooleanString["TRUE"] = "true";
     BooleanString["FALSE"] = "false";
 })(BooleanString = exports.BooleanString || (exports.BooleanString = {}));
-exports.default = Constants;
+exports["default"] = Constants;
 //# sourceMappingURL=constants.js.map
 
 /***/ }),
@@ -20612,9 +20649,14 @@ class EndpointBuilder {
         const region = region_1.Region.fromRegionId(regionId);
         if (region)
             return EndpointBuilder.createEndpointFromRegion(template, region);
-        console.log(`Unknown regionId [${regionId}], Assuming its in default Realm OC1`);
-        const defaultRealm = realm_1.Realm.OC1;
-        return EndpointBuilder.createEndpointFromRegionIdAndSecondLevelDomain(template, regionId, defaultRealm.secondLevelDomain);
+        // If regionId does not return a known region, check to see if there is a fallback second level domain from env.OCI_DEFAULT_REALM
+        // If no fallback for second level domain, default it to OC1's second level domain.
+        const fallbackSecondLevelDomain = process.env["OCI_DEFAULT_REALM"];
+        let secondLevelDomain = fallbackSecondLevelDomain
+            ? fallbackSecondLevelDomain
+            : realm_1.Realm.OC1.secondLevelDomain;
+        console.log(`Unknown regionId [${regionId}], falling back to using ${secondLevelDomain} as the second level domain.`);
+        return EndpointBuilder.createEndpointFromRegionIdAndSecondLevelDomain(template, regionId, secondLevelDomain);
     }
     static createEndpointFromRegionIdAndSecondLevelDomain(template, regionId, secondLevelDomain) {
         if (!template)
@@ -20667,7 +20709,7 @@ exports.OciError = OciError;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.addUserAgent = exports.addOpcRequestId = void 0;
 /* This utility adds extra headers to each request before being sent over wire*/
-const package_json_1 = __nccwpck_require__(1717);
+const package_json_1 = __nccwpck_require__(8130);
 const utils_1 = __nccwpck_require__(1563);
 const uuidv1 = __nccwpck_require__(8749);
 const OPC_REQUEST_ID_HEADER = "opc-request-id";
@@ -20719,7 +20761,7 @@ function addUserAgent(headers) {
 }
 exports.addUserAgent = addUserAgent;
 function populatePlatformHash() {
-    const os = __nccwpck_require__(2087);
+    const os = __nccwpck_require__(2037);
     NODE_PLATFORM_HASH.set(PLATFORM_KEY, os.platform);
     NODE_PLATFORM_HASH.set(RELEASE_KEY, os.release);
     NODE_PLATFORM_HASH.set(VERSION_KEY, process.version);
@@ -20749,7 +20791,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.byteLength = exports.isReadableStream = exports.getStringFromRequestBody = exports.formatDateToRFC3339 = exports.autoDetectContentLengthAndReadBody = exports.addAdditionalHeaders = exports.getSignerAndReqBody = exports.readStringFromReadable = exports.getStringFromResponseBody = exports.convertStringToType = exports.handleErrorBody = exports.handleErrorResponse = exports.mapContainer = void 0;
 const error_1 = __nccwpck_require__(2956);
 const range_1 = __nccwpck_require__(1139);
-const stream_1 = __nccwpck_require__(2413);
+const stream_1 = __nccwpck_require__(2781);
 const headers_1 = __nccwpck_require__(3649);
 const utils_1 = __nccwpck_require__(1563);
 const chunker_1 = __importDefault(__nccwpck_require__(138));
@@ -21514,6 +21556,8 @@ Realm.OC2 = Realm.register("oc2", "oraclegovcloud.com");
 Realm.OC3 = Realm.register("oc3", "oraclegovcloud.com");
 Realm.OC4 = Realm.register("oc4", "oraclegovcloud.uk");
 Realm.OC8 = Realm.register("oc8", "oraclecloud8.com");
+Realm.OC9 = Realm.register("oc9", "oraclecloud9.com");
+Realm.OC10 = Realm.register("oc10", "oraclecloud10.com");
 //# sourceMappingURL=realm.js.map
 
 /***/ }),
@@ -21575,7 +21619,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Region = void 0;
 const realm_1 = __nccwpck_require__(3755);
 const config_file_reader_1 = __nccwpck_require__(7407);
-const fs_1 = __nccwpck_require__(5747);
+const fs_1 = __nccwpck_require__(7147);
 const region_metadata_schema_1 = __nccwpck_require__(4389);
 const http_1 = __nccwpck_require__(6316);
 class Region {
@@ -21813,6 +21857,13 @@ Region.US_SANJOSE_1 = Region.register("us-sanjose-1", realm_1.Realm.OC1, "sjc");
 Region.ME_DUBAI_1 = Region.register("me-dubai-1", realm_1.Realm.OC1, "dxb");
 Region.SA_SANTIAGO_1 = Region.register("sa-santiago-1", realm_1.Realm.OC1, "scl");
 Region.SA_VINHEDO_1 = Region.register("sa-vinhedo-1", realm_1.Realm.OC1, "vcp");
+Region.IL_JERUSALEM_1 = Region.register("il-jerusalem-1", realm_1.Realm.OC1, "mtz");
+Region.EU_MARSEILLE_1 = Region.register("eu-marseille-1", realm_1.Realm.OC1, "mrs");
+Region.AP_SINGAPORE_1 = Region.register("ap-singapore-1", realm_1.Realm.OC1, "sin");
+Region.ME_ABUDHABI_1 = Region.register("me-abudhabi-1", realm_1.Realm.OC1, "auh");
+Region.EU_MILAN_1 = Region.register("eu-milan-1", realm_1.Realm.OC1, "lin");
+Region.EU_STOCKHOLM_1 = Region.register("eu-stockholm-1", realm_1.Realm.OC1, "arn");
+Region.AF_JOHANNESBURG_1 = Region.register("af-johannesburg-1", realm_1.Realm.OC1, "jnb");
 // OC2
 Region.US_LANGLEY_1 = Region.register("us-langley-1", realm_1.Realm.OC2, "lfi");
 Region.US_LUKE_1 = Region.register("us-luke-1", realm_1.Realm.OC2, "luf");
@@ -21826,6 +21877,10 @@ Region.UK_GOV_CARDIFF_1 = Region.register("uk-gov-cardiff-1", realm_1.Realm.OC4,
 // OC8
 Region.AP_CHIYODA_1 = Region.register("ap-chiyoda-1", realm_1.Realm.OC8, "nja");
 Region.AP_IBARAKI_1 = Region.register("ap-ibaraki-1", realm_1.Realm.OC8, "ukb");
+// OC9
+Region.ME_DCC_MUSCAT_1 = Region.register("me-dcc-muscat-1", realm_1.Realm.OC9, "mct");
+// OC10
+Region.AP_DCC_CANBERRA_1 = Region.register("ap-dcc-canberra-1", realm_1.Realm.OC10, "wga");
 //# sourceMappingURL=region.js.map
 
 /***/ }),
@@ -22013,10 +22068,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GenericRetrier = exports.NoRetryConfigurationDetails = exports.DefaultRetryCondition = void 0;
+exports.GenericRetrier = exports.OciSdkDefaultRetryConfiguration = exports.NoRetryConfigurationDetails = exports.DefaultRetryCondition = void 0;
 const waiter_1 = __nccwpck_require__(779);
 const helper_1 = __nccwpck_require__(7621);
 const __1 = __nccwpck_require__(5049);
+const constants_1 = __nccwpck_require__(1244);
 class DefaultRetryCondition {
     static shouldBeRetried(error) {
         return (error.statusCode === 500 ||
@@ -22040,9 +22096,17 @@ DefaultRetryCondition.RETRYABLE_SERVICE_ERRORS = new Map([
 ]);
 const NO_RETRY_MAXIMUM_NUMBER_OF_ATTEMPTS = 1;
 const NO_RETRY_MAXIMUM_DELAY_IN_SECONDS = 30;
+const OCI_SDK_DEFAULT_RETRY_MAXIMUM_NUMBER_OF_ATTEMPTS = 8;
+const OCI_SDK_DEFAULT_RETRY_MAXIMUM_DELAY_IN_SECONDS = 30;
 exports.NoRetryConfigurationDetails = {
     terminationStrategy: new waiter_1.MaxAttemptsTerminationStrategy(NO_RETRY_MAXIMUM_NUMBER_OF_ATTEMPTS),
     delayStrategy: new waiter_1.ExponentialBackoffDelayStrategyWithJitter(NO_RETRY_MAXIMUM_DELAY_IN_SECONDS),
+    retryCondition: DefaultRetryCondition.shouldBeRetried,
+    backupBinaryBody: false
+};
+exports.OciSdkDefaultRetryConfiguration = {
+    terminationStrategy: new waiter_1.MaxAttemptsTerminationStrategy(OCI_SDK_DEFAULT_RETRY_MAXIMUM_NUMBER_OF_ATTEMPTS),
+    delayStrategy: new waiter_1.ExponentialBackoffDelayStrategyWithJitter(OCI_SDK_DEFAULT_RETRY_MAXIMUM_DELAY_IN_SECONDS),
     retryCondition: DefaultRetryCondition.shouldBeRetried,
     backupBinaryBody: false
 };
@@ -22051,6 +22115,16 @@ class GenericRetrier {
         this._logger = undefined;
         const preferredRetryConfig = Object.assign(Object.assign({}, exports.NoRetryConfigurationDetails), retryConfiguration);
         this._retryConfiguration = preferredRetryConfig;
+    }
+    static get envVariableCheckForDefaultRetry() {
+        if (process.env[GenericRetrier.OCI_SDK_DEFAULT_RETRY_ENABLED] === constants_1.BooleanString.FALSE) {
+            return exports.NoRetryConfigurationDetails;
+        }
+        else if (process.env[GenericRetrier.OCI_SDK_DEFAULT_RETRY_ENABLED] === constants_1.BooleanString.TRUE) {
+            return exports.OciSdkDefaultRetryConfiguration;
+        }
+        else
+            return null;
     }
     static get defaultRetryConfiguration() {
         return GenericRetrier.DefaultRetryConfiguration;
@@ -22067,9 +22141,13 @@ class GenericRetrier {
     get retryConfiguration() {
         return this._retryConfiguration;
     }
-    static createPreferredRetrier(clientRetryConfiguration, requestRetryConfiguration) {
-        let retryConfigToUse = [requestRetryConfiguration, clientRetryConfiguration, {}].filter(configuration => configuration !== null && configuration !== undefined)[0];
-        retryConfigToUse = Object.assign(Object.assign({}, GenericRetrier.defaultRetryConfiguration), retryConfigToUse);
+    static createPreferredRetrier(clientRetryConfiguration, requestRetryConfiguration, specRetryConfiguration) {
+        let retryConfigToUse = [
+            requestRetryConfiguration,
+            clientRetryConfiguration,
+            GenericRetrier.defaultRetryConfiguration
+        ].filter(configuration => configuration !== null && configuration !== undefined)[0];
+        retryConfigToUse = Object.assign(Object.assign({}, specRetryConfiguration), retryConfigToUse);
         return new GenericRetrier(retryConfigToUse);
     }
     makeServiceCall(httpClient, request, excludeBody) {
@@ -22148,7 +22226,8 @@ class GenericRetrier {
 }
 exports.GenericRetrier = GenericRetrier;
 GenericRetrier.OPC_CLIENT_RETRIES_HEADER = "opc-client-retries";
-GenericRetrier.DefaultRetryConfiguration = exports.NoRetryConfigurationDetails;
+GenericRetrier.OCI_SDK_DEFAULT_RETRY_ENABLED = "OCI_SDK_DEFAULT_RETRY_ENABLED";
+GenericRetrier.DefaultRetryConfiguration = GenericRetrier.envVariableCheckForDefaultRetry;
 //# sourceMappingURL=retrier.js.map
 
 /***/ }),
@@ -22212,7 +22291,7 @@ exports.DefaultRequestSigner = exports.SignerRequest = void 0;
 const helper_1 = __nccwpck_require__(7621);
 const jssha = __nccwpck_require__(7656);
 const sshpk_1 = __nccwpck_require__(7022);
-const UrlParser = __nccwpck_require__(8835);
+const UrlParser = __nccwpck_require__(7310);
 const delegate_auth_provider_1 = __nccwpck_require__(5157);
 // tslint:disable-next-line:no-var-requires
 const httpSignature = __nccwpck_require__(2479);
@@ -22551,7 +22630,7 @@ exports.genericWaiter = genericWaiter;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -22603,7 +22682,7 @@ exports.IdentityWaiter = identity_waiter.IdentityWaiter;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -22647,6 +22726,9 @@ const oci_common_2 = __nccwpck_require__(5049);
 var IdentityApiKeys;
 (function (IdentityApiKeys) {
 })(IdentityApiKeys = exports.IdentityApiKeys || (exports.IdentityApiKeys = {}));
+/**
+ * This service client uses {@link common.CircuitBreaker.DefaultConfiguration} for all the operations by default if no circuit breaker configuration is defined by the user.
+ */
 class IdentityClient {
     constructor(params, clientConfiguration) {
         this["_endpoint"] = "";
@@ -22660,6 +22742,13 @@ class IdentityClient {
             this._circuitBreaker = clientConfiguration.circuitBreaker
                 ? clientConfiguration.circuitBreaker.circuit
                 : null;
+        }
+        // if circuit breaker is not created, check if circuit breaker system is enabled to use default circuit breaker
+        const specCircuitBreakerEnabled = true;
+        if (!this._circuitBreaker &&
+            common.utils.isCircuitBreakerSystemEnabled(clientConfiguration) &&
+            (specCircuitBreakerEnabled || common.CircuitBreaker.DefaultCircuitBreakerOverriden)) {
+            this._circuitBreaker = new common.CircuitBreaker().circuit;
         }
         this._httpClient =
             params.httpClient || new common.FetchHttpClient(requestSigner, this._circuitBreaker);
@@ -22731,12 +22820,89 @@ class IdentityClient {
         throw Error("Waiters do not exist. Please create waiters.");
     }
     /**
+       * If the domain's {@code lifecycleState} is INACTIVE,
+  * 1. Set the {@code lifecycleDetails} to ACTIVATING and asynchronously starts enabling
+  *    the domain and return 202 ACCEPTED.
+  *     1.1 Sets the domain status to ENABLED and set specified domain's
+  *         {@code lifecycleState} to ACTIVE and set the {@code lifecycleDetails} to null.
+  * <p>
+  To track progress, HTTP GET on /iamWorkRequests/{iamWorkRequestsId} endpoint will provide
+  * the async operation's status. Deactivate a domain can be done using HTTP POST
+  * /domains/{domainId}/actions/deactivate.
+  * <p>
+  - If the domain's {@code lifecycleState} is ACTIVE, returns 202 ACCEPTED with no action
+  *   taken on service side.
+  * - If domain is of {@code type} DEFAULT or DEFAULT_LIGHTWEIGHT or domain's {@code lifecycleState} is not INACTIVE,
+  *   returns 400 BAD REQUEST.
+  * - If the domain doesn't exists, returns 404 NOT FOUND.
+  * - If the authenticated user is part of the domain to be activated, returns 400 BAD REQUEST
+  * - If error occurs while activating domain, returns 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ActivateDomainRequest
+       * @return ActivateDomainResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ActivateDomain.ts.html |here} to see how to use ActivateDomain API.
+       */
+    activateDomain(activateDomainRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#activateDomain.");
+            const pathParams = {
+                "{domainId}": activateDomainRequest.domainId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": activateDomainRequest.opcRequestId,
+                "opc-retry-token": activateDomainRequest.opcRetryToken,
+                "if-match": activateDomainRequest.ifMatch
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, activateDomainRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains/{domainId}/actions/activate",
+                method: "POST",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
      * Activates the specified MFA TOTP device for the user. Activation requires manual interaction with the Console.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ActivateMfaTotpDeviceRequest
      * @return ActivateMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ActivateMfaTotpDevice.ts.html |here} to see how to use ActivateMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ActivateMfaTotpDevice.ts.html |here} to see how to use ActivateMfaTotpDevice API.
      */
     activateMfaTotpDevice(activateMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -22752,7 +22918,8 @@ class IdentityClient {
                 "if-match": activateMfaTotpDeviceRequest.ifMatch,
                 "opc-retry-token": activateMfaTotpDeviceRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, activateMfaTotpDeviceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, activateMfaTotpDeviceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -22799,10 +22966,11 @@ class IdentityClient {
   After you send your request, the new object's `lifecycleState` will temporarily be CREATING. Before using the
   * object, first make sure its `lifecycleState` has changed to ACTIVE.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param AddUserToGroupRequest
        * @return AddUserToGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/AddUserToGroup.ts.html |here} to see how to use AddUserToGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/AddUserToGroup.ts.html |here} to see how to use AddUserToGroup API.
        */
     addUserToGroup(addUserToGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -22814,7 +22982,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": addUserToGroupRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, addUserToGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, addUserToGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -22861,10 +23030,11 @@ class IdentityClient {
      * referencing the same tag in a compartment lower down the hierarchy. This set of tag defaults
      * includes all tag defaults from the current compartment back to the root compartment.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param AssembleEffectiveTagSetRequest
      * @return AssembleEffectiveTagSetResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/AssembleEffectiveTagSet.ts.html |here} to see how to use AssembleEffectiveTagSet API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/AssembleEffectiveTagSet.ts.html |here} to see how to use AssembleEffectiveTagSet API.
      */
     assembleEffectiveTagSet(assembleEffectiveTagSetRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -22878,7 +23048,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, assembleEffectiveTagSetRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, assembleEffectiveTagSetRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -22925,10 +23096,11 @@ class IdentityClient {
      * {@link WorkRequest}. Use the {@link #getWorkRequest(GetWorkRequestRequest) getWorkRequest}
      * API to monitor the status of the bulk action.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param BulkDeleteResourcesRequest
      * @return BulkDeleteResourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/BulkDeleteResources.ts.html |here} to see how to use BulkDeleteResources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/BulkDeleteResources.ts.html |here} to see how to use BulkDeleteResources API.
      */
     bulkDeleteResources(bulkDeleteResourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -22943,7 +23115,8 @@ class IdentityClient {
                 "opc-request-id": bulkDeleteResourcesRequest.opcRequestId,
                 "opc-retry-token": bulkDeleteResourcesRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, bulkDeleteResourcesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, bulkDeleteResourcesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23003,10 +23176,11 @@ class IdentityClient {
   In order to delete tags, you must first retire the tags. Use {@link #updateTag(UpdateTagRequest) updateTag}
   * to retire a tag.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param BulkDeleteTagsRequest
        * @return BulkDeleteTagsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/BulkDeleteTags.ts.html |here} to see how to use BulkDeleteTags API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/BulkDeleteTags.ts.html |here} to see how to use BulkDeleteTags API.
        */
     bulkDeleteTags(bulkDeleteTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23019,7 +23193,8 @@ class IdentityClient {
                 "opc-request-id": bulkDeleteTagsRequest.opcRequestId,
                 "opc-retry-token": bulkDeleteTagsRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, bulkDeleteTagsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, bulkDeleteTagsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23072,10 +23247,11 @@ class IdentityClient {
   * For example, if one request adds `tag set-1` to a resource and sets a tag value to `tag set-2`,
   * `tag set-1` and `tag set-2` cannot have any common tag definitions.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param BulkEditTagsRequest
        * @return BulkEditTagsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/BulkEditTags.ts.html |here} to see how to use BulkEditTags API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/BulkEditTags.ts.html |here} to see how to use BulkEditTags API.
        */
     bulkEditTags(bulkEditTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23088,7 +23264,8 @@ class IdentityClient {
                 "opc-request-id": bulkEditTagsRequest.opcRequestId,
                 "opc-retry-token": bulkEditTagsRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, bulkEditTagsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, bulkEditTagsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23132,10 +23309,11 @@ class IdentityClient {
      * compartments. This operation creates a {@link WorkRequest}.
      * Use the {@link #getWorkRequest(GetWorkRequestRequest) getWorkRequest} API to monitor the status of the bulk action.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param BulkMoveResourcesRequest
      * @return BulkMoveResourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/BulkMoveResources.ts.html |here} to see how to use BulkMoveResources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/BulkMoveResources.ts.html |here} to see how to use BulkMoveResources API.
      */
     bulkMoveResources(bulkMoveResourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23150,7 +23328,8 @@ class IdentityClient {
                 "opc-request-id": bulkMoveResourcesRequest.opcRequestId,
                 "opc-retry-token": bulkMoveResourcesRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, bulkMoveResourcesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, bulkMoveResourcesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23208,10 +23387,11 @@ class IdentityClient {
   To delete a tag namespace, you must first retire it. Use {@link #updateTagNamespace(UpdateTagNamespaceRequest) updateTagNamespace}
   * to retire a tag namespace.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CascadeDeleteTagNamespaceRequest
        * @return CascadeDeleteTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CascadeDeleteTagNamespace.ts.html |here} to see how to use CascadeDeleteTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CascadeDeleteTagNamespace.ts.html |here} to see how to use CascadeDeleteTagNamespace API.
        */
     cascadeDeleteTagNamespace(cascadeDeleteTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23227,7 +23407,8 @@ class IdentityClient {
                 "opc-request-id": cascadeDeleteTagNamespaceRequest.opcRequestId,
                 "opc-retry-token": cascadeDeleteTagNamespaceRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, cascadeDeleteTagNamespaceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, cascadeDeleteTagNamespaceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23264,6 +23445,153 @@ class IdentityClient {
         });
     }
     /**
+       * Change the containing compartment for a domain.
+  * <p>
+  This is an asynchronous call where the Domain's compartment is changed and is updated with the new compartment information.
+  * To track progress, HTTP GET on /iamWorkRequests/{iamWorkRequestsId} endpoint will provide
+  * the async operation's status.
+  * <p>
+  The compartment change is complete when accessed via domain URL and
+  * also returns new compartment OCID.
+  * - If the domain doesn't exists, returns 404 NOT FOUND.
+  * - If Domain {@code type} is DEFAULT or DEFAULT_LIGHTWEIGHT, return 400 BAD Request
+  * - If Domain is not active or being updated, returns 400 BAD REQUEST.
+  * - If error occurs while changing compartment for domain, return 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ChangeDomainCompartmentRequest
+       * @return ChangeDomainCompartmentResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ChangeDomainCompartment.ts.html |here} to see how to use ChangeDomainCompartment API.
+       */
+    changeDomainCompartment(changeDomainCompartmentRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#changeDomainCompartment.");
+            const pathParams = {
+                "{domainId}": changeDomainCompartmentRequest.domainId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": changeDomainCompartmentRequest.opcRequestId,
+                "opc-retry-token": changeDomainCompartmentRequest.opcRetryToken,
+                "if-match": changeDomainCompartmentRequest.ifMatch
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, changeDomainCompartmentRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains/{domainId}/actions/changeCompartment",
+                method: "POST",
+                bodyContent: common.ObjectSerializer.serialize(changeDomainCompartmentRequest.changeDomainCompartmentDetails, "ChangeDomainCompartmentDetails", model.ChangeDomainCompartmentDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+       * If the domain's {@code lifecycleState} is ACTIVE, validates the requested {@code licenseType} update
+  * is allowed and
+  * 1. Set the {@code lifecycleDetails} to UPDATING
+  * 2. Asynchronously starts updating the domain and return 202 ACCEPTED.
+  *     2.1 Successfully updates specified domain's {@code licenseType}.
+  * 3. On completion set the {@code lifecycleDetails} to null.
+  * To track progress, HTTP GET on /iamWorkRequests/{iamWorkRequestsId} endpoint will provide
+  * the async operation's status.
+  * <p>
+  - If license type update is successful, return 202 ACCEPTED
+  * - If requested {@code licenseType} validation fails, returns 400 Bad request.
+  * - If Domain is not active or being updated, returns 400 BAD REQUEST.
+  * - If Domain {@code type} is DEFAULT or DEFAULT_LIGHTWEIGHT, return 400 BAD Request
+  * - If the domain doesn't exists, returns 404 NOT FOUND
+  * - If any internal error occurs, returns 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ChangeDomainLicenseTypeRequest
+       * @return ChangeDomainLicenseTypeResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ChangeDomainLicenseType.ts.html |here} to see how to use ChangeDomainLicenseType API.
+       */
+    changeDomainLicenseType(changeDomainLicenseTypeRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#changeDomainLicenseType.");
+            const pathParams = {
+                "{domainId}": changeDomainLicenseTypeRequest.domainId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": changeDomainLicenseTypeRequest.opcRequestId,
+                "opc-retry-token": changeDomainLicenseTypeRequest.opcRetryToken,
+                "if-match": changeDomainLicenseTypeRequest.ifMatch
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, changeDomainLicenseTypeRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains/{domainId}/actions/changeLicenseType",
+                method: "POST",
+                bodyContent: common.ObjectSerializer.serialize(changeDomainLicenseTypeRequest.changeDomainLicenseTypeDetails, "ChangeDomainLicenseTypeDetails", model.ChangeDomainLicenseTypeDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
        * Moves the specified tag namespace to the specified compartment within the same tenancy.
   * <p>
   To move the tag namespace, you must have the manage tag-namespaces permission on both compartments.
@@ -23271,10 +23599,11 @@ class IdentityClient {
   * <p>
   Moving a tag namespace moves all the tag key definitions contained in the tag namespace.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param ChangeTagNamespaceCompartmentRequest
        * @return ChangeTagNamespaceCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ChangeTagNamespaceCompartment.ts.html |here} to see how to use ChangeTagNamespaceCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ChangeTagNamespaceCompartment.ts.html |here} to see how to use ChangeTagNamespaceCompartment API.
        */
     changeTagNamespaceCompartment(changeTagNamespaceCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23288,7 +23617,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": changeTagNamespaceCompartmentRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, changeTagNamespaceCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, changeTagNamespaceCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23332,10 +23662,11 @@ class IdentityClient {
   * does not need to write a policy to give users this ability. To compare, administrators who have permission to the
   * tenancy can use this operation to create an auth token for any user, including themselves.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateAuthTokenRequest
        * @return CreateAuthTokenResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateAuthToken.ts.html |here} to see how to use CreateAuthToken API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateAuthToken.ts.html |here} to see how to use CreateAuthToken API.
        */
     createAuthToken(createAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23349,7 +23680,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createAuthTokenRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createAuthTokenRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createAuthTokenRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23411,10 +23743,11 @@ class IdentityClient {
   After you send your request, the new object's `lifecycleState` will temporarily be CREATING. Before using the
   * object, first make sure its `lifecycleState` has changed to ACTIVE.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateCompartmentRequest
        * @return CreateCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateCompartment.ts.html |here} to see how to use CreateCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateCompartment.ts.html |here} to see how to use CreateCompartment API.
        */
     createCompartment(createCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23426,7 +23759,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createCompartmentRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23480,10 +23814,11 @@ class IdentityClient {
   * does not need to write a policy to give users this ability. To compare, administrators who have permission to the
   * tenancy can use this operation to create a secret key for any user, including themselves.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateCustomerSecretKeyRequest
        * @return CreateCustomerSecretKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateCustomerSecretKey.ts.html |here} to see how to use CreateCustomerSecretKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateCustomerSecretKey.ts.html |here} to see how to use CreateCustomerSecretKey API.
        */
     createCustomerSecretKey(createCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23497,7 +23832,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createCustomerSecretKeyRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createCustomerSecretKeyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createCustomerSecretKeyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23539,6 +23875,143 @@ class IdentityClient {
         });
     }
     /**
+     * Creates a new DB credential for the specified user.
+     *
+     * This operation does not retry by default if the user has not defined a retry configuration.
+     * @param CreateDbCredentialRequest
+     * @return CreateDbCredentialResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateDbCredential.ts.html |here} to see how to use CreateDbCredential API.
+     */
+    createDbCredential(createDbCredentialRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#createDbCredential.");
+            const pathParams = {
+                "{userId}": createDbCredentialRequest.userId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": createDbCredentialRequest.opcRequestId,
+                "opc-retry-token": createDbCredentialRequest.opcRetryToken
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createDbCredentialRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/users/{userId}/dbCredentials",
+                method: "POST",
+                bodyContent: common.ObjectSerializer.serialize(createDbCredentialRequest.createDbCredentialDetails, "CreateDbCredentialDetails", model.CreateDbCredentialDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "dbCredential",
+                    bodyModel: model.DbCredential,
+                    type: "model.DbCredential",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("etag"),
+                            key: "etag",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+       * Creates a new domain in the tenancy with domain home in {@code homeRegion}. This is an asynchronous call - where, at start,
+  * {@code lifecycleState} of this domain is set to CREATING and {@code lifecycleDetails} to UPDATING. On domain creation completion
+  * this Domain's {@code lifecycleState} will be set to ACTIVE and {@code lifecycleDetails} to null.
+  * <p>
+  To track progress, HTTP GET on /iamWorkRequests/{iamWorkRequestsId} endpoint will provide
+  * the async operation's status.
+  * <p>
+  After creating a `Domain`, make sure its `lifecycleState` changes from CREATING to ACTIVE
+  * before using it.
+  * If the domain's {@code displayName} already exists, returns 400 BAD REQUEST.
+  * If any one of admin related fields are provided and one of the following 3 fields
+  * - {@code adminEmail}, {@code adminLastName} and {@code adminUserName} - is not provided,
+  * returns 400 BAD REQUEST.
+  * - If {@code isNotificationBypassed} is NOT provided when admin information is provided,
+  * returns 400 BAD REQUEST.
+  * - If any internal error occurs, return 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param CreateDomainRequest
+       * @return CreateDomainResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateDomain.ts.html |here} to see how to use CreateDomain API.
+       */
+    createDomain(createDomainRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#createDomain.");
+            const pathParams = {};
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-retry-token": createDomainRequest.opcRetryToken,
+                "opc-request-id": createDomainRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createDomainRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains",
+                method: "POST",
+                bodyContent: common.ObjectSerializer.serialize(createDomainRequest.createDomainDetails, "CreateDomainDetails", model.CreateDomainDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
        * Creates a new dynamic group in your tenancy.
   * <p>
   You must specify your tenancy's OCID as the compartment ID in the request object (remember that the tenancy
@@ -23558,10 +24031,11 @@ class IdentityClient {
   After you send your request, the new object's `lifecycleState` will temporarily be CREATING. Before using the
   * object, first make sure its `lifecycleState` has changed to ACTIVE.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateDynamicGroupRequest
        * @return CreateDynamicGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateDynamicGroup.ts.html |here} to see how to use CreateDynamicGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateDynamicGroup.ts.html |here} to see how to use CreateDynamicGroup API.
        */
     createDynamicGroup(createDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23573,7 +24047,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createDynamicGroupRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createDynamicGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createDynamicGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23637,10 +24112,11 @@ class IdentityClient {
   * See {@link #addUserToGroup(AddUserToGroupRequest) addUserToGroup} and
   * {@link #createPolicy(CreatePolicyRequest) createPolicy}.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateGroupRequest
        * @return CreateGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateGroup.ts.html |here} to see how to use CreateGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateGroup.ts.html |here} to see how to use CreateGroup API.
        */
     createGroup(createGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23652,7 +24128,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createGroupRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23694,7 +24171,9 @@ class IdentityClient {
         });
     }
     /**
-       * Creates a new identity provider in your tenancy. For more information, see
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Creates a new identity provider in your tenancy. For more information, see
   * [Identity Providers and Federation](https://docs.cloud.oracle.com/Content/Identity/Concepts/federation.htm).
   * <p>
   You must specify your tenancy's OCID as the compartment ID in the request object.
@@ -23713,10 +24192,11 @@ class IdentityClient {
   * be CREATING. Before using the object, first make sure its `lifecycleState` has
   * changed to ACTIVE.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateIdentityProviderRequest
        * @return CreateIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateIdentityProvider.ts.html |here} to see how to use CreateIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateIdentityProvider.ts.html |here} to see how to use CreateIdentityProvider API.
        */
     createIdentityProvider(createIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23728,7 +24208,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createIdentityProviderRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createIdentityProviderRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createIdentityProviderRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23770,14 +24251,17 @@ class IdentityClient {
         });
     }
     /**
-     * Creates a single mapping between an IdP group and an IAM Service
-     * {@link Group}.
-     *
-     * @param CreateIdpGroupMappingRequest
-     * @return CreateIdpGroupMappingResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateIdpGroupMapping.ts.html |here} to see how to use CreateIdpGroupMapping API.
-     */
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Creates a single mapping between an IdP group and an IAM Service
+  * {@link Group}.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param CreateIdpGroupMappingRequest
+       * @return CreateIdpGroupMappingResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateIdpGroupMapping.ts.html |here} to see how to use CreateIdpGroupMapping API.
+       */
     createIdpGroupMapping(createIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -23790,7 +24274,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createIdpGroupMappingRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createIdpGroupMappingRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createIdpGroupMappingRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23834,10 +24319,11 @@ class IdentityClient {
     /**
      * Creates a new MFA TOTP device for the user. A user can have one MFA TOTP device.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param CreateMfaTotpDeviceRequest
      * @return CreateMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateMfaTotpDevice.ts.html |here} to see how to use CreateMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateMfaTotpDevice.ts.html |here} to see how to use CreateMfaTotpDevice API.
      */
     createMfaTotpDevice(createMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23851,7 +24337,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createMfaTotpDeviceRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createMfaTotpDeviceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createMfaTotpDeviceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23914,10 +24401,11 @@ class IdentityClient {
   After your network resource is created, you can use it in policy to restrict access to only requests made from an allowed
   * IP address specified in your network source. For more information, see [Managing Network Sources](https://docs.cloud.oracle.com/Content/Identity/Tasks/managingnetworksources.htm).
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateNetworkSourceRequest
        * @return CreateNetworkSourceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateNetworkSource.ts.html |here} to see how to use CreateNetworkSource API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateNetworkSource.ts.html |here} to see how to use CreateNetworkSource API.
        */
     createNetworkSource(createNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23929,7 +24417,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createNetworkSourceRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createNetworkSourceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createNetworkSourceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -23973,10 +24462,11 @@ class IdentityClient {
     /**
      * Creates Oauth token for the user
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param CreateOAuthClientCredentialRequest
      * @return CreateOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateOAuthClientCredential.ts.html |here} to see how to use CreateOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateOAuthClientCredential.ts.html |here} to see how to use CreateOAuthClientCredential API.
      */
     createOAuthClientCredential(createOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -23990,7 +24480,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createOAuthClientCredentialRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createOAuthClientCredentialRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createOAuthClientCredentialRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24044,10 +24535,11 @@ class IdentityClient {
   **Note:** The user's Console login is the unique name you specified when you created the user
   * (see {@link #createUser(CreateUserRequest) createUser}).
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateOrResetUIPasswordRequest
        * @return CreateOrResetUIPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateOrResetUIPassword.ts.html |here} to see how to use CreateOrResetUIPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateOrResetUIPassword.ts.html |here} to see how to use CreateOrResetUIPassword API.
        */
     createOrResetUIPassword(createOrResetUIPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24061,7 +24553,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createOrResetUIPasswordRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createOrResetUIPasswordRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createOrResetUIPasswordRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24120,10 +24613,11 @@ class IdentityClient {
   * <p>
   New policies take effect typically within 10 seconds.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreatePolicyRequest
        * @return CreatePolicyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreatePolicy.ts.html |here} to see how to use CreatePolicy API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreatePolicy.ts.html |here} to see how to use CreatePolicy API.
        */
     createPolicy(createPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24135,7 +24629,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createPolicyRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createPolicyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createPolicyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24179,10 +24674,11 @@ class IdentityClient {
     /**
      * Creates a subscription to a region for a tenancy.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param CreateRegionSubscriptionRequest
      * @return CreateRegionSubscriptionResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateRegionSubscription.ts.html |here} to see how to use CreateRegionSubscription API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateRegionSubscription.ts.html |here} to see how to use CreateRegionSubscription API.
      */
     createRegionSubscription(createRegionSubscriptionRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24196,7 +24692,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createRegionSubscriptionRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createRegionSubscriptionRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createRegionSubscriptionRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24238,10 +24735,11 @@ class IdentityClient {
      * have to be unique, and you can change it anytime with
      * {@link #updateSmtpCredential(UpdateSmtpCredentialRequest) updateSmtpCredential}.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param CreateSmtpCredentialRequest
      * @return CreateSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateSmtpCredential.ts.html |here} to see how to use CreateSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateSmtpCredential.ts.html |here} to see how to use CreateSmtpCredential API.
      */
     createSmtpCredential(createSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24255,7 +24753,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createSmtpCredentialRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createSmtpCredentialRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createSmtpCredentialRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24310,10 +24809,11 @@ class IdentityClient {
   * does not need to write a policy to give users this ability. To compare, administrators who have permission to the
   * tenancy can use this operation to create a Swift password for any user, including themselves.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateSwiftPasswordRequest
        * @return CreateSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateSwiftPassword.ts.html |here} to see how to use CreateSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateSwiftPassword.ts.html |here} to see how to use CreateSwiftPassword API.
        */
     createSwiftPassword(createSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24327,7 +24827,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createSwiftPasswordRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createSwiftPasswordRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createSwiftPasswordRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24392,10 +24893,11 @@ class IdentityClient {
   * * If a `validator` is set, the user applying the tag to a resource must select from a list
   * of values that you supply with {@link #enumTagDefinitionValidator(EnumTagDefinitionValidatorRequest) enumTagDefinitionValidator}.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateTagRequest
        * @return CreateTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateTag.ts.html |here} to see how to use CreateTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateTag.ts.html |here} to see how to use CreateTag API.
        */
     createTag(createTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24409,7 +24911,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createTagRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createTagRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createTagRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24460,10 +24963,11 @@ class IdentityClient {
   * If the `isRequired` flag is set to \"true\", the value is set during resource creation.
   * * If the `isRequired` flag is set to \"false\", the value you enter is set during resource creation.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateTagDefaultRequest
        * @return CreateTagDefaultResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateTagDefault.ts.html |here} to see how to use CreateTagDefault API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateTagDefault.ts.html |here} to see how to use CreateTagDefault API.
        */
     createTagDefault(createTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24476,7 +24980,8 @@ class IdentityClient {
                 "opc-retry-token": createTagDefaultRequest.opcRetryToken,
                 "opc-request-id": createTagDefaultRequest.opcRequestId
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createTagDefaultRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createTagDefaultRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24533,10 +25038,11 @@ class IdentityClient {
   * It does not have to be unique, and you can change it with
   * {@link #updateTagNamespace(UpdateTagNamespaceRequest) updateTagNamespace}.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateTagNamespaceRequest
        * @return CreateTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateTagNamespace.ts.html |here} to see how to use CreateTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateTagNamespace.ts.html |here} to see how to use CreateTagNamespace API.
        */
     createTagNamespace(createTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24548,7 +25054,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createTagNamespaceRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createTagNamespaceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createTagNamespaceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24621,10 +25128,11 @@ class IdentityClient {
   * <p>
   **Important:** Make sure to inform the new user which compartment(s) they have access to.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param CreateUserRequest
        * @return CreateUserResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/CreateUser.ts.html |here} to see how to use CreateUser API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/CreateUser.ts.html |here} to see how to use CreateUser API.
        */
     createUser(createUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24636,7 +25144,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": createUserRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, createUserRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createUserRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24678,6 +25187,83 @@ class IdentityClient {
         });
     }
     /**
+       * If the domain's {@code lifecycleState} is ACTIVE and no active Apps are present in domain,
+  * 1. Set the {@code lifecycleDetails} to DEACTIVATING and asynchronously starts disabling
+  *    the domain and return 202 ACCEPTED.
+  *     1.1 Sets the domain status to DISABLED and set specified domain's
+  *         {@code lifecycleState} to INACTIVE and set the {@code lifecycleDetails} to null.
+  * <p>
+  To track progress, HTTP GET on /iamWorkRequests/{iamWorkRequestsId} endpoint will provide
+  * the async operation's status. Activate a domain can be done using HTTP POST
+  * /domains/{domainId}/actions/activate.
+  * <p>
+  - If the domain's {@code lifecycleState} is INACTIVE, returns 202 ACCEPTED with no action
+  *   taken on service side.
+  * - If domain is of {@code type} DEFAULT or DEFAULT_LIGHTWEIGHT or domain's {@code lifecycleState}
+  *   is not ACTIVE, returns 400 BAD REQUEST.
+  * - If the domain doesn't exists, returns 404 NOT FOUND.
+  * - If any active Apps in domain, returns 400 BAD REQUEST.
+  * - If the authenticated user is part of the domain to be activated, returns 400 BAD REQUEST
+  * - If error occurs while deactivating domain, returns 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param DeactivateDomainRequest
+       * @return DeactivateDomainResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeactivateDomain.ts.html |here} to see how to use DeactivateDomain API.
+       */
+    deactivateDomain(deactivateDomainRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#deactivateDomain.");
+            const pathParams = {
+                "{domainId}": deactivateDomainRequest.domainId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": deactivateDomainRequest.opcRequestId,
+                "opc-retry-token": deactivateDomainRequest.opcRetryToken,
+                "if-match": deactivateDomainRequest.ifMatch
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deactivateDomainRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains/{domainId}/actions/deactivate",
+                method: "POST",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
        * Deletes the specified API signing key for the specified user.
   * <p>
   Every user has permission to use this operation to delete a key for *their own user ID*. An
@@ -24685,10 +25271,11 @@ class IdentityClient {
   * To compare, administrators who have permission to the tenancy can use this operation to delete
   * a key for any user, including themselves.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param DeleteApiKeyRequest
        * @return DeleteApiKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteApiKey.ts.html |here} to see how to use DeleteApiKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteApiKey.ts.html |here} to see how to use DeleteApiKey API.
        */
     deleteApiKey(deleteApiKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24703,7 +25290,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteApiKeyRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteApiKeyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteApiKeyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24737,10 +25325,11 @@ class IdentityClient {
     /**
      * Deletes the specified auth token for the specified user.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteAuthTokenRequest
      * @return DeleteAuthTokenResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteAuthToken.ts.html |here} to see how to use DeleteAuthToken API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteAuthToken.ts.html |here} to see how to use DeleteAuthToken API.
      */
     deleteAuthToken(deleteAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24755,7 +25344,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteAuthTokenRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteAuthTokenRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteAuthTokenRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24789,10 +25379,11 @@ class IdentityClient {
     /**
      * Deletes the specified compartment. The compartment must be empty.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteCompartmentRequest
      * @return DeleteCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteCompartment.ts.html |here} to see how to use DeleteCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteCompartment.ts.html |here} to see how to use DeleteCompartment API.
      */
     deleteCompartment(deleteCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24806,7 +25397,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteCompartmentRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24845,10 +25437,11 @@ class IdentityClient {
     /**
      * Deletes the specified secret key for the specified user.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteCustomerSecretKeyRequest
      * @return DeleteCustomerSecretKeyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteCustomerSecretKey.ts.html |here} to see how to use DeleteCustomerSecretKey API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteCustomerSecretKey.ts.html |here} to see how to use DeleteCustomerSecretKey API.
      */
     deleteCustomerSecretKey(deleteCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24863,7 +25456,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteCustomerSecretKeyRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteCustomerSecretKeyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteCustomerSecretKeyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24895,12 +25489,143 @@ class IdentityClient {
         });
     }
     /**
+     * Deletes the specified DB credential for the specified user.
+     *
+     * This operation does not retry by default if the user has not defined a retry configuration.
+     * @param DeleteDbCredentialRequest
+     * @return DeleteDbCredentialResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteDbCredential.ts.html |here} to see how to use DeleteDbCredential API.
+     */
+    deleteDbCredential(deleteDbCredentialRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#deleteDbCredential.");
+            const pathParams = {
+                "{userId}": deleteDbCredentialRequest.userId,
+                "{dbCredentialId}": deleteDbCredentialRequest.dbCredentialId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": deleteDbCredentialRequest.opcRequestId,
+                "if-match": deleteDbCredentialRequest.ifMatch
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteDbCredentialRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/users/{userId}/dbCredentials/{dbCredentialId}",
+                method: "DELETE",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+       * Soft Deletes a domain.
+  * <p>
+  This is an asynchronous API, where, if the domain's {@code lifecycleState} is INACTIVE and
+  * no active Apps are present in underlying stripe,
+  *   1. Sets the specified domain's {@code lifecycleState} to DELETING.
+  *   2. Domains marked as DELETING will be cleaned up by a periodic task unless customer request it to be undo via ticket.
+  *   3. Work request is created and returned as opc-work-request-id along with 202 ACCEPTED.
+  * To track progress, HTTP GET on /iamWorkRequests/{iamWorkRequestsId} endpoint will provide
+  * the async operation's status.
+  * <p>
+  - If the domain's {@code lifecycleState} is DELETING, returns 202 Accepted as a deletion
+  *   is already in progress for this domain.
+  * - If the domain doesn't exists, returns 404 NOT FOUND.
+  * - If domain is of {@code type} DEFAULT or DEFAULT_LIGHTWEIGHT, returns 400 BAD REQUEST.
+  * - If any active Apps in domain, returns 400 BAD REQUEST.
+  * - If the authenticated user is part of the domain to be deleted, returns 400 BAD REQUEST.
+  * - If any internal error occurs, return 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param DeleteDomainRequest
+       * @return DeleteDomainResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteDomain.ts.html |here} to see how to use DeleteDomain API.
+       */
+    deleteDomain(deleteDomainRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#deleteDomain.");
+            const pathParams = {
+                "{domainId}": deleteDomainRequest.domainId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "if-match": deleteDomainRequest.ifMatch,
+                "opc-request-id": deleteDomainRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteDomainRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains/{domainId}",
+                method: "DELETE",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
      * Deletes the specified dynamic group.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteDynamicGroupRequest
      * @return DeleteDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteDynamicGroup.ts.html |here} to see how to use DeleteDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteDynamicGroup.ts.html |here} to see how to use DeleteDynamicGroup API.
      */
     deleteDynamicGroup(deleteDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24914,7 +25639,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteDynamicGroupRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteDynamicGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteDynamicGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24948,10 +25674,11 @@ class IdentityClient {
     /**
      * Deletes the specified group. The group must be empty.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteGroupRequest
      * @return DeleteGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteGroup.ts.html |here} to see how to use DeleteGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteGroup.ts.html |here} to see how to use DeleteGroup API.
      */
     deleteGroup(deleteGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24965,7 +25692,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteGroupRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -24997,14 +25725,17 @@ class IdentityClient {
         });
     }
     /**
-     * Deletes the specified identity provider. The identity provider must not have
-     * any group mappings (see {@link IdpGroupMapping}).
-     *
-     * @param DeleteIdentityProviderRequest
-     * @return DeleteIdentityProviderResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteIdentityProvider.ts.html |here} to see how to use DeleteIdentityProvider API.
-     */
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Deletes the specified identity provider. The identity provider must not have
+  * any group mappings (see {@link IdpGroupMapping}).
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param DeleteIdentityProviderRequest
+       * @return DeleteIdentityProviderResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteIdentityProvider.ts.html |here} to see how to use DeleteIdentityProvider API.
+       */
     deleteIdentityProvider(deleteIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -25017,7 +25748,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteIdentityProviderRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteIdentityProviderRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteIdentityProviderRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25049,12 +25781,16 @@ class IdentityClient {
         });
     }
     /**
-     * Deletes the specified group mapping.
-     * @param DeleteIdpGroupMappingRequest
-     * @return DeleteIdpGroupMappingResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteIdpGroupMapping.ts.html |here} to see how to use DeleteIdpGroupMapping API.
-     */
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Deletes the specified group mapping.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param DeleteIdpGroupMappingRequest
+       * @return DeleteIdpGroupMappingResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteIdpGroupMapping.ts.html |here} to see how to use DeleteIdpGroupMapping API.
+       */
     deleteIdpGroupMapping(deleteIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -25068,7 +25804,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteIdpGroupMappingRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteIdpGroupMappingRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteIdpGroupMappingRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25102,10 +25839,11 @@ class IdentityClient {
     /**
      * Deletes the specified MFA TOTP device for the specified user.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteMfaTotpDeviceRequest
      * @return DeleteMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteMfaTotpDevice.ts.html |here} to see how to use DeleteMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteMfaTotpDevice.ts.html |here} to see how to use DeleteMfaTotpDevice API.
      */
     deleteMfaTotpDevice(deleteMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25120,7 +25858,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteMfaTotpDeviceRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteMfaTotpDeviceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteMfaTotpDeviceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25154,10 +25893,11 @@ class IdentityClient {
     /**
      * Deletes the specified network source
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteNetworkSourceRequest
      * @return DeleteNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteNetworkSource.ts.html |here} to see how to use DeleteNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteNetworkSource.ts.html |here} to see how to use DeleteNetworkSource API.
      */
     deleteNetworkSource(deleteNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25171,7 +25911,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteNetworkSourceRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteNetworkSourceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteNetworkSourceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25205,10 +25946,11 @@ class IdentityClient {
     /**
      * Delete Oauth token for the user
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteOAuthClientCredentialRequest
      * @return DeleteOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteOAuthClientCredential.ts.html |here} to see how to use DeleteOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteOAuthClientCredential.ts.html |here} to see how to use DeleteOAuthClientCredential API.
      */
     deleteOAuthClientCredential(deleteOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25223,7 +25965,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteOAuthClientCredentialRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteOAuthClientCredentialRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteOAuthClientCredentialRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25256,10 +25999,11 @@ class IdentityClient {
     }
     /**
      * Deletes the specified policy. The deletion takes effect typically within 10 seconds.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeletePolicyRequest
      * @return DeletePolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeletePolicy.ts.html |here} to see how to use DeletePolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeletePolicy.ts.html |here} to see how to use DeletePolicy API.
      */
     deletePolicy(deletePolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25273,7 +26017,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deletePolicyRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deletePolicyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deletePolicyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25307,10 +26052,11 @@ class IdentityClient {
     /**
      * Deletes the specified SMTP credential for the specified user.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteSmtpCredentialRequest
      * @return DeleteSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteSmtpCredential.ts.html |here} to see how to use DeleteSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteSmtpCredential.ts.html |here} to see how to use DeleteSmtpCredential API.
      */
     deleteSmtpCredential(deleteSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25325,7 +26071,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteSmtpCredentialRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteSmtpCredentialRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteSmtpCredentialRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25361,10 +26108,11 @@ class IdentityClient {
   * <p>
   Deletes the specified Swift password for the specified user.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param DeleteSwiftPasswordRequest
        * @return DeleteSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteSwiftPassword.ts.html |here} to see how to use DeleteSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteSwiftPassword.ts.html |here} to see how to use DeleteSwiftPassword API.
        */
     deleteSwiftPassword(deleteSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25379,7 +26127,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteSwiftPasswordRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteSwiftPasswordRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteSwiftPasswordRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25433,10 +26182,11 @@ class IdentityClient {
   To delete a tag, you must first retire it. Use {@link #updateTag(UpdateTagRequest) updateTag}
   * to retire a tag.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param DeleteTagRequest
        * @return DeleteTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteTag.ts.html |here} to see how to use DeleteTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteTag.ts.html |here} to see how to use DeleteTag API.
        */
     deleteTag(deleteTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25451,7 +26201,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteTagRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteTagRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteTagRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25490,10 +26241,11 @@ class IdentityClient {
     /**
      * Deletes the the specified tag default.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteTagDefaultRequest
      * @return DeleteTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteTagDefault.ts.html |here} to see how to use DeleteTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteTagDefault.ts.html |here} to see how to use DeleteTagDefault API.
      */
     deleteTagDefault(deleteTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25508,7 +26260,8 @@ class IdentityClient {
                 "opc-request-id": deleteTagDefaultRequest.opcRequestId,
                 "if-match": deleteTagDefaultRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteTagDefaultRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteTagDefaultRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25548,10 +26301,11 @@ class IdentityClient {
   * <p>
   Use {@link #deleteTag(DeleteTagRequest) deleteTag} to delete a tag definition.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param DeleteTagNamespaceRequest
        * @return DeleteTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteTagNamespace.ts.html |here} to see how to use DeleteTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteTagNamespace.ts.html |here} to see how to use DeleteTagNamespace API.
        */
     deleteTagNamespace(deleteTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25566,7 +26320,8 @@ class IdentityClient {
                 "if-match": deleteTagNamespaceRequest.ifMatch,
                 "opc-request-id": deleteTagNamespaceRequest.opcRequestId
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteTagNamespaceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteTagNamespaceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25599,10 +26354,11 @@ class IdentityClient {
     }
     /**
      * Deletes the specified user. The user must not be in any groups.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param DeleteUserRequest
      * @return DeleteUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/DeleteUser.ts.html |here} to see how to use DeleteUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/DeleteUser.ts.html |here} to see how to use DeleteUser API.
      */
     deleteUser(deleteUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25616,7 +26372,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": deleteUserRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, deleteUserRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteUserRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25648,12 +26405,86 @@ class IdentityClient {
         });
     }
     /**
+       * Replicate domain to a new region. This is an asynchronous call - where, at start,
+  * {@code state} of this domain in replica region is set to ENABLING_REPLICATION.
+  * On domain replication completion the {@code state} will be set to REPLICATION_ENABLED.
+  * <p>
+  To track progress, HTTP GET on /iamWorkRequests/{iamWorkRequestsId} endpoint will provide
+  * the async operation's status.
+  * <p>
+  If the replica region's {@code state} is already ENABLING_REPLICATION or REPLICATION_ENABLED,
+  * returns 409 CONFLICT.
+  * - If the domain doesn't exists, returns 404 NOT FOUND.
+  * - If home region is same as replication region, return 400 BAD REQUEST.
+  * - If Domain is not active or being updated, returns 400 BAD REQUEST.
+  * - If any internal error occurs, return 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param EnableReplicationToRegionRequest
+       * @return EnableReplicationToRegionResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/EnableReplicationToRegion.ts.html |here} to see how to use EnableReplicationToRegion API.
+       */
+    enableReplicationToRegion(enableReplicationToRegionRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#enableReplicationToRegion.");
+            const pathParams = {
+                "{domainId}": enableReplicationToRegionRequest.domainId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": enableReplicationToRegionRequest.opcRequestId,
+                "opc-retry-token": enableReplicationToRegionRequest.opcRetryToken,
+                "if-match": enableReplicationToRegionRequest.ifMatch
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, enableReplicationToRegionRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains/{domainId}/actions/enableReplicationToRegion",
+                method: "POST",
+                bodyContent: common.ObjectSerializer.serialize(enableReplicationToRegionRequest.enableReplicationToRegionDetails, "EnableReplicationToRegionDetails", model.EnableReplicationToRegionDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
      * Generate seed for the MFA TOTP device.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GenerateTotpSeedRequest
      * @return GenerateTotpSeedResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GenerateTotpSeed.ts.html |here} to see how to use GenerateTotpSeed API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GenerateTotpSeed.ts.html |here} to see how to use GenerateTotpSeed API.
      */
     generateTotpSeed(generateTotpSeedRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25668,7 +26499,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": generateTotpSeedRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, generateTotpSeedRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, generateTotpSeedRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25712,10 +26544,11 @@ class IdentityClient {
      * Gets the authentication policy for the given tenancy. You must specify your tenant\u2019s OCID as the value for
      * the compartment ID (remember that the tenancy is simply the root compartment).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetAuthenticationPolicyRequest
      * @return GetAuthenticationPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetAuthenticationPolicy.ts.html |here} to see how to use GetAuthenticationPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetAuthenticationPolicy.ts.html |here} to see how to use GetAuthenticationPolicy API.
      */
     getAuthenticationPolicy(getAuthenticationPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25728,7 +26561,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getAuthenticationPolicyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getAuthenticationPolicyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25778,10 +26612,11 @@ class IdentityClient {
   * call the {@link #listInstances(ListInstancesRequest) listInstances} operation in the Cloud Compute
   * Service or the {@link #listVolumes(ListVolumesRequest) listVolumes} operation in Cloud Block Storage.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param GetCompartmentRequest
        * @return GetCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetCompartment.ts.html |here} to see how to use GetCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetCompartment.ts.html |here} to see how to use GetCompartment API.
        */
     getCompartment(getCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25794,7 +26629,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25835,12 +26671,78 @@ class IdentityClient {
         });
     }
     /**
+       * Get the specified domain's information.
+  * <p>
+  - If the domain doesn't exists, returns 404 NOT FOUND.
+  * - If any internal error occurs, returns 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param GetDomainRequest
+       * @return GetDomainResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetDomain.ts.html |here} to see how to use GetDomain API.
+       */
+    getDomain(getDomainRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#getDomain.");
+            const pathParams = {
+                "{domainId}": getDomainRequest.domainId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": getDomainRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getDomainRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains/{domainId}",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "domain",
+                    bodyModel: model.Domain,
+                    type: "model.Domain",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("etag"),
+                            key: "etag",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
      * Gets the specified dynamic group's information.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetDynamicGroupRequest
      * @return GetDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetDynamicGroup.ts.html |here} to see how to use GetDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetDynamicGroup.ts.html |here} to see how to use GetDynamicGroup API.
      */
     getDynamicGroup(getDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25853,7 +26755,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getDynamicGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getDynamicGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25900,10 +26803,11 @@ class IdentityClient {
   * {@link #listUserGroupMemberships(ListUserGroupMembershipsRequest) listUserGroupMemberships} and
   * provide the group's OCID as a query parameter in the request.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param GetGroupRequest
        * @return GetGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetGroup.ts.html |here} to see how to use GetGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetGroup.ts.html |here} to see how to use GetGroup API.
        */
     getGroup(getGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25916,7 +26820,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -25957,12 +26862,77 @@ class IdentityClient {
         });
     }
     /**
-     * Gets the specified identity provider's information.
-     * @param GetIdentityProviderRequest
-     * @return GetIdentityProviderResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetIdentityProvider.ts.html |here} to see how to use GetIdentityProvider API.
-     */
+       * Gets details on a specified IAM work request. For asynchronous operations in Identity and Access Management service, opc-work-request-id header values contains
+  * iam work request id that can be provided in this API to track the current status of the operation.
+  * <p>
+  - If workrequest exists, returns 202 ACCEPTED
+  * - If workrequest does not exist, returns 404 NOT FOUND
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param GetIamWorkRequestRequest
+       * @return GetIamWorkRequestResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetIamWorkRequest.ts.html |here} to see how to use GetIamWorkRequest API.
+       */
+    getIamWorkRequest(getIamWorkRequestRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#getIamWorkRequest.");
+            const pathParams = {
+                "{iamWorkRequestId}": getIamWorkRequestRequest.iamWorkRequestId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": getIamWorkRequestRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getIamWorkRequestRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/iamWorkRequests/{iamWorkRequestId}",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "iamWorkRequest",
+                    bodyModel: model.IamWorkRequest,
+                    type: "model.IamWorkRequest",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Gets the specified identity provider's information.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param GetIdentityProviderRequest
+       * @return GetIdentityProviderResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetIdentityProvider.ts.html |here} to see how to use GetIdentityProvider API.
+       */
     getIdentityProvider(getIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -25974,7 +26944,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getIdentityProviderRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getIdentityProviderRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26015,12 +26986,16 @@ class IdentityClient {
         });
     }
     /**
-     * Gets the specified group mapping.
-     * @param GetIdpGroupMappingRequest
-     * @return GetIdpGroupMappingResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetIdpGroupMapping.ts.html |here} to see how to use GetIdpGroupMapping API.
-     */
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Gets the specified group mapping.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param GetIdpGroupMappingRequest
+       * @return GetIdpGroupMappingResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetIdpGroupMapping.ts.html |here} to see how to use GetIdpGroupMapping API.
+       */
     getIdpGroupMapping(getIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -26033,7 +27008,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getIdpGroupMappingRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getIdpGroupMappingRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26076,10 +27052,11 @@ class IdentityClient {
     /**
      * Get the specified MFA TOTP device for the specified user.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetMfaTotpDeviceRequest
      * @return GetMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetMfaTotpDevice.ts.html |here} to see how to use GetMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetMfaTotpDevice.ts.html |here} to see how to use GetMfaTotpDevice API.
      */
     getMfaTotpDevice(getMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26093,7 +27070,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getMfaTotpDeviceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getMfaTotpDeviceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26136,10 +27114,11 @@ class IdentityClient {
     /**
      * Gets the specified network source's information.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetNetworkSourceRequest
      * @return GetNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetNetworkSource.ts.html |here} to see how to use GetNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetNetworkSource.ts.html |here} to see how to use GetNetworkSource API.
      */
     getNetworkSource(getNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26152,7 +27131,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getNetworkSourceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getNetworkSourceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26194,10 +27174,11 @@ class IdentityClient {
     }
     /**
      * Gets the specified policy's information.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetPolicyRequest
      * @return GetPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetPolicy.ts.html |here} to see how to use GetPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetPolicy.ts.html |here} to see how to use GetPolicy API.
      */
     getPolicy(getPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26210,7 +27191,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getPolicyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getPolicyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26251,11 +27233,70 @@ class IdentityClient {
         });
     }
     /**
+     * Retrieve the standard tag namespace template given the standard tag namespace name.
+     *
+     * This operation does not retry by default if the user has not defined a retry configuration.
+     * @param GetStandardTagTemplateRequest
+     * @return GetStandardTagTemplateResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetStandardTagTemplate.ts.html |here} to see how to use GetStandardTagTemplate API.
+     */
+    getStandardTagTemplate(getStandardTagTemplateRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#getStandardTagTemplate.");
+            const pathParams = {
+                "{standardTagNamespaceName}": getStandardTagTemplateRequest.standardTagNamespaceName
+            };
+            const queryParams = {
+                "compartmentId": getStandardTagTemplateRequest.compartmentId
+            };
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getStandardTagTemplateRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/tags/standardTagNamespaceTemplates/{standardTagNamespaceName}",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "standardTagNamespaceTemplate",
+                    bodyModel: model.StandardTagNamespaceTemplate,
+                    type: "model.StandardTagNamespaceTemplate",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
      * Gets the specified tag's information.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetTagRequest
      * @return GetTagResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetTag.ts.html |here} to see how to use GetTag API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetTag.ts.html |here} to see how to use GetTag API.
      */
     getTag(getTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26269,7 +27310,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getTagRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getTagRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26312,10 +27354,11 @@ class IdentityClient {
     /**
      * Retrieves the specified tag default.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetTagDefaultRequest
      * @return GetTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetTagDefault.ts.html |here} to see how to use GetTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetTagDefault.ts.html |here} to see how to use GetTagDefault API.
      */
     getTagDefault(getTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26328,7 +27371,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getTagDefaultRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getTagDefaultRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26371,10 +27415,11 @@ class IdentityClient {
     /**
      * Gets the specified tag namespace's information.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetTagNamespaceRequest
      * @return GetTagNamespaceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetTagNamespace.ts.html |here} to see how to use GetTagNamespace API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetTagNamespace.ts.html |here} to see how to use GetTagNamespace API.
      */
     getTagNamespace(getTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26387,7 +27432,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getTagNamespaceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getTagNamespaceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26424,12 +27470,13 @@ class IdentityClient {
     }
     /**
      * Gets details on a specified work request. The workRequestID is returned in the opc-workrequest-id header
-     * for any asynchronous operation in the Identity and Access Management service.
+     * for any asynchronous operation in tagging service.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetTaggingWorkRequestRequest
      * @return GetTaggingWorkRequestResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetTaggingWorkRequest.ts.html |here} to see how to use GetTaggingWorkRequest API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetTaggingWorkRequest.ts.html |here} to see how to use GetTaggingWorkRequest API.
      */
     getTaggingWorkRequest(getTaggingWorkRequestRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26442,7 +27489,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getTaggingWorkRequestRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getTaggingWorkRequestRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26484,10 +27532,11 @@ class IdentityClient {
     }
     /**
      * Get the specified tenancy's information.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetTenancyRequest
      * @return GetTenancyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetTenancy.ts.html |here} to see how to use GetTenancy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetTenancy.ts.html |here} to see how to use GetTenancy API.
      */
     getTenancy(getTenancyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26500,7 +27549,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getTenancyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getTenancyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26537,10 +27587,11 @@ class IdentityClient {
     }
     /**
      * Gets the specified user's information.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetUserRequest
      * @return GetUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetUser.ts.html |here} to see how to use GetUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetUser.ts.html |here} to see how to use GetUser API.
      */
     getUser(getUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26553,7 +27604,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getUserRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getUserRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26595,10 +27647,11 @@ class IdentityClient {
     }
     /**
      * Gets the specified UserGroupMembership's information.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetUserGroupMembershipRequest
      * @return GetUserGroupMembershipResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetUserGroupMembership.ts.html |here} to see how to use GetUserGroupMembership API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetUserGroupMembership.ts.html |here} to see how to use GetUserGroupMembership API.
      */
     getUserGroupMembership(getUserGroupMembershipRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26611,7 +27664,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getUserGroupMembershipRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getUserGroupMembershipRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26655,10 +27709,11 @@ class IdentityClient {
      * Gets the specified user's console password information. The returned object contains the user's OCID,
      * but not the password itself. The actual password is returned only when created or reset.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetUserUIPasswordInformationRequest
      * @return GetUserUIPasswordInformationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetUserUIPasswordInformation.ts.html |here} to see how to use GetUserUIPasswordInformation API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetUserUIPasswordInformation.ts.html |here} to see how to use GetUserUIPasswordInformation API.
      */
     getUserUIPasswordInformation(getUserUIPasswordInformationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26671,7 +27726,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getUserUIPasswordInformationRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getUserUIPasswordInformationRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26713,12 +27769,13 @@ class IdentityClient {
     }
     /**
      * Gets details on a specified work request. The workRequestID is returned in the opc-workrequest-id header
-     * for any asynchronous operation in the Identity and Access Management service.
+     * for any asynchronous operation in the compartment service.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param GetWorkRequestRequest
      * @return GetWorkRequestResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/GetWorkRequest.ts.html |here} to see how to use GetWorkRequest API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/GetWorkRequest.ts.html |here} to see how to use GetWorkRequest API.
      */
     getWorkRequest(getWorkRequestRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26731,7 +27788,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, getWorkRequestRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getWorkRequestRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26772,15 +27830,143 @@ class IdentityClient {
         });
     }
     /**
+     * OCI will release Tag Namespaces that our customers can import.
+     * These Tag Namespaces will provide Tags for our customers and Partners to provide consistency and enable data reporting.
+     *
+     * This operation does not retry by default if the user has not defined a retry configuration.
+     * @param ImportStandardTagsRequest
+     * @return ImportStandardTagsResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ImportStandardTags.ts.html |here} to see how to use ImportStandardTags API.
+     */
+    importStandardTags(importStandardTagsRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#importStandardTags.");
+            const pathParams = {};
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": importStandardTagsRequest.opcRequestId,
+                "opc-retry-token": importStandardTagsRequest.opcRetryToken
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, importStandardTagsRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/tags/actions/importStandardTags",
+                method: "POST",
+                bodyContent: common.ObjectSerializer.serialize(importStandardTagsRequest.importStandardTagsDetails, "ImportStandardTagsDetails", model.ImportStandardTagsDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+       * List the allowed domain license types supported by OCI
+  * If {@code currentLicenseTypeName} provided, returns allowed license types a domain with the specified license type name can migrate to.
+  * If {@code name} is provided, it filters and returns resources that match the given license type name.
+  * Otherwise, returns all valid license types that are currently supported.
+  * <p>
+  - If license type details are retrieved sucessfully, return 202 ACCEPTED.
+  * - If any internal error occurs, return 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ListAllowedDomainLicenseTypesRequest
+       * @return ListAllowedDomainLicenseTypesResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListAllowedDomainLicenseTypes.ts.html |here} to see how to use ListAllowedDomainLicenseTypes API.
+       */
+    listAllowedDomainLicenseTypes(listAllowedDomainLicenseTypesRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#listAllowedDomainLicenseTypes.");
+            const pathParams = {};
+            const queryParams = {
+                "currentLicenseTypeName": listAllowedDomainLicenseTypesRequest.currentLicenseTypeName
+            };
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": listAllowedDomainLicenseTypesRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listAllowedDomainLicenseTypesRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/allowedDomainLicenseTypes",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "items",
+                    bodyModel: model.AllowedDomainLicenseTypeSummary,
+                    type: "Array<model.AllowedDomainLicenseTypeSummary>",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-next-page"),
+                            key: "opcNextPage",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
        * Lists the API signing keys for the specified user. A user can have a maximum of three keys.
   * <p>
   Every user has permission to use this API call for *their own user ID*.  An administrator in your
   * organization does not need to write a policy to give users this ability.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param ListApiKeysRequest
        * @return ListApiKeysResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListApiKeys.ts.html |here} to see how to use ListApiKeys API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListApiKeys.ts.html |here} to see how to use ListApiKeys API.
        */
     listApiKeys(listApiKeysRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26793,7 +27979,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listApiKeysRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listApiKeysRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26837,10 +28024,11 @@ class IdentityClient {
      * Lists the auth tokens for the specified user. The returned object contains the token's OCID, but not
      * the token itself. The actual token is returned only upon creation.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListAuthTokensRequest
      * @return ListAuthTokensResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListAuthTokens.ts.html |here} to see how to use ListAuthTokens API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListAuthTokens.ts.html |here} to see how to use ListAuthTokens API.
      */
     listAuthTokens(listAuthTokensRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26853,7 +28041,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listAuthTokensRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listAuthTokensRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26900,10 +28089,11 @@ class IdentityClient {
      * Note that the order of the results returned can change if availability domains are added or removed; therefore, do not
      * create a dependency on the list order.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListAvailabilityDomainsRequest
      * @return ListAvailabilityDomainsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListAvailabilityDomains.ts.html |here} to see how to use ListAvailabilityDomains API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListAvailabilityDomains.ts.html |here} to see how to use ListAvailabilityDomains API.
      */
     listAvailabilityDomains(listAvailabilityDomainsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26916,7 +28106,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listAvailabilityDomainsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listAvailabilityDomainsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -26965,10 +28156,11 @@ class IdentityClient {
      * require an [OCID](https://docs.cloud.oracle.com/Content/General/Concepts/identifiers.htm) to identify a specific resource, but some resource-types,
      * such as buckets, require you to provide other identifying information.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListBulkActionResourceTypesRequest
      * @return ListBulkActionResourceTypesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListBulkActionResourceTypes.ts.html |here} to see how to use ListBulkActionResourceTypes API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListBulkActionResourceTypes.ts.html |here} to see how to use ListBulkActionResourceTypes API.
      */
     listBulkActionResourceTypes(listBulkActionResourceTypesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26983,7 +28175,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listBulkActionResourceTypesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listBulkActionResourceTypesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27026,10 +28219,11 @@ class IdentityClient {
     /**
      * Lists the resource types that support bulk tag editing.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListBulkEditTagsResourceTypesRequest
      * @return ListBulkEditTagsResourceTypesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListBulkEditTagsResourceTypes.ts.html |here} to see how to use ListBulkEditTagsResourceTypes API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListBulkEditTagsResourceTypes.ts.html |here} to see how to use ListBulkEditTagsResourceTypes API.
      */
     listBulkEditTagsResourceTypes(listBulkEditTagsResourceTypesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27043,7 +28237,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listBulkEditTagsResourceTypesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listBulkEditTagsResourceTypesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27103,10 +28298,11 @@ class IdentityClient {
   * <p>
   See [Where to Get the Tenancy's OCID and User's OCID](https://docs.cloud.oracle.com/Content/API/Concepts/apisigningkey.htm#five).
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param ListCompartmentsRequest
        * @return ListCompartmentsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListCompartments.ts.html |here} to see how to use ListCompartments API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListCompartments.ts.html |here} to see how to use ListCompartments API.
        */
     listCompartments(listCompartmentsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27127,7 +28323,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listCompartmentsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listCompartmentsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27211,10 +28408,11 @@ class IdentityClient {
      * Lists all the tags enabled for cost-tracking in the specified tenancy. For information about
      * cost-tracking tags, see [Using Cost-tracking Tags](https://docs.cloud.oracle.com/Content/Identity/Concepts/taggingoverview.htm#costs).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListCostTrackingTagsRequest
      * @return ListCostTrackingTagsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListCostTrackingTags.ts.html |here} to see how to use ListCostTrackingTags API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListCostTrackingTags.ts.html |here} to see how to use ListCostTrackingTags API.
      */
     listCostTrackingTags(listCostTrackingTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27229,7 +28427,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listCostTrackingTagsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listCostTrackingTagsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27313,10 +28512,11 @@ class IdentityClient {
      * Lists the secret keys for the specified user. The returned object contains the secret key's OCID, but not
      * the secret key itself. The actual secret key is returned only upon creation.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListCustomerSecretKeysRequest
      * @return ListCustomerSecretKeysResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListCustomerSecretKeys.ts.html |here} to see how to use ListCustomerSecretKeys API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListCustomerSecretKeys.ts.html |here} to see how to use ListCustomerSecretKeys API.
      */
     listCustomerSecretKeys(listCustomerSecretKeysRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27329,7 +28529,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listCustomerSecretKeysRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listCustomerSecretKeysRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27370,14 +28571,239 @@ class IdentityClient {
         });
     }
     /**
+     * Lists the DB credentials for the specified user. The returned object contains the credential's OCID
+     *
+     * This operation does not retry by default if the user has not defined a retry configuration.
+     * @param ListDbCredentialsRequest
+     * @return ListDbCredentialsResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListDbCredentials.ts.html |here} to see how to use ListDbCredentials API.
+     */
+    listDbCredentials(listDbCredentialsRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#listDbCredentials.");
+            const pathParams = {
+                "{userId}": listDbCredentialsRequest.userId
+            };
+            const queryParams = {
+                "page": listDbCredentialsRequest.page,
+                "limit": listDbCredentialsRequest.limit,
+                "name": listDbCredentialsRequest.name,
+                "sortBy": listDbCredentialsRequest.sortBy,
+                "sortOrder": listDbCredentialsRequest.sortOrder,
+                "lifecycleState": listDbCredentialsRequest.lifecycleState
+            };
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": listDbCredentialsRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listDbCredentialsRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/users/{userId}/dbCredentials",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "items",
+                    bodyModel: model.DbCredentialSummary,
+                    type: "Array<model.DbCredentialSummary>",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-next-page"),
+                            key: "opcNextPage",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listDbCredentialsRecordIterator function.
+     * Creates a new async iterator which will iterate over the models.DbCredentialSummary objects
+     * contained in responses from the listDbCredentials operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllDbCredentials(request) {
+        return oci_common_1.paginateRecords(request, req => this.listDbCredentials(req));
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listDbCredentialsResponseIterator function.
+     * Creates a new async iterator which will iterate over the responses received from the listDbCredentials operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllDbCredentialsResponses(request) {
+        return oci_common_1.paginateResponses(request, req => this.listDbCredentials(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the models.DbCredentialSummary objects
+     * contained in responses from the listDbCredentials operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listDbCredentialsRecordIterator(request) {
+        return oci_common_1.paginateRecords(request, req => this.listDbCredentials(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the responses received from the listDbCredentials operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listDbCredentialsResponseIterator(request) {
+        return oci_common_1.paginateResponses(request, req => this.listDbCredentials(req));
+    }
+    /**
+     * List all domains that are homed or have a replica region in current region.
+     * - If any internal error occurs, return 500 INTERNAL SERVER ERROR.
+     *
+     * This operation does not retry by default if the user has not defined a retry configuration.
+     * @param ListDomainsRequest
+     * @return ListDomainsResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListDomains.ts.html |here} to see how to use ListDomains API.
+     */
+    listDomains(listDomainsRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#listDomains.");
+            const pathParams = {};
+            const queryParams = {
+                "compartmentId": listDomainsRequest.compartmentId,
+                "displayName": listDomainsRequest.displayName,
+                "url": listDomainsRequest.url,
+                "homeRegionUrl": listDomainsRequest.homeRegionUrl,
+                "type": listDomainsRequest.type,
+                "licenseType": listDomainsRequest.licenseType,
+                "isHiddenOnLogin": listDomainsRequest.isHiddenOnLogin,
+                "page": listDomainsRequest.page,
+                "limit": listDomainsRequest.limit,
+                "name": listDomainsRequest.name,
+                "sortBy": listDomainsRequest.sortBy,
+                "sortOrder": listDomainsRequest.sortOrder,
+                "lifecycleState": listDomainsRequest.lifecycleState
+            };
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": listDomainsRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listDomainsRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "items",
+                    bodyModel: model.DomainSummary,
+                    type: "Array<model.DomainSummary>",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-next-page"),
+                            key: "opcNextPage",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listDomainsRecordIterator function.
+     * Creates a new async iterator which will iterate over the models.DomainSummary objects
+     * contained in responses from the listDomains operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllDomains(request) {
+        return oci_common_1.paginateRecords(request, req => this.listDomains(req));
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listDomainsResponseIterator function.
+     * Creates a new async iterator which will iterate over the responses received from the listDomains operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllDomainsResponses(request) {
+        return oci_common_1.paginateResponses(request, req => this.listDomains(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the models.DomainSummary objects
+     * contained in responses from the listDomains operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listDomainsRecordIterator(request) {
+        return oci_common_1.paginateRecords(request, req => this.listDomains(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the responses received from the listDomains operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listDomainsResponseIterator(request) {
+        return oci_common_1.paginateResponses(request, req => this.listDomains(req));
+    }
+    /**
      * Lists the dynamic groups in your tenancy. You must specify your tenancy's OCID as the value for
      * the compartment ID (remember that the tenancy is simply the root compartment).
      * See [Where to Get the Tenancy's OCID and User's OCID](https://docs.cloud.oracle.com/Content/API/Concepts/apisigningkey.htm#five).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListDynamicGroupsRequest
      * @return ListDynamicGroupsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListDynamicGroups.ts.html |here} to see how to use ListDynamicGroups API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListDynamicGroups.ts.html |here} to see how to use ListDynamicGroups API.
      */
     listDynamicGroups(listDynamicGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27396,7 +28822,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listDynamicGroupsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listDynamicGroupsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27481,10 +28908,11 @@ class IdentityClient {
      * of your compartments as the value for the compartment ID (remember that the tenancy is simply the root compartment).
      * See [Where to Get the Tenancy's OCID and User's OCID](https://docs.cloud.oracle.com/Content/API/Concepts/apisigningkey.htm#five).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListFaultDomainsRequest
      * @return ListFaultDomainsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListFaultDomains.ts.html |here} to see how to use ListFaultDomains API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListFaultDomains.ts.html |here} to see how to use ListFaultDomains API.
      */
     listFaultDomains(listFaultDomainsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27498,7 +28926,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listFaultDomainsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listFaultDomainsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27538,10 +28967,11 @@ class IdentityClient {
      * the compartment ID (remember that the tenancy is simply the root compartment).
      * See [Where to Get the Tenancy's OCID and User's OCID](https://docs.cloud.oracle.com/Content/API/Concepts/apisigningkey.htm#five).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListGroupsRequest
      * @return ListGroupsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListGroups.ts.html |here} to see how to use ListGroups API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListGroups.ts.html |here} to see how to use ListGroups API.
      */
     listGroups(listGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27560,7 +28990,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listGroupsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listGroupsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27641,12 +29072,349 @@ class IdentityClient {
         return oci_common_1.paginateResponses(request, req => this.listGroups(req));
     }
     /**
-     * Lists the identity provider groups.
-     * @param ListIdentityProviderGroupsRequest
-     * @return ListIdentityProviderGroupsResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListIdentityProviderGroups.ts.html |here} to see how to use ListIdentityProviderGroups API.
+       * Gets error details for a specified IAM work request. For asynchronous operations in Identity and Access Management service, opc-work-request-id header values contains
+  * iam work request id that can be provided in this API to track the current status of the operation.
+  * <p>
+  - If workrequest exists, returns 202 ACCEPTED
+  * - If workrequest does not exist, returns 404 NOT FOUND
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ListIamWorkRequestErrorsRequest
+       * @return ListIamWorkRequestErrorsResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListIamWorkRequestErrors.ts.html |here} to see how to use ListIamWorkRequestErrors API.
+       */
+    listIamWorkRequestErrors(listIamWorkRequestErrorsRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#listIamWorkRequestErrors.");
+            const pathParams = {
+                "{iamWorkRequestId}": listIamWorkRequestErrorsRequest.iamWorkRequestId
+            };
+            const queryParams = {
+                "limit": listIamWorkRequestErrorsRequest.limit,
+                "page": listIamWorkRequestErrorsRequest.page,
+                "sortOrder": listIamWorkRequestErrorsRequest.sortOrder
+            };
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": listIamWorkRequestErrorsRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listIamWorkRequestErrorsRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/iamWorkRequests/{iamWorkRequestId}/errors",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "items",
+                    bodyModel: model.IamWorkRequestErrorSummary,
+                    type: "Array<model.IamWorkRequestErrorSummary>",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-next-page"),
+                            key: "opcNextPage",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listIamWorkRequestErrorsRecordIterator function.
+     * Creates a new async iterator which will iterate over the models.IamWorkRequestErrorSummary objects
+     * contained in responses from the listIamWorkRequestErrors operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
      */
+    listAllIamWorkRequestErrors(request) {
+        return oci_common_1.paginateRecords(request, req => this.listIamWorkRequestErrors(req));
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listIamWorkRequestErrorsResponseIterator function.
+     * Creates a new async iterator which will iterate over the responses received from the listIamWorkRequestErrors operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllIamWorkRequestErrorsResponses(request) {
+        return oci_common_1.paginateResponses(request, req => this.listIamWorkRequestErrors(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the models.IamWorkRequestErrorSummary objects
+     * contained in responses from the listIamWorkRequestErrors operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listIamWorkRequestErrorsRecordIterator(request) {
+        return oci_common_1.paginateRecords(request, req => this.listIamWorkRequestErrors(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the responses received from the listIamWorkRequestErrors operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listIamWorkRequestErrorsResponseIterator(request) {
+        return oci_common_1.paginateResponses(request, req => this.listIamWorkRequestErrors(req));
+    }
+    /**
+       * Gets logs for a specified IAM work request. For asynchronous operations in Identity and Access Management service, opc-work-request-id header values contains
+  * iam work request id that can be provided in this API to track the current status of the operation.
+  * <p>
+  - If workrequest exists, returns 202 ACCEPTED
+  * - If workrequest does not exist, returns 404 NOT FOUND
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ListIamWorkRequestLogsRequest
+       * @return ListIamWorkRequestLogsResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListIamWorkRequestLogs.ts.html |here} to see how to use ListIamWorkRequestLogs API.
+       */
+    listIamWorkRequestLogs(listIamWorkRequestLogsRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#listIamWorkRequestLogs.");
+            const pathParams = {
+                "{iamWorkRequestId}": listIamWorkRequestLogsRequest.iamWorkRequestId
+            };
+            const queryParams = {
+                "limit": listIamWorkRequestLogsRequest.limit,
+                "page": listIamWorkRequestLogsRequest.page,
+                "sortOrder": listIamWorkRequestLogsRequest.sortOrder
+            };
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": listIamWorkRequestLogsRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listIamWorkRequestLogsRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/iamWorkRequests/{iamWorkRequestId}/logs",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "items",
+                    bodyModel: model.IamWorkRequestLogSummary,
+                    type: "Array<model.IamWorkRequestLogSummary>",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("retry-after"),
+                            key: "retryAfter",
+                            dataType: "number"
+                        },
+                        {
+                            value: response.headers.get("opc-next-page"),
+                            key: "opcNextPage",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listIamWorkRequestLogsRecordIterator function.
+     * Creates a new async iterator which will iterate over the models.IamWorkRequestLogSummary objects
+     * contained in responses from the listIamWorkRequestLogs operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllIamWorkRequestLogs(request) {
+        return oci_common_1.paginateRecords(request, req => this.listIamWorkRequestLogs(req));
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listIamWorkRequestLogsResponseIterator function.
+     * Creates a new async iterator which will iterate over the responses received from the listIamWorkRequestLogs operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllIamWorkRequestLogsResponses(request) {
+        return oci_common_1.paginateResponses(request, req => this.listIamWorkRequestLogs(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the models.IamWorkRequestLogSummary objects
+     * contained in responses from the listIamWorkRequestLogs operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listIamWorkRequestLogsRecordIterator(request) {
+        return oci_common_1.paginateRecords(request, req => this.listIamWorkRequestLogs(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the responses received from the listIamWorkRequestLogs operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listIamWorkRequestLogsResponseIterator(request) {
+        return oci_common_1.paginateResponses(request, req => this.listIamWorkRequestLogs(req));
+    }
+    /**
+       * List the IAM work requests in compartment
+  * <p>
+  - If IAM workrequest  details are retrieved sucessfully, return 202 ACCEPTED.
+  * - If any internal error occurs, return 500 INTERNAL SERVER ERROR.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ListIamWorkRequestsRequest
+       * @return ListIamWorkRequestsResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListIamWorkRequests.ts.html |here} to see how to use ListIamWorkRequests API.
+       */
+    listIamWorkRequests(listIamWorkRequestsRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#listIamWorkRequests.");
+            const pathParams = {};
+            const queryParams = {
+                "compartmentId": listIamWorkRequestsRequest.compartmentId,
+                "page": listIamWorkRequestsRequest.page,
+                "limit": listIamWorkRequestsRequest.limit,
+                "resourceIdentifier": listIamWorkRequestsRequest.resourceIdentifier
+            };
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": listIamWorkRequestsRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listIamWorkRequestsRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/iamWorkRequests",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "items",
+                    bodyModel: model.IamWorkRequestSummary,
+                    type: "Array<model.IamWorkRequestSummary>",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-next-page"),
+                            key: "opcNextPage",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listIamWorkRequestsRecordIterator function.
+     * Creates a new async iterator which will iterate over the models.IamWorkRequestSummary objects
+     * contained in responses from the listIamWorkRequests operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllIamWorkRequests(request) {
+        return oci_common_1.paginateRecords(request, req => this.listIamWorkRequests(req));
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listIamWorkRequestsResponseIterator function.
+     * Creates a new async iterator which will iterate over the responses received from the listIamWorkRequests operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllIamWorkRequestsResponses(request) {
+        return oci_common_1.paginateResponses(request, req => this.listIamWorkRequests(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the models.IamWorkRequestSummary objects
+     * contained in responses from the listIamWorkRequests operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listIamWorkRequestsRecordIterator(request) {
+        return oci_common_1.paginateRecords(request, req => this.listIamWorkRequests(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the responses received from the listIamWorkRequests operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listIamWorkRequestsResponseIterator(request) {
+        return oci_common_1.paginateResponses(request, req => this.listIamWorkRequests(req));
+    }
+    /**
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Lists the identity provider groups.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ListIdentityProviderGroupsRequest
+       * @return ListIdentityProviderGroupsResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListIdentityProviderGroups.ts.html |here} to see how to use ListIdentityProviderGroups API.
+       */
     listIdentityProviderGroups(listIdentityProviderGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -27663,7 +29431,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listIdentityProviderGroupsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listIdentityProviderGroupsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27744,16 +29513,19 @@ class IdentityClient {
         return oci_common_1.paginateResponses(request, req => this.listIdentityProviderGroups(req));
     }
     /**
-     * Lists all the identity providers in your tenancy. You must specify the identity provider type (e.g., `SAML2` for
-     * identity providers using the SAML2.0 protocol). You must specify your tenancy's OCID as the value for the
-     * compartment ID (remember that the tenancy is simply the root compartment).
-     * See [Where to Get the Tenancy's OCID and User's OCID](https://docs.cloud.oracle.com/Content/API/Concepts/apisigningkey.htm#five).
-     *
-     * @param ListIdentityProvidersRequest
-     * @return ListIdentityProvidersResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListIdentityProviders.ts.html |here} to see how to use ListIdentityProviders API.
-     */
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Lists all the identity providers in your tenancy. You must specify the identity provider type (e.g., `SAML2` for
+  * identity providers using the SAML2.0 protocol). You must specify your tenancy's OCID as the value for the
+  * compartment ID (remember that the tenancy is simply the root compartment).
+  * See [Where to Get the Tenancy's OCID and User's OCID](https://docs.cloud.oracle.com/Content/API/Concepts/apisigningkey.htm#five).
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ListIdentityProvidersRequest
+       * @return ListIdentityProvidersResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListIdentityProviders.ts.html |here} to see how to use ListIdentityProviders API.
+       */
     listIdentityProviders(listIdentityProvidersRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -27772,7 +29544,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listIdentityProvidersRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listIdentityProvidersRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27853,13 +29626,16 @@ class IdentityClient {
         return oci_common_1.paginateResponses(request, req => this.listIdentityProviders(req));
     }
     /**
-     * Lists the group mappings for the specified identity provider.
-     *
-     * @param ListIdpGroupMappingsRequest
-     * @return ListIdpGroupMappingsResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListIdpGroupMappings.ts.html |here} to see how to use ListIdpGroupMappings API.
-     */
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Lists the group mappings for the specified identity provider.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param ListIdpGroupMappingsRequest
+       * @return ListIdpGroupMappingsResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListIdpGroupMappings.ts.html |here} to see how to use ListIdpGroupMappings API.
+       */
     listIdpGroupMappings(listIdpGroupMappingsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -27874,7 +29650,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listIdpGroupMappingsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listIdpGroupMappingsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -27958,10 +29735,11 @@ class IdentityClient {
      * Lists the MFA TOTP devices for the specified user. The returned object contains the device's OCID, but not
      * the seed. The seed is returned only upon creation or when the IAM service regenerates the MFA seed for the device.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListMfaTotpDevicesRequest
      * @return ListMfaTotpDevicesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListMfaTotpDevices.ts.html |here} to see how to use ListMfaTotpDevices API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListMfaTotpDevices.ts.html |here} to see how to use ListMfaTotpDevices API.
      */
     listMfaTotpDevices(listMfaTotpDevicesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27979,7 +29757,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listMfaTotpDevicesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listMfaTotpDevicesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28064,10 +29843,11 @@ class IdentityClient {
      * the compartment ID (remember that the tenancy is simply the root compartment).
      * See [Where to Get the Tenancy's OCID and User's OCID](https://docs.cloud.oracle.com/Content/API/Concepts/apisigningkey.htm#five).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListNetworkSourcesRequest
      * @return ListNetworkSourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListNetworkSources.ts.html |here} to see how to use ListNetworkSources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListNetworkSources.ts.html |here} to see how to use ListNetworkSources API.
      */
     listNetworkSources(listNetworkSourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28086,7 +29866,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listNetworkSourcesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listNetworkSourcesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28169,10 +29950,11 @@ class IdentityClient {
     /**
      * List of Oauth tokens for the user
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListOAuthClientCredentialsRequest
      * @return ListOAuthClientCredentialsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListOAuthClientCredentials.ts.html |here} to see how to use ListOAuthClientCredentials API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListOAuthClientCredentials.ts.html |here} to see how to use ListOAuthClientCredentials API.
      */
     listOAuthClientCredentials(listOAuthClientCredentialsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28189,7 +29971,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listOAuthClientCredentialsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listOAuthClientCredentialsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28276,10 +30059,11 @@ class IdentityClient {
   To determine which policies apply to a particular group or compartment, you must view the individual
   * statements inside all your policies. There isn't a way to automatically obtain that information via the API.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param ListPoliciesRequest
        * @return ListPoliciesResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListPolicies.ts.html |here} to see how to use ListPolicies API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListPolicies.ts.html |here} to see how to use ListPolicies API.
        */
     listPolicies(listPoliciesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28298,7 +30082,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listPoliciesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listPoliciesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28380,10 +30165,11 @@ class IdentityClient {
     }
     /**
      * Lists the region subscriptions for the specified tenancy.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListRegionSubscriptionsRequest
      * @return ListRegionSubscriptionsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListRegionSubscriptions.ts.html |here} to see how to use ListRegionSubscriptions API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListRegionSubscriptions.ts.html |here} to see how to use ListRegionSubscriptions API.
      */
     listRegionSubscriptions(listRegionSubscriptionsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28396,7 +30182,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listRegionSubscriptionsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listRegionSubscriptionsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28433,10 +30220,11 @@ class IdentityClient {
     }
     /**
      * Lists all the regions offered by Oracle Cloud Infrastructure.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListRegionsRequest
      * @return ListRegionsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListRegions.ts.html |here} to see how to use ListRegions API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListRegions.ts.html |here} to see how to use ListRegions API.
      */
     listRegions(listRegionsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28447,7 +30235,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listRegionsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listRegionsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28486,10 +30275,11 @@ class IdentityClient {
      * Lists the SMTP credentials for the specified user. The returned object contains the credential's OCID,
      * the SMTP user name but not the SMTP password. The SMTP password is returned only upon creation.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListSmtpCredentialsRequest
      * @return ListSmtpCredentialsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListSmtpCredentials.ts.html |here} to see how to use ListSmtpCredentials API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListSmtpCredentials.ts.html |here} to see how to use ListSmtpCredentials API.
      */
     listSmtpCredentials(listSmtpCredentialsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28502,7 +30292,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listSmtpCredentialsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listSmtpCredentialsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28543,15 +30334,119 @@ class IdentityClient {
         });
     }
     /**
+     * Lists available standard tag namespaces that users can create.
+     *
+     * This operation does not retry by default if the user has not defined a retry configuration.
+     * @param ListStandardTagNamespacesRequest
+     * @return ListStandardTagNamespacesResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListStandardTagNamespaces.ts.html |here} to see how to use ListStandardTagNamespaces API.
+     */
+    listStandardTagNamespaces(listStandardTagNamespacesRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#listStandardTagNamespaces.");
+            const pathParams = {};
+            const queryParams = {
+                "compartmentId": listStandardTagNamespacesRequest.compartmentId,
+                "page": listStandardTagNamespacesRequest.page,
+                "limit": listStandardTagNamespacesRequest.limit
+            };
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listStandardTagNamespacesRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/tags/standardTagNamespaceTemplates",
+                method: "GET",
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "items",
+                    bodyModel: model.StandardTagNamespaceTemplateSummary,
+                    type: "Array<model.StandardTagNamespaceTemplateSummary>",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-next-page"),
+                            key: "opcNextPage",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listStandardTagNamespacesRecordIterator function.
+     * Creates a new async iterator which will iterate over the models.StandardTagNamespaceTemplateSummary objects
+     * contained in responses from the listStandardTagNamespaces operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllStandardTagNamespaces(request) {
+        return oci_common_1.paginateRecords(request, req => this.listStandardTagNamespaces(req));
+    }
+    /**
+     * NOTE: This function is deprecated in favor of listStandardTagNamespacesResponseIterator function.
+     * Creates a new async iterator which will iterate over the responses received from the listStandardTagNamespaces operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listAllStandardTagNamespacesResponses(request) {
+        return oci_common_1.paginateResponses(request, req => this.listStandardTagNamespaces(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the models.StandardTagNamespaceTemplateSummary objects
+     * contained in responses from the listStandardTagNamespaces operation. This iterator will fetch more data from the
+     * server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listStandardTagNamespacesRecordIterator(request) {
+        return oci_common_1.paginateRecords(request, req => this.listStandardTagNamespaces(req));
+    }
+    /**
+     * Creates a new async iterator which will iterate over the responses received from the listStandardTagNamespaces operation. This iterator
+     * will fetch more data from the server as needed.
+     *
+     * @param request a request which can be sent to the service operation
+     */
+    listStandardTagNamespacesResponseIterator(request) {
+        return oci_common_1.paginateResponses(request, req => this.listStandardTagNamespaces(req));
+    }
+    /**
        * **Deprecated. Use {@link #listAuthTokens(ListAuthTokensRequest) listAuthTokens} instead.**
   * <p>
   Lists the Swift passwords for the specified user. The returned object contains the password's OCID, but not
   * the password itself. The actual password is returned only upon creation.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param ListSwiftPasswordsRequest
        * @return ListSwiftPasswordsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListSwiftPasswords.ts.html |here} to see how to use ListSwiftPasswords API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListSwiftPasswords.ts.html |here} to see how to use ListSwiftPasswords API.
        */
     listSwiftPasswords(listSwiftPasswordsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28564,7 +30459,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listSwiftPasswordsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listSwiftPasswordsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28607,10 +30503,11 @@ class IdentityClient {
     /**
      * Lists the tag defaults for tag definitions in the specified compartment.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListTagDefaultsRequest
      * @return ListTagDefaultsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListTagDefaults.ts.html |here} to see how to use ListTagDefaults API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListTagDefaults.ts.html |here} to see how to use ListTagDefaults API.
      */
     listTagDefaults(listTagDefaultsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28628,7 +30525,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listTagDefaultsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listTagDefaultsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28711,10 +30609,11 @@ class IdentityClient {
     /**
      * Lists the tag namespaces in the specified compartment.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListTagNamespacesRequest
      * @return ListTagNamespacesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListTagNamespaces.ts.html |here} to see how to use ListTagNamespaces API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListTagNamespaces.ts.html |here} to see how to use ListTagNamespaces API.
      */
     listTagNamespaces(listTagNamespacesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28731,7 +30630,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listTagNamespacesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listTagNamespacesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28814,10 +30714,11 @@ class IdentityClient {
     /**
      * Gets the errors for a work request.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListTaggingWorkRequestErrorsRequest
      * @return ListTaggingWorkRequestErrorsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListTaggingWorkRequestErrors.ts.html |here} to see how to use ListTaggingWorkRequestErrors API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListTaggingWorkRequestErrors.ts.html |here} to see how to use ListTaggingWorkRequestErrors API.
      */
     listTaggingWorkRequestErrors(listTaggingWorkRequestErrorsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28833,7 +30734,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listTaggingWorkRequestErrorsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listTaggingWorkRequestErrorsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -28921,10 +30823,11 @@ class IdentityClient {
     /**
      * Gets the logs for a work request.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListTaggingWorkRequestLogsRequest
      * @return ListTaggingWorkRequestLogsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListTaggingWorkRequestLogs.ts.html |here} to see how to use ListTaggingWorkRequestLogs API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListTaggingWorkRequestLogs.ts.html |here} to see how to use ListTaggingWorkRequestLogs API.
      */
     listTaggingWorkRequestLogs(listTaggingWorkRequestLogsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28940,7 +30843,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listTaggingWorkRequestLogsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listTaggingWorkRequestLogsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29028,10 +30932,11 @@ class IdentityClient {
     /**
      * Lists the tagging work requests in compartment.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListTaggingWorkRequestsRequest
      * @return ListTaggingWorkRequestsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListTaggingWorkRequests.ts.html |here} to see how to use ListTaggingWorkRequests API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListTaggingWorkRequests.ts.html |here} to see how to use ListTaggingWorkRequests API.
      */
     listTaggingWorkRequests(listTaggingWorkRequestsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29047,7 +30952,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listTaggingWorkRequestsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listTaggingWorkRequestsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29130,10 +31036,11 @@ class IdentityClient {
     /**
      * Lists the tag definitions in the specified tag namespace.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListTagsRequest
      * @return ListTagsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListTags.ts.html |here} to see how to use ListTags API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListTags.ts.html |here} to see how to use ListTags API.
      */
     listTags(listTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29150,7 +31057,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listTagsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listTagsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29242,10 +31150,11 @@ class IdentityClient {
   * If the answer is no, the response is an empty list.
   * - Although`userId` and `groupId` are not individually required, you must set one of them.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param ListUserGroupMembershipsRequest
        * @return ListUserGroupMembershipsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListUserGroupMemberships.ts.html |here} to see how to use ListUserGroupMemberships API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListUserGroupMemberships.ts.html |here} to see how to use ListUserGroupMemberships API.
        */
     listUserGroupMemberships(listUserGroupMembershipsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29262,7 +31171,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listUserGroupMembershipsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listUserGroupMembershipsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29347,10 +31257,11 @@ class IdentityClient {
      * compartment ID (remember that the tenancy is simply the root compartment).
      * See [Where to Get the Tenancy's OCID and User's OCID](https://docs.cloud.oracle.com/Content/API/Concepts/apisigningkey.htm#five).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListUsersRequest
      * @return ListUsersResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListUsers.ts.html |here} to see how to use ListUsers API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListUsers.ts.html |here} to see how to use ListUsers API.
      */
     listUsers(listUsersRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29371,7 +31282,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listUsersRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listUsersRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29454,10 +31366,11 @@ class IdentityClient {
     /**
      * Lists the work requests in compartment.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ListWorkRequestsRequest
      * @return ListWorkRequestsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ListWorkRequests.ts.html |here} to see how to use ListWorkRequests API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ListWorkRequests.ts.html |here} to see how to use ListWorkRequests API.
      */
     listWorkRequests(listWorkRequestsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29473,7 +31386,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, listWorkRequestsRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listWorkRequestsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29563,10 +31477,11 @@ class IdentityClient {
      * are aware of the implications for the compartment contents before you move it. For more
      * information, see [Moving a Compartment](https://docs.cloud.oracle.com/Content/Identity/Tasks/managingcompartments.htm#MoveCompartment).
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param MoveCompartmentRequest
      * @return MoveCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/MoveCompartment.ts.html |here} to see how to use MoveCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/MoveCompartment.ts.html |here} to see how to use MoveCompartment API.
      */
     moveCompartment(moveCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29582,7 +31497,8 @@ class IdentityClient {
                 "opc-request-id": moveCompartmentRequest.opcRequestId,
                 "opc-retry-token": moveCompartmentRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, moveCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, moveCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29622,10 +31538,11 @@ class IdentityClient {
     /**
      * Recover the compartment from DELETED state to ACTIVE state.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param RecoverCompartmentRequest
      * @return RecoverCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/RecoverCompartment.ts.html |here} to see how to use RecoverCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/RecoverCompartment.ts.html |here} to see how to use RecoverCompartment API.
      */
     recoverCompartment(recoverCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29640,7 +31557,8 @@ class IdentityClient {
                 "if-match": recoverCompartmentRequest.ifMatch,
                 "opc-request-id": recoverCompartmentRequest.opcRequestId
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, recoverCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, recoverCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29682,10 +31600,11 @@ class IdentityClient {
     }
     /**
      * Removes a user from a group by deleting the corresponding `UserGroupMembership`.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param RemoveUserFromGroupRequest
      * @return RemoveUserFromGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/RemoveUserFromGroup.ts.html |here} to see how to use RemoveUserFromGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/RemoveUserFromGroup.ts.html |here} to see how to use RemoveUserFromGroup API.
      */
     removeUserFromGroup(removeUserFromGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29699,7 +31618,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": removeUserFromGroupRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, removeUserFromGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, removeUserFromGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29733,10 +31653,11 @@ class IdentityClient {
     /**
      * Resets the OAuth2 client credentials for the SCIM client associated with this identity provider.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param ResetIdpScimClientRequest
      * @return ResetIdpScimClientResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/ResetIdpScimClient.ts.html |here} to see how to use ResetIdpScimClient API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/ResetIdpScimClient.ts.html |here} to see how to use ResetIdpScimClient API.
      */
     resetIdpScimClient(resetIdpScimClientRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29749,7 +31670,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, resetIdpScimClientRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, resetIdpScimClientRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29787,10 +31709,11 @@ class IdentityClient {
     /**
      * Updates the specified auth token's description.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateAuthTokenRequest
      * @return UpdateAuthTokenResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateAuthToken.ts.html |here} to see how to use UpdateAuthToken API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateAuthToken.ts.html |here} to see how to use UpdateAuthToken API.
      */
     updateAuthToken(updateAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29805,7 +31728,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateAuthTokenRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateAuthTokenRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateAuthTokenRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29849,10 +31773,11 @@ class IdentityClient {
     /**
      * Updates authentication policy for the specified tenancy
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateAuthenticationPolicyRequest
      * @return UpdateAuthenticationPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateAuthenticationPolicy.ts.html |here} to see how to use UpdateAuthenticationPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateAuthenticationPolicy.ts.html |here} to see how to use UpdateAuthenticationPolicy API.
      */
     updateAuthenticationPolicy(updateAuthenticationPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29866,7 +31791,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateAuthenticationPolicyRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateAuthenticationPolicyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateAuthenticationPolicyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29909,10 +31835,11 @@ class IdentityClient {
     }
     /**
      * Updates the specified compartment's description or name. You can't update the root compartment.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateCompartmentRequest
      * @return UpdateCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateCompartment.ts.html |here} to see how to use UpdateCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateCompartment.ts.html |here} to see how to use UpdateCompartment API.
      */
     updateCompartment(updateCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29926,7 +31853,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateCompartmentRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateCompartmentRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -29970,10 +31898,11 @@ class IdentityClient {
     /**
      * Updates the specified secret key's description.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateCustomerSecretKeyRequest
      * @return UpdateCustomerSecretKeyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateCustomerSecretKey.ts.html |here} to see how to use UpdateCustomerSecretKey API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateCustomerSecretKey.ts.html |here} to see how to use UpdateCustomerSecretKey API.
      */
     updateCustomerSecretKey(updateCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29988,7 +31917,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateCustomerSecretKeyRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateCustomerSecretKeyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateCustomerSecretKeyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30030,11 +31960,83 @@ class IdentityClient {
         });
     }
     /**
+       * Updates domain information and associated stripe. This is an asynchronous call where
+  * the associated stripe and domain are updated.
+  * <p>
+  To track progress, HTTP GET on /iamWorkRequests/{iamWorkRequestsId} endpoint will provide
+  * the async operation's status.
+  * <p>
+  - If the {@code displayName} is not unique within the tenancy, returns 400 BAD REQUEST.
+  * - If any field other than {@code description} is requested to be updated for DEFAULT domain,
+  * returns 400 BAD REQUEST.
+  * - If Domain is not active or being updated, returns 400 BAD REQUEST.
+  * - If Domain {@code type} is DEFAULT or DEFAULT_LIGHTWEIGHT, return 400 BAD Request
+  * - If the domain doesn't exists, returns 404 NOT FOUND.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param UpdateDomainRequest
+       * @return UpdateDomainResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateDomain.ts.html |here} to see how to use UpdateDomain API.
+       */
+    updateDomain(updateDomainRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation IdentityClient#updateDomain.");
+            const pathParams = {
+                "{domainId}": updateDomainRequest.domainId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "if-match": updateDomainRequest.ifMatch,
+                "opc-request-id": updateDomainRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateDomainRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_2.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/domains/{domainId}",
+                method: "PUT",
+                bodyContent: common.ObjectSerializer.serialize(updateDomainRequest.updateDomainDetails, "UpdateDomainDetails", model.UpdateDomainDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request);
+                const sdkResponse = oci_common_2.composeResponse({
+                    responseObject: {},
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-work-request-id"),
+                            key: "opcWorkRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
      * Updates the specified dynamic group.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateDynamicGroupRequest
      * @return UpdateDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateDynamicGroup.ts.html |here} to see how to use UpdateDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateDynamicGroup.ts.html |here} to see how to use UpdateDynamicGroup API.
      */
     updateDynamicGroup(updateDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30048,7 +32050,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateDynamicGroupRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateDynamicGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateDynamicGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30091,10 +32094,11 @@ class IdentityClient {
     }
     /**
      * Updates the specified group.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateGroupRequest
      * @return UpdateGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateGroup.ts.html |here} to see how to use UpdateGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateGroup.ts.html |here} to see how to use UpdateGroup API.
      */
     updateGroup(updateGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30108,7 +32112,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateGroupRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateGroupRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateGroupRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30150,12 +32155,16 @@ class IdentityClient {
         });
     }
     /**
-     * Updates the specified identity provider.
-     * @param UpdateIdentityProviderRequest
-     * @return UpdateIdentityProviderResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateIdentityProvider.ts.html |here} to see how to use UpdateIdentityProvider API.
-     */
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Updates the specified identity provider.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param UpdateIdentityProviderRequest
+       * @return UpdateIdentityProviderResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateIdentityProvider.ts.html |here} to see how to use UpdateIdentityProvider API.
+       */
     updateIdentityProvider(updateIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -30168,7 +32177,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateIdentityProviderRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateIdentityProviderRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateIdentityProviderRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30210,12 +32220,16 @@ class IdentityClient {
         });
     }
     /**
-     * Updates the specified group mapping.
-     * @param UpdateIdpGroupMappingRequest
-     * @return UpdateIdpGroupMappingResponse
-     * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateIdpGroupMapping.ts.html |here} to see how to use UpdateIdpGroupMapping API.
-     */
+       * **Deprecated.** For more information, see [Deprecated IAM Service APIs](https://docs.cloud.oracle.com/Content/Identity/Reference/deprecatediamapis.htm).
+  * <p>
+  Updates the specified group mapping.
+  *
+       * This operation does not retry by default if the user has not defined a retry configuration.
+       * @param UpdateIdpGroupMappingRequest
+       * @return UpdateIdpGroupMappingResponse
+       * @throws OciError when an error occurs
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateIdpGroupMapping.ts.html |here} to see how to use UpdateIdpGroupMapping API.
+       */
     updateIdpGroupMapping(updateIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.logger)
@@ -30229,7 +32243,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateIdpGroupMappingRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateIdpGroupMappingRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateIdpGroupMappingRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30272,10 +32287,11 @@ class IdentityClient {
     }
     /**
      * Updates the specified network source.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateNetworkSourceRequest
      * @return UpdateNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateNetworkSource.ts.html |here} to see how to use UpdateNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateNetworkSource.ts.html |here} to see how to use UpdateNetworkSource API.
      */
     updateNetworkSource(updateNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30289,7 +32305,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateNetworkSourceRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateNetworkSourceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateNetworkSourceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30333,10 +32350,11 @@ class IdentityClient {
     /**
      * Updates Oauth token for the user
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateOAuthClientCredentialRequest
      * @return UpdateOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateOAuthClientCredential.ts.html |here} to see how to use UpdateOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateOAuthClientCredential.ts.html |here} to see how to use UpdateOAuthClientCredential API.
      */
     updateOAuthClientCredential(updateOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30351,7 +32369,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateOAuthClientCredentialRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateOAuthClientCredentialRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateOAuthClientCredentialRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30397,10 +32416,11 @@ class IdentityClient {
   * <p>
   Policy changes take effect typically within 10 seconds.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param UpdatePolicyRequest
        * @return UpdatePolicyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdatePolicy.ts.html |here} to see how to use UpdatePolicy API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdatePolicy.ts.html |here} to see how to use UpdatePolicy API.
        */
     updatePolicy(updatePolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30414,7 +32434,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updatePolicyRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updatePolicyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updatePolicyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30458,10 +32479,11 @@ class IdentityClient {
     /**
      * Updates the specified SMTP credential's description.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateSmtpCredentialRequest
      * @return UpdateSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateSmtpCredential.ts.html |here} to see how to use UpdateSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateSmtpCredential.ts.html |here} to see how to use UpdateSmtpCredential API.
      */
     updateSmtpCredential(updateSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30476,7 +32498,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateSmtpCredentialRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateSmtpCredentialRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateSmtpCredentialRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30522,10 +32545,11 @@ class IdentityClient {
   * <p>
   Updates the specified Swift password's description.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param UpdateSwiftPasswordRequest
        * @return UpdateSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateSwiftPassword.ts.html |here} to see how to use UpdateSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateSwiftPassword.ts.html |here} to see how to use UpdateSwiftPassword API.
        */
     updateSwiftPassword(updateSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30540,7 +32564,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateSwiftPasswordRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateSwiftPasswordRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateSwiftPasswordRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30593,10 +32618,11 @@ class IdentityClient {
   You cannot remove list values that appear in a TagDefault. To remove a list value that
   * appears in a TagDefault, first update the TagDefault to use a different value.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param UpdateTagRequest
        * @return UpdateTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateTag.ts.html |here} to see how to use UpdateTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateTag.ts.html |here} to see how to use UpdateTag API.
        */
     updateTag(updateTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30611,7 +32637,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateTagRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateTagRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateTagRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30660,10 +32687,11 @@ class IdentityClient {
      * If the `isRequired` flag is set to \"true\", the value is set during resource creation.
      * * If the `isRequired` flag is set to \"false\", the value you enter is set during resource creation.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateTagDefaultRequest
      * @return UpdateTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateTagDefault.ts.html |here} to see how to use UpdateTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateTagDefault.ts.html |here} to see how to use UpdateTagDefault API.
      */
     updateTagDefault(updateTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30678,7 +32706,8 @@ class IdentityClient {
                 "if-match": updateTagDefaultRequest.ifMatch,
                 "opc-request-id": updateTagDefaultRequest.opcRequestId
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateTagDefaultRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateTagDefaultRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30730,10 +32759,11 @@ class IdentityClient {
   * <p>
   You can't add a namespace with the same name as a retired namespace in the same tenancy.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param UpdateTagNamespaceRequest
        * @return UpdateTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateTagNamespace.ts.html |here} to see how to use UpdateTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateTagNamespace.ts.html |here} to see how to use UpdateTagNamespace API.
        */
     updateTagNamespace(updateTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30746,7 +32776,8 @@ class IdentityClient {
             let headerParams = {
                 "Content-Type": common.Constants.APPLICATION_JSON
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateTagNamespaceRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateTagNamespaceRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30784,10 +32815,11 @@ class IdentityClient {
     }
     /**
      * Updates the description of the specified user.
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateUserRequest
      * @return UpdateUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateUser.ts.html |here} to see how to use UpdateUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateUser.ts.html |here} to see how to use UpdateUser API.
      */
     updateUser(updateUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30801,7 +32833,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateUserRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateUserRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateUserRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30845,10 +32878,11 @@ class IdentityClient {
     /**
      * Updates the capabilities of the specified user.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateUserCapabilitiesRequest
      * @return UpdateUserCapabilitiesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateUserCapabilities.ts.html |here} to see how to use UpdateUserCapabilities API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateUserCapabilities.ts.html |here} to see how to use UpdateUserCapabilities API.
      */
     updateUserCapabilities(updateUserCapabilitiesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30862,7 +32896,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateUserCapabilitiesRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateUserCapabilitiesRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateUserCapabilitiesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30906,10 +32941,11 @@ class IdentityClient {
     /**
      * Updates the state of the specified user.
      *
+     * This operation does not retry by default if the user has not defined a retry configuration.
      * @param UpdateUserStateRequest
      * @return UpdateUserStateResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UpdateUserState.ts.html |here} to see how to use UpdateUserState API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UpdateUserState.ts.html |here} to see how to use UpdateUserState API.
      */
     updateUserState(updateUserStateRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30923,7 +32959,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "if-match": updateUserStateRequest.ifMatch
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, updateUserStateRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateUserStateRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -30981,10 +33018,11 @@ class IdentityClient {
   After you send your request, the new object's `lifecycleState` will temporarily be CREATING. Before using
   * the object, first make sure its `lifecycleState` has changed to ACTIVE.
   *
+       * This operation does not retry by default if the user has not defined a retry configuration.
        * @param UploadApiKeyRequest
        * @return UploadApiKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.5.0/identity/UploadApiKey.ts.html |here} to see how to use UploadApiKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.12.1/identity/UploadApiKey.ts.html |here} to see how to use UploadApiKey API.
        */
     uploadApiKey(uploadApiKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30998,7 +33036,8 @@ class IdentityClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-retry-token": uploadApiKeyRequest.opcRetryToken
             };
-            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : {}, uploadApiKeyRequest.retryConfiguration);
+            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const retrier = oci_common_2.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, uploadApiKeyRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
             const request = yield oci_common_2.composeRequest({
@@ -31041,7 +33080,7 @@ class IdentityClient {
     }
 }
 exports.IdentityClient = IdentityClient;
-IdentityClient.serviceEndpointTemplate = "https://identity.{region}.{secondLevelDomain}";
+IdentityClient.serviceEndpointTemplate = "https://identity.{region}.oci.{secondLevelDomain}";
 //# sourceMappingURL=client.js.map
 
 /***/ }),
@@ -31060,7 +33099,7 @@ IdentityClient.serviceEndpointTemplate = "https://identity.{region}.{secondLevel
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -31113,6 +33152,18 @@ class IdentityWaiter {
         });
     }
     /**
+     * Waits forDomain till it reaches any of the provided states
+     *
+     * @param request the request to send
+     * @param targetStates the desired states to wait for. The waiter will return once the resource reaches any of the provided states
+     * @return response returns GetDomainResponse
+     */
+    forDomain(request, ...targetStates) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return oci_common_1.genericWaiter(this.config, () => this.client.getDomain(request), response => targetStates.includes(response.domain.lifecycleState));
+        });
+    }
+    /**
      * Waits forDynamicGroup till it reaches any of the provided states
      *
      * @param request the request to send
@@ -31134,6 +33185,17 @@ class IdentityWaiter {
     forGroup(request, ...targetStates) {
         return __awaiter(this, void 0, void 0, function* () {
             return oci_common_1.genericTerminalConditionWaiter(this.config, () => this.client.getGroup(request), response => targetStates.includes(response.group.lifecycleState), targetStates.includes(models.Group.LifecycleState.Deleted));
+        });
+    }
+    /**
+     * Waits forIamWorkRequest
+     *
+     * @param request the request to send
+     * @return response returns GetIamWorkRequestResponse
+     */
+    forIamWorkRequest(request) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return oci_common_1.genericWaiter(this.config, () => this.client.getIamWorkRequest(request), response => (response.iamWorkRequest.timeFinished ? true : false));
         });
     }
     /**
@@ -31274,7 +33336,7 @@ exports.IdentityWaiter = IdentityWaiter;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31296,6 +33358,42 @@ var AddUserToGroupDetails;
 
 /***/ }),
 
+/***/ 5371:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AllowedDomainLicenseTypeSummary = void 0;
+var AllowedDomainLicenseTypeSummary;
+(function (AllowedDomainLicenseTypeSummary) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    AllowedDomainLicenseTypeSummary.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    AllowedDomainLicenseTypeSummary.getDeserializedJsonObj = getDeserializedJsonObj;
+})(AllowedDomainLicenseTypeSummary = exports.AllowedDomainLicenseTypeSummary || (exports.AllowedDomainLicenseTypeSummary = {}));
+//# sourceMappingURL=allowed-domain-license-type-summary.js.map
+
+/***/ }),
+
 /***/ 4831:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -31310,7 +33408,7 @@ var AddUserToGroupDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31359,7 +33457,7 @@ var ApiKey;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31408,7 +33506,7 @@ var AuthToken;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -31478,7 +33576,7 @@ var AuthenticationPolicy;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31514,7 +33612,7 @@ var AvailabilityDomain;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -31590,7 +33688,7 @@ var BaseTagDefinitionValidator;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -31658,7 +33756,7 @@ var BulkActionResourceTypeCollection;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31694,7 +33792,7 @@ var BulkActionResourceType;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31730,7 +33828,7 @@ var BulkActionResource;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -31798,7 +33896,7 @@ var BulkDeleteResourcesDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31834,7 +33932,7 @@ var BulkDeleteTagsDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31877,7 +33975,7 @@ var BulkEditOperationDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -31913,7 +34011,7 @@ var BulkEditResource;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -31991,7 +34089,7 @@ var BulkEditTagsDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -32059,7 +34157,7 @@ var BulkEditTagsResourceTypeCollection;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32095,7 +34193,7 @@ var BulkEditTagsResourceType;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -32149,6 +34247,78 @@ var BulkMoveResourcesDetails;
 
 /***/ }),
 
+/***/ 9462:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChangeDomainCompartmentDetails = void 0;
+var ChangeDomainCompartmentDetails;
+(function (ChangeDomainCompartmentDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ChangeDomainCompartmentDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ChangeDomainCompartmentDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(ChangeDomainCompartmentDetails = exports.ChangeDomainCompartmentDetails || (exports.ChangeDomainCompartmentDetails = {}));
+//# sourceMappingURL=change-domain-compartment-details.js.map
+
+/***/ }),
+
+/***/ 9002:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChangeDomainLicenseTypeDetails = void 0;
+var ChangeDomainLicenseTypeDetails;
+(function (ChangeDomainLicenseTypeDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ChangeDomainLicenseTypeDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ChangeDomainLicenseTypeDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(ChangeDomainLicenseTypeDetails = exports.ChangeDomainLicenseTypeDetails || (exports.ChangeDomainLicenseTypeDetails = {}));
+//# sourceMappingURL=change-domain-license-type-details.js.map
+
+/***/ }),
+
 /***/ 5779:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -32163,7 +34333,7 @@ var BulkMoveResourcesDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32185,6 +34355,42 @@ var ChangeTagNamespaceCompartmentDetail;
 
 /***/ }),
 
+/***/ 1709:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ChangeTasDomainLicenseTypeDetails = void 0;
+var ChangeTasDomainLicenseTypeDetails;
+(function (ChangeTasDomainLicenseTypeDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ChangeTasDomainLicenseTypeDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ChangeTasDomainLicenseTypeDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(ChangeTasDomainLicenseTypeDetails = exports.ChangeTasDomainLicenseTypeDetails || (exports.ChangeTasDomainLicenseTypeDetails = {}));
+//# sourceMappingURL=change-tas-domain-license-type-details.js.map
+
+/***/ }),
+
 /***/ 8094:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -32199,7 +34405,7 @@ var ChangeTagNamespaceCompartmentDetail;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32248,7 +34454,7 @@ var Compartment;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32284,7 +34490,7 @@ var CreateApiKeyDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32320,7 +34526,7 @@ var CreateAuthTokenDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32356,7 +34562,7 @@ var CreateCompartmentDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32378,6 +34584,78 @@ var CreateCustomerSecretKeyDetails;
 
 /***/ }),
 
+/***/ 9764:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CreateDbCredentialDetails = void 0;
+var CreateDbCredentialDetails;
+(function (CreateDbCredentialDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    CreateDbCredentialDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    CreateDbCredentialDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(CreateDbCredentialDetails = exports.CreateDbCredentialDetails || (exports.CreateDbCredentialDetails = {}));
+//# sourceMappingURL=create-db-credential-details.js.map
+
+/***/ }),
+
+/***/ 4689:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CreateDomainDetails = void 0;
+var CreateDomainDetails;
+(function (CreateDomainDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    CreateDomainDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    CreateDomainDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(CreateDomainDetails = exports.CreateDomainDetails || (exports.CreateDomainDetails = {}));
+//# sourceMappingURL=create-domain-details.js.map
+
+/***/ }),
+
 /***/ 8894:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -32392,7 +34670,7 @@ var CreateCustomerSecretKeyDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32428,7 +34706,7 @@ var CreateDynamicGroupDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32464,7 +34742,7 @@ var CreateGroupDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -32541,7 +34819,7 @@ var CreateIdentityProviderDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32577,7 +34855,7 @@ var CreateIdpGroupMappingDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -32645,7 +34923,7 @@ var CreateNetworkSourceDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -32713,7 +34991,7 @@ var CreateOAuth2ClientCredentialDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32749,7 +35027,7 @@ var CreatePolicyDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32785,7 +35063,7 @@ var CreateRegionSubscriptionDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -32846,7 +35124,7 @@ var CreateSaml2IdentityProviderDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32882,7 +35160,7 @@ var CreateSmtpCredentialDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32918,7 +35196,7 @@ var CreateSwiftPasswordDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -32954,7 +35232,7 @@ var CreateTagDefaultDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33018,7 +35296,7 @@ var CreateTagDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33054,7 +35332,7 @@ var CreateTagNamespaceDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33090,7 +35368,7 @@ var CreateUserDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33139,7 +35417,7 @@ var CustomerSecretKeySummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33174,6 +35452,90 @@ var CustomerSecretKey;
 
 /***/ }),
 
+/***/ 6334:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DbCredentialSummary = void 0;
+var DbCredentialSummary;
+(function (DbCredentialSummary) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    DbCredentialSummary.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    DbCredentialSummary.getDeserializedJsonObj = getDeserializedJsonObj;
+})(DbCredentialSummary = exports.DbCredentialSummary || (exports.DbCredentialSummary = {}));
+//# sourceMappingURL=db-credential-summary.js.map
+
+/***/ }),
+
+/***/ 6879:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DbCredential = void 0;
+var DbCredential;
+(function (DbCredential) {
+    let LifecycleState;
+    (function (LifecycleState) {
+        LifecycleState["Creating"] = "CREATING";
+        LifecycleState["Active"] = "ACTIVE";
+        LifecycleState["Deleting"] = "DELETING";
+        LifecycleState["Deleted"] = "DELETED";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        LifecycleState["UnknownValue"] = "UNKNOWN_VALUE";
+    })(LifecycleState = DbCredential.LifecycleState || (DbCredential.LifecycleState = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    DbCredential.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    DbCredential.getDeserializedJsonObj = getDeserializedJsonObj;
+})(DbCredential = exports.DbCredential || (exports.DbCredential = {}));
+//# sourceMappingURL=db-credential.js.map
+
+/***/ }),
+
 /***/ 5975:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -33188,7 +35550,7 @@ var CustomerSecretKey;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33235,6 +35597,320 @@ var DefaultTagDefinitionValidator;
 
 /***/ }),
 
+/***/ 2406:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DomainReplicationStates = void 0;
+var DomainReplicationStates;
+(function (DomainReplicationStates) {
+    let State;
+    (function (State) {
+        State["EnablingReplication"] = "ENABLING_REPLICATION";
+        State["ReplicationEnabled"] = "REPLICATION_ENABLED";
+        State["DisablingReplication"] = "DISABLING_REPLICATION";
+        State["ReplicationDisabled"] = "REPLICATION_DISABLED";
+        State["Deleted"] = "DELETED";
+    })(State = DomainReplicationStates.State || (DomainReplicationStates.State = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    DomainReplicationStates.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    DomainReplicationStates.getDeserializedJsonObj = getDeserializedJsonObj;
+})(DomainReplicationStates = exports.DomainReplicationStates || (exports.DomainReplicationStates = {}));
+//# sourceMappingURL=domain-replication-states.js.map
+
+/***/ }),
+
+/***/ 5857:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DomainReplication = void 0;
+const model = __importStar(__nccwpck_require__(7268));
+var DomainReplication;
+(function (DomainReplication) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "domainReplicationStates": obj.domainReplicationStates
+                ? obj.domainReplicationStates.map(item => {
+                    return model.DomainReplicationStates.getJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    DomainReplication.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "domainReplicationStates": obj.domainReplicationStates
+                ? obj.domainReplicationStates.map(item => {
+                    return model.DomainReplicationStates.getDeserializedJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    DomainReplication.getDeserializedJsonObj = getDeserializedJsonObj;
+})(DomainReplication = exports.DomainReplication || (exports.DomainReplication = {}));
+//# sourceMappingURL=domain-replication.js.map
+
+/***/ }),
+
+/***/ 7640:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DomainSummary = void 0;
+const model = __importStar(__nccwpck_require__(7268));
+var DomainSummary;
+(function (DomainSummary) {
+    let Type;
+    (function (Type) {
+        Type["Default"] = "DEFAULT";
+        Type["Secondary"] = "SECONDARY";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        Type["UnknownValue"] = "UNKNOWN_VALUE";
+    })(Type = DomainSummary.Type || (DomainSummary.Type = {}));
+    let LifecycleState;
+    (function (LifecycleState) {
+        LifecycleState["Creating"] = "CREATING";
+        LifecycleState["Active"] = "ACTIVE";
+        LifecycleState["Deleting"] = "DELETING";
+        LifecycleState["Inactive"] = "INACTIVE";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        LifecycleState["UnknownValue"] = "UNKNOWN_VALUE";
+    })(LifecycleState = DomainSummary.LifecycleState || (DomainSummary.LifecycleState = {}));
+    let LifecycleDetails;
+    (function (LifecycleDetails) {
+        LifecycleDetails["Deactivating"] = "DEACTIVATING";
+        LifecycleDetails["Activating"] = "ACTIVATING";
+        LifecycleDetails["Updating"] = "UPDATING";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        LifecycleDetails["UnknownValue"] = "UNKNOWN_VALUE";
+    })(LifecycleDetails = DomainSummary.LifecycleDetails || (DomainSummary.LifecycleDetails = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "replicaRegions": obj.replicaRegions
+                ? obj.replicaRegions.map(item => {
+                    return model.ReplicatedRegionDetails.getJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    DomainSummary.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "replicaRegions": obj.replicaRegions
+                ? obj.replicaRegions.map(item => {
+                    return model.ReplicatedRegionDetails.getDeserializedJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    DomainSummary.getDeserializedJsonObj = getDeserializedJsonObj;
+})(DomainSummary = exports.DomainSummary || (exports.DomainSummary = {}));
+//# sourceMappingURL=domain-summary.js.map
+
+/***/ }),
+
+/***/ 8419:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Domain = void 0;
+const model = __importStar(__nccwpck_require__(7268));
+var Domain;
+(function (Domain) {
+    let Type;
+    (function (Type) {
+        Type["Default"] = "DEFAULT";
+        Type["Secondary"] = "SECONDARY";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        Type["UnknownValue"] = "UNKNOWN_VALUE";
+    })(Type = Domain.Type || (Domain.Type = {}));
+    let LifecycleState;
+    (function (LifecycleState) {
+        LifecycleState["Creating"] = "CREATING";
+        LifecycleState["Active"] = "ACTIVE";
+        LifecycleState["Deleting"] = "DELETING";
+        LifecycleState["Inactive"] = "INACTIVE";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        LifecycleState["UnknownValue"] = "UNKNOWN_VALUE";
+    })(LifecycleState = Domain.LifecycleState || (Domain.LifecycleState = {}));
+    let LifecycleDetails;
+    (function (LifecycleDetails) {
+        LifecycleDetails["Deactivating"] = "DEACTIVATING";
+        LifecycleDetails["Activating"] = "ACTIVATING";
+        LifecycleDetails["Updating"] = "UPDATING";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        LifecycleDetails["UnknownValue"] = "UNKNOWN_VALUE";
+    })(LifecycleDetails = Domain.LifecycleDetails || (Domain.LifecycleDetails = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "replicaRegions": obj.replicaRegions
+                ? obj.replicaRegions.map(item => {
+                    return model.ReplicatedRegionDetails.getJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    Domain.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "replicaRegions": obj.replicaRegions
+                ? obj.replicaRegions.map(item => {
+                    return model.ReplicatedRegionDetails.getDeserializedJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    Domain.getDeserializedJsonObj = getDeserializedJsonObj;
+})(Domain = exports.Domain || (exports.Domain = {}));
+//# sourceMappingURL=domain.js.map
+
+/***/ }),
+
 /***/ 8888:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -33249,7 +35925,7 @@ var DefaultTagDefinitionValidator;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33284,6 +35960,42 @@ var DynamicGroup;
 
 /***/ }),
 
+/***/ 4034:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.EnableReplicationToRegionDetails = void 0;
+var EnableReplicationToRegionDetails;
+(function (EnableReplicationToRegionDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    EnableReplicationToRegionDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    EnableReplicationToRegionDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(EnableReplicationToRegionDetails = exports.EnableReplicationToRegionDetails || (exports.EnableReplicationToRegionDetails = {}));
+//# sourceMappingURL=enable-replication-to-region-details.js.map
+
+/***/ }),
+
 /***/ 1764:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -33298,7 +36010,7 @@ var DynamicGroup;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33359,7 +36071,7 @@ var EnumTagDefinitionValidator;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33395,7 +36107,7 @@ var FaultDomain;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33431,7 +36143,7 @@ var FullyQualifiedScope;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33466,6 +36178,323 @@ var Group;
 
 /***/ }),
 
+/***/ 7041:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.IamWorkRequestErrorSummary = void 0;
+var IamWorkRequestErrorSummary;
+(function (IamWorkRequestErrorSummary) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    IamWorkRequestErrorSummary.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    IamWorkRequestErrorSummary.getDeserializedJsonObj = getDeserializedJsonObj;
+})(IamWorkRequestErrorSummary = exports.IamWorkRequestErrorSummary || (exports.IamWorkRequestErrorSummary = {}));
+//# sourceMappingURL=iam-work-request-error-summary.js.map
+
+/***/ }),
+
+/***/ 6872:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.IamWorkRequestLogSummary = void 0;
+var IamWorkRequestLogSummary;
+(function (IamWorkRequestLogSummary) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    IamWorkRequestLogSummary.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    IamWorkRequestLogSummary.getDeserializedJsonObj = getDeserializedJsonObj;
+})(IamWorkRequestLogSummary = exports.IamWorkRequestLogSummary || (exports.IamWorkRequestLogSummary = {}));
+//# sourceMappingURL=iam-work-request-log-summary.js.map
+
+/***/ }),
+
+/***/ 7423:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.IamWorkRequestResource = void 0;
+var IamWorkRequestResource;
+(function (IamWorkRequestResource) {
+    let ActionType;
+    (function (ActionType) {
+        ActionType["Created"] = "CREATED";
+        ActionType["Updated"] = "UPDATED";
+        ActionType["Deleted"] = "DELETED";
+        ActionType["Related"] = "RELATED";
+        ActionType["InProgress"] = "IN_PROGRESS";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        ActionType["UnknownValue"] = "UNKNOWN_VALUE";
+    })(ActionType = IamWorkRequestResource.ActionType || (IamWorkRequestResource.ActionType = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    IamWorkRequestResource.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    IamWorkRequestResource.getDeserializedJsonObj = getDeserializedJsonObj;
+})(IamWorkRequestResource = exports.IamWorkRequestResource || (exports.IamWorkRequestResource = {}));
+//# sourceMappingURL=iam-work-request-resource.js.map
+
+/***/ }),
+
+/***/ 6979:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.IamWorkRequestSummary = void 0;
+const model = __importStar(__nccwpck_require__(7268));
+var IamWorkRequestSummary;
+(function (IamWorkRequestSummary) {
+    let OperationType;
+    (function (OperationType) {
+        OperationType["CreateDomain"] = "CREATE_DOMAIN";
+        OperationType["ReplicateDomainToRegion"] = "REPLICATE_DOMAIN_TO_REGION";
+        OperationType["UpdateDomain"] = "UPDATE_DOMAIN";
+        OperationType["ActivateDomain"] = "ACTIVATE_DOMAIN";
+        OperationType["DeactivateDomain"] = "DEACTIVATE_DOMAIN";
+        OperationType["DeleteDomain"] = "DELETE_DOMAIN";
+        OperationType["ChangeCompartmentForDomain"] = "CHANGE_COMPARTMENT_FOR_DOMAIN";
+        OperationType["ChangeLicenseTypeForDomain"] = "CHANGE_LICENSE_TYPE_FOR_DOMAIN";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        OperationType["UnknownValue"] = "UNKNOWN_VALUE";
+    })(OperationType = IamWorkRequestSummary.OperationType || (IamWorkRequestSummary.OperationType = {}));
+    let Status;
+    (function (Status) {
+        Status["Accepted"] = "ACCEPTED";
+        Status["InProgress"] = "IN_PROGRESS";
+        Status["Failed"] = "FAILED";
+        Status["Succeeded"] = "SUCCEEDED";
+        Status["Canceling"] = "CANCELING";
+        Status["Canceled"] = "CANCELED";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        Status["UnknownValue"] = "UNKNOWN_VALUE";
+    })(Status = IamWorkRequestSummary.Status || (IamWorkRequestSummary.Status = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "resources": obj.resources
+                ? obj.resources.map(item => {
+                    return model.IamWorkRequestResource.getJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    IamWorkRequestSummary.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "resources": obj.resources
+                ? obj.resources.map(item => {
+                    return model.IamWorkRequestResource.getDeserializedJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    IamWorkRequestSummary.getDeserializedJsonObj = getDeserializedJsonObj;
+})(IamWorkRequestSummary = exports.IamWorkRequestSummary || (exports.IamWorkRequestSummary = {}));
+//# sourceMappingURL=iam-work-request-summary.js.map
+
+/***/ }),
+
+/***/ 8197:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.IamWorkRequest = void 0;
+const model = __importStar(__nccwpck_require__(7268));
+var IamWorkRequest;
+(function (IamWorkRequest) {
+    let OperationType;
+    (function (OperationType) {
+        OperationType["CreateDomain"] = "CREATE_DOMAIN";
+        OperationType["ReplicateDomainToRegion"] = "REPLICATE_DOMAIN_TO_REGION";
+        OperationType["UpdateDomain"] = "UPDATE_DOMAIN";
+        OperationType["ActivateDomain"] = "ACTIVATE_DOMAIN";
+        OperationType["DeactivateDomain"] = "DEACTIVATE_DOMAIN";
+        OperationType["DeleteDomain"] = "DELETE_DOMAIN";
+        OperationType["ChangeCompartmentForDomain"] = "CHANGE_COMPARTMENT_FOR_DOMAIN";
+        OperationType["ChangeLicenseTypeForDomain"] = "CHANGE_LICENSE_TYPE_FOR_DOMAIN";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        OperationType["UnknownValue"] = "UNKNOWN_VALUE";
+    })(OperationType = IamWorkRequest.OperationType || (IamWorkRequest.OperationType = {}));
+    let Status;
+    (function (Status) {
+        Status["Accepted"] = "ACCEPTED";
+        Status["InProgress"] = "IN_PROGRESS";
+        Status["Failed"] = "FAILED";
+        Status["Succeeded"] = "SUCCEEDED";
+        Status["Canceling"] = "CANCELING";
+        Status["Canceled"] = "CANCELED";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        Status["UnknownValue"] = "UNKNOWN_VALUE";
+    })(Status = IamWorkRequest.Status || (IamWorkRequest.Status = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "resources": obj.resources
+                ? obj.resources.map(item => {
+                    return model.IamWorkRequestResource.getJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    IamWorkRequest.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "resources": obj.resources
+                ? obj.resources.map(item => {
+                    return model.IamWorkRequestResource.getDeserializedJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    IamWorkRequest.getDeserializedJsonObj = getDeserializedJsonObj;
+})(IamWorkRequest = exports.IamWorkRequest || (exports.IamWorkRequest = {}));
+//# sourceMappingURL=iam-work-request.js.map
+
+/***/ }),
+
 /***/ 3442:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -33480,7 +36509,7 @@ var Group;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33516,7 +36545,7 @@ var IdentityProviderGroupSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33601,7 +36630,7 @@ var IdentityProvider;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33636,6 +36665,42 @@ var IdpGroupMapping;
 
 /***/ }),
 
+/***/ 271:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ImportStandardTagsDetails = void 0;
+var ImportStandardTagsDetails;
+(function (ImportStandardTagsDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ImportStandardTagsDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ImportStandardTagsDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(ImportStandardTagsDetails = exports.ImportStandardTagsDetails || (exports.ImportStandardTagsDetails = {}));
+//# sourceMappingURL=import-standard-tags-details.js.map
+
+/***/ }),
+
 /***/ 7268:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -33650,7 +36715,7 @@ var IdpGroupMapping;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33673,11 +36738,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MoveCompartmentDetails = exports.MfaTotpToken = exports.MfaTotpDeviceSummary = exports.MfaTotpDevice = exports.IdpGroupMapping = exports.IdentityProviderGroupSummary = exports.IdentityProvider = exports.Group = exports.FullyQualifiedScope = exports.FaultDomain = exports.DynamicGroup = exports.CustomerSecretKeySummary = exports.CustomerSecretKey = exports.CreateUserDetails = exports.CreateTagNamespaceDetails = exports.CreateTagDetails = exports.CreateTagDefaultDetails = exports.CreateSwiftPasswordDetails = exports.CreateSmtpCredentialDetails = exports.CreateRegionSubscriptionDetails = exports.CreatePolicyDetails = exports.CreateOAuth2ClientCredentialDetails = exports.CreateNetworkSourceDetails = exports.CreateIdpGroupMappingDetails = exports.CreateIdentityProviderDetails = exports.CreateGroupDetails = exports.CreateDynamicGroupDetails = exports.CreateCustomerSecretKeyDetails = exports.CreateCompartmentDetails = exports.CreateAuthTokenDetails = exports.CreateApiKeyDetails = exports.Compartment = exports.ChangeTagNamespaceCompartmentDetail = exports.BulkMoveResourcesDetails = exports.BulkEditTagsResourceTypeCollection = exports.BulkEditTagsResourceType = exports.BulkEditTagsDetails = exports.BulkEditResource = exports.BulkEditOperationDetails = exports.BulkDeleteTagsDetails = exports.BulkDeleteResourcesDetails = exports.BulkActionResourceTypeCollection = exports.BulkActionResourceType = exports.BulkActionResource = exports.BaseTagDefinitionValidator = exports.AvailabilityDomain = exports.AuthenticationPolicy = exports.AuthToken = exports.ApiKey = exports.AddUserToGroupDetails = void 0;
-exports.WorkRequest = exports.UserGroupMembership = exports.UserCapabilities = exports.User = exports.UpdateUserDetails = exports.UpdateUserCapabilitiesDetails = exports.UpdateTagNamespaceDetails = exports.UpdateTagDetails = exports.UpdateTagDefaultDetails = exports.UpdateSwiftPasswordDetails = exports.UpdateStateDetails = exports.UpdateSmtpCredentialDetails = exports.UpdatePolicyDetails = exports.UpdateOAuth2ClientCredentialDetails = exports.UpdateNetworkSourceDetails = exports.UpdateIdpGroupMappingDetails = exports.UpdateIdentityProviderDetails = exports.UpdateGroupDetails = exports.UpdateDynamicGroupDetails = exports.UpdateCustomerSecretKeyDetails = exports.UpdateCompartmentDetails = exports.UpdateAuthenticationPolicyDetails = exports.UpdateAuthTokenDetails = exports.UIPasswordInformation = exports.UIPassword = exports.Tenancy = exports.TaggingWorkRequestSummary = exports.TaggingWorkRequestLogSummary = exports.TaggingWorkRequestErrorSummary = exports.TaggingWorkRequest = exports.TagSummary = exports.TagNamespaceSummary = exports.TagNamespace = exports.TagDefaultSummary = exports.TagDefault = exports.Tag = exports.SwiftPassword = exports.SmtpCredentialSummary = exports.SmtpCredential = exports.ScimClientCredentials = exports.RegionSubscription = exports.Region = exports.Policy = exports.PasswordPolicy = exports.OAuth2ClientCredentialSummary = exports.OAuth2ClientCredential = exports.NetworkSourcesVirtualSourceList = exports.NetworkSourcesSummary = exports.NetworkSources = exports.NetworkPolicy = void 0;
-exports.UpdateSaml2IdentityProviderDetails = exports.Saml2IdentityProvider = exports.EnumTagDefinitionValidator = exports.DefaultTagDefinitionValidator = exports.CreateSaml2IdentityProviderDetails = exports.WorkRequestSummary = exports.WorkRequestResource = exports.WorkRequestLogEntry = exports.WorkRequestError = void 0;
+exports.DomainReplicationStates = exports.DomainReplication = exports.Domain = exports.DbCredentialSummary = exports.DbCredential = exports.CustomerSecretKeySummary = exports.CustomerSecretKey = exports.CreateUserDetails = exports.CreateTagNamespaceDetails = exports.CreateTagDetails = exports.CreateTagDefaultDetails = exports.CreateSwiftPasswordDetails = exports.CreateSmtpCredentialDetails = exports.CreateRegionSubscriptionDetails = exports.CreatePolicyDetails = exports.CreateOAuth2ClientCredentialDetails = exports.CreateNetworkSourceDetails = exports.CreateIdpGroupMappingDetails = exports.CreateIdentityProviderDetails = exports.CreateGroupDetails = exports.CreateDynamicGroupDetails = exports.CreateDomainDetails = exports.CreateDbCredentialDetails = exports.CreateCustomerSecretKeyDetails = exports.CreateCompartmentDetails = exports.CreateAuthTokenDetails = exports.CreateApiKeyDetails = exports.Compartment = exports.ChangeTasDomainLicenseTypeDetails = exports.ChangeTagNamespaceCompartmentDetail = exports.ChangeDomainLicenseTypeDetails = exports.ChangeDomainCompartmentDetails = exports.BulkMoveResourcesDetails = exports.BulkEditTagsResourceTypeCollection = exports.BulkEditTagsResourceType = exports.BulkEditTagsDetails = exports.BulkEditResource = exports.BulkEditOperationDetails = exports.BulkDeleteTagsDetails = exports.BulkDeleteResourcesDetails = exports.BulkActionResourceTypeCollection = exports.BulkActionResourceType = exports.BulkActionResource = exports.BaseTagDefinitionValidator = exports.AvailabilityDomain = exports.AuthenticationPolicy = exports.AuthToken = exports.ApiKey = exports.AllowedDomainLicenseTypeSummary = exports.AddUserToGroupDetails = void 0;
+exports.UIPasswordInformation = exports.UIPassword = exports.Tenancy = exports.TaggingWorkRequestSummary = exports.TaggingWorkRequestLogSummary = exports.TaggingWorkRequestErrorSummary = exports.TaggingWorkRequest = exports.TagSummary = exports.TagNamespaceSummary = exports.TagNamespace = exports.TagDefaultSummary = exports.TagDefault = exports.Tag = exports.SwiftPassword = exports.StandardTagNamespaceTemplateSummary = exports.StandardTagNamespaceTemplate = exports.StandardTagDefinitionTemplate = exports.SmtpCredentialSummary = exports.SmtpCredential = exports.ScimClientCredentials = exports.ReplicatedRegionDetails = exports.RegionSubscription = exports.Region = exports.Policy = exports.PasswordPolicy = exports.OAuth2ClientCredentialSummary = exports.OAuth2ClientCredential = exports.NetworkSourcesVirtualSourceList = exports.NetworkSourcesSummary = exports.NetworkSources = exports.NetworkPolicy = exports.MoveCompartmentDetails = exports.MfaTotpToken = exports.MfaTotpDeviceSummary = exports.MfaTotpDevice = exports.ImportStandardTagsDetails = exports.IdpGroupMapping = exports.IdentityProviderGroupSummary = exports.IdentityProvider = exports.IamWorkRequestSummary = exports.IamWorkRequestResource = exports.IamWorkRequestLogSummary = exports.IamWorkRequestErrorSummary = exports.IamWorkRequest = exports.Group = exports.FullyQualifiedScope = exports.FaultDomain = exports.EnableReplicationToRegionDetails = exports.DynamicGroup = exports.DomainSummary = void 0;
+exports.UpdateSaml2IdentityProviderDetails = exports.Saml2IdentityProvider = exports.EnumTagDefinitionValidator = exports.DefaultTagDefinitionValidator = exports.CreateSaml2IdentityProviderDetails = exports.WorkRequestSummary = exports.WorkRequestResource = exports.WorkRequestLogEntry = exports.WorkRequestError = exports.WorkRequest = exports.UserGroupMembership = exports.UserCapabilities = exports.User = exports.UpdateUserDetails = exports.UpdateUserCapabilitiesDetails = exports.UpdateTagNamespaceDetails = exports.UpdateTagDetails = exports.UpdateTagDefaultDetails = exports.UpdateSwiftPasswordDetails = exports.UpdateStateDetails = exports.UpdateSmtpCredentialDetails = exports.UpdatePolicyDetails = exports.UpdateOAuth2ClientCredentialDetails = exports.UpdateNetworkSourceDetails = exports.UpdateIdpGroupMappingDetails = exports.UpdateIdentityProviderDetails = exports.UpdateGroupDetails = exports.UpdateDynamicGroupDetails = exports.UpdateDomainDetails = exports.UpdateCustomerSecretKeyDetails = exports.UpdateCompartmentDetails = exports.UpdateAuthenticationPolicyDetails = exports.UpdateAuthTokenDetails = void 0;
 const AddUserToGroupDetails = __importStar(__nccwpck_require__(9846));
 exports.AddUserToGroupDetails = AddUserToGroupDetails.AddUserToGroupDetails;
+const AllowedDomainLicenseTypeSummary = __importStar(__nccwpck_require__(5371));
+exports.AllowedDomainLicenseTypeSummary = AllowedDomainLicenseTypeSummary.AllowedDomainLicenseTypeSummary;
 const ApiKey = __importStar(__nccwpck_require__(4831));
 exports.ApiKey = ApiKey.ApiKey;
 const AuthToken = __importStar(__nccwpck_require__(7631));
@@ -33710,8 +36777,14 @@ const BulkEditTagsResourceTypeCollection = __importStar(__nccwpck_require__(3808
 exports.BulkEditTagsResourceTypeCollection = BulkEditTagsResourceTypeCollection.BulkEditTagsResourceTypeCollection;
 const BulkMoveResourcesDetails = __importStar(__nccwpck_require__(9739));
 exports.BulkMoveResourcesDetails = BulkMoveResourcesDetails.BulkMoveResourcesDetails;
+const ChangeDomainCompartmentDetails = __importStar(__nccwpck_require__(9462));
+exports.ChangeDomainCompartmentDetails = ChangeDomainCompartmentDetails.ChangeDomainCompartmentDetails;
+const ChangeDomainLicenseTypeDetails = __importStar(__nccwpck_require__(9002));
+exports.ChangeDomainLicenseTypeDetails = ChangeDomainLicenseTypeDetails.ChangeDomainLicenseTypeDetails;
 const ChangeTagNamespaceCompartmentDetail = __importStar(__nccwpck_require__(5779));
 exports.ChangeTagNamespaceCompartmentDetail = ChangeTagNamespaceCompartmentDetail.ChangeTagNamespaceCompartmentDetail;
+const ChangeTasDomainLicenseTypeDetails = __importStar(__nccwpck_require__(1709));
+exports.ChangeTasDomainLicenseTypeDetails = ChangeTasDomainLicenseTypeDetails.ChangeTasDomainLicenseTypeDetails;
 const Compartment = __importStar(__nccwpck_require__(8094));
 exports.Compartment = Compartment.Compartment;
 const CreateApiKeyDetails = __importStar(__nccwpck_require__(8680));
@@ -33722,6 +36795,10 @@ const CreateCompartmentDetails = __importStar(__nccwpck_require__(7243));
 exports.CreateCompartmentDetails = CreateCompartmentDetails.CreateCompartmentDetails;
 const CreateCustomerSecretKeyDetails = __importStar(__nccwpck_require__(7345));
 exports.CreateCustomerSecretKeyDetails = CreateCustomerSecretKeyDetails.CreateCustomerSecretKeyDetails;
+const CreateDbCredentialDetails = __importStar(__nccwpck_require__(9764));
+exports.CreateDbCredentialDetails = CreateDbCredentialDetails.CreateDbCredentialDetails;
+const CreateDomainDetails = __importStar(__nccwpck_require__(4689));
+exports.CreateDomainDetails = CreateDomainDetails.CreateDomainDetails;
 const CreateDynamicGroupDetails = __importStar(__nccwpck_require__(8894));
 exports.CreateDynamicGroupDetails = CreateDynamicGroupDetails.CreateDynamicGroupDetails;
 const CreateGroupDetails = __importStar(__nccwpck_require__(6649));
@@ -33754,20 +36831,46 @@ const CustomerSecretKey = __importStar(__nccwpck_require__(8681));
 exports.CustomerSecretKey = CustomerSecretKey.CustomerSecretKey;
 const CustomerSecretKeySummary = __importStar(__nccwpck_require__(6361));
 exports.CustomerSecretKeySummary = CustomerSecretKeySummary.CustomerSecretKeySummary;
+const DbCredential = __importStar(__nccwpck_require__(6879));
+exports.DbCredential = DbCredential.DbCredential;
+const DbCredentialSummary = __importStar(__nccwpck_require__(6334));
+exports.DbCredentialSummary = DbCredentialSummary.DbCredentialSummary;
+const Domain = __importStar(__nccwpck_require__(8419));
+exports.Domain = Domain.Domain;
+const DomainReplication = __importStar(__nccwpck_require__(5857));
+exports.DomainReplication = DomainReplication.DomainReplication;
+const DomainReplicationStates = __importStar(__nccwpck_require__(2406));
+exports.DomainReplicationStates = DomainReplicationStates.DomainReplicationStates;
+const DomainSummary = __importStar(__nccwpck_require__(7640));
+exports.DomainSummary = DomainSummary.DomainSummary;
 const DynamicGroup = __importStar(__nccwpck_require__(8888));
 exports.DynamicGroup = DynamicGroup.DynamicGroup;
+const EnableReplicationToRegionDetails = __importStar(__nccwpck_require__(4034));
+exports.EnableReplicationToRegionDetails = EnableReplicationToRegionDetails.EnableReplicationToRegionDetails;
 const FaultDomain = __importStar(__nccwpck_require__(8374));
 exports.FaultDomain = FaultDomain.FaultDomain;
 const FullyQualifiedScope = __importStar(__nccwpck_require__(1786));
 exports.FullyQualifiedScope = FullyQualifiedScope.FullyQualifiedScope;
 const Group = __importStar(__nccwpck_require__(8291));
 exports.Group = Group.Group;
+const IamWorkRequest = __importStar(__nccwpck_require__(8197));
+exports.IamWorkRequest = IamWorkRequest.IamWorkRequest;
+const IamWorkRequestErrorSummary = __importStar(__nccwpck_require__(7041));
+exports.IamWorkRequestErrorSummary = IamWorkRequestErrorSummary.IamWorkRequestErrorSummary;
+const IamWorkRequestLogSummary = __importStar(__nccwpck_require__(6872));
+exports.IamWorkRequestLogSummary = IamWorkRequestLogSummary.IamWorkRequestLogSummary;
+const IamWorkRequestResource = __importStar(__nccwpck_require__(7423));
+exports.IamWorkRequestResource = IamWorkRequestResource.IamWorkRequestResource;
+const IamWorkRequestSummary = __importStar(__nccwpck_require__(6979));
+exports.IamWorkRequestSummary = IamWorkRequestSummary.IamWorkRequestSummary;
 const IdentityProvider = __importStar(__nccwpck_require__(973));
 exports.IdentityProvider = IdentityProvider.IdentityProvider;
 const IdentityProviderGroupSummary = __importStar(__nccwpck_require__(3442));
 exports.IdentityProviderGroupSummary = IdentityProviderGroupSummary.IdentityProviderGroupSummary;
 const IdpGroupMapping = __importStar(__nccwpck_require__(8420));
 exports.IdpGroupMapping = IdpGroupMapping.IdpGroupMapping;
+const ImportStandardTagsDetails = __importStar(__nccwpck_require__(271));
+exports.ImportStandardTagsDetails = ImportStandardTagsDetails.ImportStandardTagsDetails;
 const MfaTotpDevice = __importStar(__nccwpck_require__(2165));
 exports.MfaTotpDevice = MfaTotpDevice.MfaTotpDevice;
 const MfaTotpDeviceSummary = __importStar(__nccwpck_require__(9275));
@@ -33796,12 +36899,20 @@ const Region = __importStar(__nccwpck_require__(6980));
 exports.Region = Region.Region;
 const RegionSubscription = __importStar(__nccwpck_require__(4182));
 exports.RegionSubscription = RegionSubscription.RegionSubscription;
+const ReplicatedRegionDetails = __importStar(__nccwpck_require__(7876));
+exports.ReplicatedRegionDetails = ReplicatedRegionDetails.ReplicatedRegionDetails;
 const ScimClientCredentials = __importStar(__nccwpck_require__(2269));
 exports.ScimClientCredentials = ScimClientCredentials.ScimClientCredentials;
 const SmtpCredential = __importStar(__nccwpck_require__(2583));
 exports.SmtpCredential = SmtpCredential.SmtpCredential;
 const SmtpCredentialSummary = __importStar(__nccwpck_require__(892));
 exports.SmtpCredentialSummary = SmtpCredentialSummary.SmtpCredentialSummary;
+const StandardTagDefinitionTemplate = __importStar(__nccwpck_require__(5674));
+exports.StandardTagDefinitionTemplate = StandardTagDefinitionTemplate.StandardTagDefinitionTemplate;
+const StandardTagNamespaceTemplate = __importStar(__nccwpck_require__(6044));
+exports.StandardTagNamespaceTemplate = StandardTagNamespaceTemplate.StandardTagNamespaceTemplate;
+const StandardTagNamespaceTemplateSummary = __importStar(__nccwpck_require__(2072));
+exports.StandardTagNamespaceTemplateSummary = StandardTagNamespaceTemplateSummary.StandardTagNamespaceTemplateSummary;
 const SwiftPassword = __importStar(__nccwpck_require__(4087));
 exports.SwiftPassword = SwiftPassword.SwiftPassword;
 const Tag = __importStar(__nccwpck_require__(8449));
@@ -33838,6 +36949,8 @@ const UpdateCompartmentDetails = __importStar(__nccwpck_require__(7983));
 exports.UpdateCompartmentDetails = UpdateCompartmentDetails.UpdateCompartmentDetails;
 const UpdateCustomerSecretKeyDetails = __importStar(__nccwpck_require__(6993));
 exports.UpdateCustomerSecretKeyDetails = UpdateCustomerSecretKeyDetails.UpdateCustomerSecretKeyDetails;
+const UpdateDomainDetails = __importStar(__nccwpck_require__(1022));
+exports.UpdateDomainDetails = UpdateDomainDetails.UpdateDomainDetails;
 const UpdateDynamicGroupDetails = __importStar(__nccwpck_require__(9459));
 exports.UpdateDynamicGroupDetails = UpdateDynamicGroupDetails.UpdateDynamicGroupDetails;
 const UpdateGroupDetails = __importStar(__nccwpck_require__(1254));
@@ -33912,7 +37025,7 @@ exports.UpdateSaml2IdentityProviderDetails = UpdateSaml2IdentityProviderDetails.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33961,7 +37074,7 @@ var MfaTotpDeviceSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34010,7 +37123,7 @@ var MfaTotpDevice;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34046,7 +37159,7 @@ var MfaTotpToken;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34082,7 +37195,7 @@ var MoveCompartmentDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34118,7 +37231,7 @@ var NetworkPolicy;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34186,7 +37299,7 @@ var NetworkSourcesSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34267,7 +37380,7 @@ var NetworkSources;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34303,7 +37416,7 @@ var NetworkSourcesVirtualSourceList;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34384,7 +37497,7 @@ var OAuth2ClientCredentialSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34465,7 +37578,7 @@ var OAuth2ClientCredential;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34501,7 +37614,7 @@ var PasswordPolicy;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34550,7 +37663,7 @@ var Policy;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34596,7 +37709,7 @@ var RegionSubscription;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34618,6 +37731,55 @@ var Region;
 
 /***/ }),
 
+/***/ 7876:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ReplicatedRegionDetails = void 0;
+var ReplicatedRegionDetails;
+(function (ReplicatedRegionDetails) {
+    let State;
+    (function (State) {
+        State["EnablingReplication"] = "ENABLING_REPLICATION";
+        State["ReplicationEnabled"] = "REPLICATION_ENABLED";
+        State["DisablingReplication"] = "DISABLING_REPLICATION";
+        State["ReplicationDisabled"] = "REPLICATION_DISABLED";
+        State["Deleted"] = "DELETED";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        State["UnknownValue"] = "UNKNOWN_VALUE";
+    })(State = ReplicatedRegionDetails.State || (ReplicatedRegionDetails.State = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ReplicatedRegionDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    ReplicatedRegionDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(ReplicatedRegionDetails = exports.ReplicatedRegionDetails || (exports.ReplicatedRegionDetails = {}));
+//# sourceMappingURL=replicated-region-details.js.map
+
+/***/ }),
+
 /***/ 6636:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -34632,7 +37794,7 @@ var Region;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34693,7 +37855,7 @@ var Saml2IdentityProvider;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34729,7 +37891,7 @@ var ScimClientCredentials;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34778,7 +37940,7 @@ var SmtpCredentialSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34813,6 +37975,167 @@ var SmtpCredential;
 
 /***/ }),
 
+/***/ 5674:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.StandardTagDefinitionTemplate = void 0;
+var StandardTagDefinitionTemplate;
+(function (StandardTagDefinitionTemplate) {
+    let Type;
+    (function (Type) {
+        Type["Enum"] = "ENUM";
+        Type["String"] = "STRING";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        Type["UnknownValue"] = "UNKNOWN_VALUE";
+    })(Type = StandardTagDefinitionTemplate.Type || (StandardTagDefinitionTemplate.Type = {}));
+    let EnumMutability;
+    (function (EnumMutability) {
+        EnumMutability["Immutable"] = "IMMUTABLE";
+        EnumMutability["Mutable"] = "MUTABLE";
+        EnumMutability["Appendable"] = "APPENDABLE";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        EnumMutability["UnknownValue"] = "UNKNOWN_VALUE";
+    })(EnumMutability = StandardTagDefinitionTemplate.EnumMutability || (StandardTagDefinitionTemplate.EnumMutability = {}));
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    StandardTagDefinitionTemplate.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    StandardTagDefinitionTemplate.getDeserializedJsonObj = getDeserializedJsonObj;
+})(StandardTagDefinitionTemplate = exports.StandardTagDefinitionTemplate || (exports.StandardTagDefinitionTemplate = {}));
+//# sourceMappingURL=standard-tag-definition-template.js.map
+
+/***/ }),
+
+/***/ 2072:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.StandardTagNamespaceTemplateSummary = void 0;
+var StandardTagNamespaceTemplateSummary;
+(function (StandardTagNamespaceTemplateSummary) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    StandardTagNamespaceTemplateSummary.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    StandardTagNamespaceTemplateSummary.getDeserializedJsonObj = getDeserializedJsonObj;
+})(StandardTagNamespaceTemplateSummary = exports.StandardTagNamespaceTemplateSummary || (exports.StandardTagNamespaceTemplateSummary = {}));
+//# sourceMappingURL=standard-tag-namespace-template-summary.js.map
+
+/***/ }),
+
+/***/ 6044:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.StandardTagNamespaceTemplate = void 0;
+const model = __importStar(__nccwpck_require__(7268));
+var StandardTagNamespaceTemplate;
+(function (StandardTagNamespaceTemplate) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "tagDefinitionTemplates": obj.tagDefinitionTemplates
+                ? obj.tagDefinitionTemplates.map(item => {
+                    return model.StandardTagDefinitionTemplate.getJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    StandardTagNamespaceTemplate.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {
+            "tagDefinitionTemplates": obj.tagDefinitionTemplates
+                ? obj.tagDefinitionTemplates.map(item => {
+                    return model.StandardTagDefinitionTemplate.getDeserializedJsonObj(item);
+                })
+                : undefined
+        });
+        return jsonObj;
+    }
+    StandardTagNamespaceTemplate.getDeserializedJsonObj = getDeserializedJsonObj;
+})(StandardTagNamespaceTemplate = exports.StandardTagNamespaceTemplate || (exports.StandardTagNamespaceTemplate = {}));
+//# sourceMappingURL=standard-tag-namespace-template.js.map
+
+/***/ }),
+
 /***/ 4087:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -34827,7 +38150,7 @@ var SmtpCredential;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34876,7 +38199,7 @@ var SwiftPassword;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34921,7 +38244,7 @@ var TagDefaultSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34966,7 +38289,7 @@ var TagDefault;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35002,7 +38325,7 @@ var TagNamespaceSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35050,7 +38373,7 @@ var TagNamespace;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35086,7 +38409,7 @@ var TagSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -35162,7 +38485,7 @@ var Tag;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35198,7 +38521,7 @@ var TaggingWorkRequestErrorSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35234,7 +38557,7 @@ var TaggingWorkRequestLogSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -35267,6 +38590,7 @@ var TaggingWorkRequestSummary;
         OperationType["DeleteNonEmptyTagNamespace"] = "DELETE_NON_EMPTY_TAG_NAMESPACE";
         OperationType["BulkDeleteTagDefinition"] = "BULK_DELETE_TAG_DEFINITION";
         OperationType["BulkEditOfTags"] = "BULK_EDIT_OF_TAGS";
+        OperationType["ImportStandardTags"] = "IMPORT_STANDARD_TAGS";
         /**
          * This value is used if a service returns a value for this enum that is not recognized by this
          * version of the SDK.
@@ -35329,7 +38653,7 @@ var TaggingWorkRequestSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -35362,6 +38686,7 @@ var TaggingWorkRequest;
         OperationType["DeleteNonEmptyTagNamespace"] = "DELETE_NON_EMPTY_TAG_NAMESPACE";
         OperationType["BulkDeleteTagDefinition"] = "BULK_DELETE_TAG_DEFINITION";
         OperationType["BulkEditOfTags"] = "BULK_EDIT_OF_TAGS";
+        OperationType["ImportStandardTags"] = "IMPORT_STANDARD_TAGS";
         /**
          * This value is used if a service returns a value for this enum that is not recognized by this
          * version of the SDK.
@@ -35424,7 +38749,7 @@ var TaggingWorkRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35460,7 +38785,7 @@ var Tenancy;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35509,7 +38834,7 @@ var UIPasswordInformation;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35558,7 +38883,7 @@ var UIPassword;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35594,7 +38919,7 @@ var UpdateAuthTokenDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -35664,7 +38989,7 @@ var UpdateAuthenticationPolicyDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35700,7 +39025,7 @@ var UpdateCompartmentDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35722,6 +39047,42 @@ var UpdateCustomerSecretKeyDetails;
 
 /***/ }),
 
+/***/ 1022:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Identity and Access Management Service API
+ * APIs for managing users, groups, compartments, and policies.
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UpdateDomainDetails = void 0;
+var UpdateDomainDetails;
+(function (UpdateDomainDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    UpdateDomainDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    UpdateDomainDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(UpdateDomainDetails = exports.UpdateDomainDetails || (exports.UpdateDomainDetails = {}));
+//# sourceMappingURL=update-domain-details.js.map
+
+/***/ }),
+
 /***/ 9459:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -35736,7 +39097,7 @@ var UpdateCustomerSecretKeyDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35772,7 +39133,7 @@ var UpdateDynamicGroupDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35808,7 +39169,7 @@ var UpdateGroupDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -35880,7 +39241,7 @@ var UpdateIdentityProviderDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35916,7 +39277,7 @@ var UpdateIdpGroupMappingDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -35984,7 +39345,7 @@ var UpdateNetworkSourceDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -36052,7 +39413,7 @@ var UpdateOAuth2ClientCredentialDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36088,7 +39449,7 @@ var UpdatePolicyDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -36149,7 +39510,7 @@ var UpdateSaml2IdentityProviderDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36185,7 +39546,7 @@ var UpdateSmtpCredentialDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36221,7 +39582,7 @@ var UpdateStateDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36257,7 +39618,7 @@ var UpdateSwiftPasswordDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36293,7 +39654,7 @@ var UpdateTagDefaultDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -36357,7 +39718,7 @@ var UpdateTagDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36393,7 +39754,7 @@ var UpdateTagNamespaceDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36429,7 +39790,7 @@ var UpdateUserCapabilitiesDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36465,7 +39826,7 @@ var UpdateUserDetails;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36501,7 +39862,7 @@ var UserCapabilities;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36550,7 +39911,7 @@ var UserGroupMembership;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -36627,7 +39988,7 @@ var User;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36663,7 +40024,7 @@ var WorkRequestError;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36699,7 +40060,7 @@ var WorkRequestLogEntry;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -36749,7 +40110,7 @@ var WorkRequestResource;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -36851,7 +40212,7 @@ var WorkRequestSummary;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -36963,7 +40324,7 @@ var WorkRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -36986,15 +40347,23 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ListUsersRequest = exports.ListPoliciesRequest = exports.ListNetworkSourcesRequest = exports.ListMfaTotpDevicesRequest = exports.ListIdentityProvidersRequest = exports.ListGroupsRequest = exports.ListDynamicGroupsRequest = exports.ListCompartmentsRequest = exports.ListBulkActionResourceTypesRequest = void 0;
+exports.ListUsersRequest = exports.ListPoliciesRequest = exports.ListNetworkSourcesRequest = exports.ListMfaTotpDevicesRequest = exports.ListIdentityProvidersRequest = exports.ListIamWorkRequestLogsRequest = exports.ListIamWorkRequestErrorsRequest = exports.ListGroupsRequest = exports.ListDynamicGroupsRequest = exports.ListDomainsRequest = exports.ListDbCredentialsRequest = exports.ListCompartmentsRequest = exports.ListBulkActionResourceTypesRequest = void 0;
 const ListBulkActionResourceTypesRequest = __importStar(__nccwpck_require__(4698));
 exports.ListBulkActionResourceTypesRequest = ListBulkActionResourceTypesRequest.ListBulkActionResourceTypesRequest;
 const ListCompartmentsRequest = __importStar(__nccwpck_require__(1912));
 exports.ListCompartmentsRequest = ListCompartmentsRequest.ListCompartmentsRequest;
+const ListDbCredentialsRequest = __importStar(__nccwpck_require__(3972));
+exports.ListDbCredentialsRequest = ListDbCredentialsRequest.ListDbCredentialsRequest;
+const ListDomainsRequest = __importStar(__nccwpck_require__(4335));
+exports.ListDomainsRequest = ListDomainsRequest.ListDomainsRequest;
 const ListDynamicGroupsRequest = __importStar(__nccwpck_require__(5376));
 exports.ListDynamicGroupsRequest = ListDynamicGroupsRequest.ListDynamicGroupsRequest;
 const ListGroupsRequest = __importStar(__nccwpck_require__(777));
 exports.ListGroupsRequest = ListGroupsRequest.ListGroupsRequest;
+const ListIamWorkRequestErrorsRequest = __importStar(__nccwpck_require__(7194));
+exports.ListIamWorkRequestErrorsRequest = ListIamWorkRequestErrorsRequest.ListIamWorkRequestErrorsRequest;
+const ListIamWorkRequestLogsRequest = __importStar(__nccwpck_require__(1698));
+exports.ListIamWorkRequestLogsRequest = ListIamWorkRequestLogsRequest.ListIamWorkRequestLogsRequest;
 const ListIdentityProvidersRequest = __importStar(__nccwpck_require__(8937));
 exports.ListIdentityProvidersRequest = ListIdentityProvidersRequest.ListIdentityProvidersRequest;
 const ListMfaTotpDevicesRequest = __importStar(__nccwpck_require__(8594));
@@ -37023,7 +40392,7 @@ exports.ListUsersRequest = ListUsersRequest.ListUsersRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37054,7 +40423,7 @@ var ListBulkActionResourceTypesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37081,6 +40450,78 @@ var ListCompartmentsRequest;
 
 /***/ }),
 
+/***/ 3972:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ *
+ *
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ListDbCredentialsRequest = void 0;
+var ListDbCredentialsRequest;
+(function (ListDbCredentialsRequest) {
+    let SortBy;
+    (function (SortBy) {
+        SortBy["Timecreated"] = "TIMECREATED";
+        SortBy["Name"] = "NAME";
+    })(SortBy = ListDbCredentialsRequest.SortBy || (ListDbCredentialsRequest.SortBy = {}));
+    let SortOrder;
+    (function (SortOrder) {
+        SortOrder["Asc"] = "ASC";
+        SortOrder["Desc"] = "DESC";
+    })(SortOrder = ListDbCredentialsRequest.SortOrder || (ListDbCredentialsRequest.SortOrder = {}));
+})(ListDbCredentialsRequest = exports.ListDbCredentialsRequest || (exports.ListDbCredentialsRequest = {}));
+//# sourceMappingURL=list-db-credentials-request.js.map
+
+/***/ }),
+
+/***/ 4335:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ *
+ *
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ListDomainsRequest = void 0;
+var ListDomainsRequest;
+(function (ListDomainsRequest) {
+    let SortBy;
+    (function (SortBy) {
+        SortBy["Timecreated"] = "TIMECREATED";
+        SortBy["Name"] = "NAME";
+    })(SortBy = ListDomainsRequest.SortBy || (ListDomainsRequest.SortBy = {}));
+    let SortOrder;
+    (function (SortOrder) {
+        SortOrder["Asc"] = "ASC";
+        SortOrder["Desc"] = "DESC";
+    })(SortOrder = ListDomainsRequest.SortOrder || (ListDomainsRequest.SortOrder = {}));
+})(ListDomainsRequest = exports.ListDomainsRequest || (exports.ListDomainsRequest = {}));
+//# sourceMappingURL=list-domains-request.js.map
+
+/***/ }),
+
 /***/ 5376:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -37095,7 +40536,7 @@ var ListCompartmentsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37131,7 +40572,7 @@ var ListDynamicGroupsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37153,6 +40594,68 @@ var ListGroupsRequest;
 
 /***/ }),
 
+/***/ 7194:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ *
+ *
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ListIamWorkRequestErrorsRequest = void 0;
+var ListIamWorkRequestErrorsRequest;
+(function (ListIamWorkRequestErrorsRequest) {
+    let SortOrder;
+    (function (SortOrder) {
+        SortOrder["Asc"] = "ASC";
+        SortOrder["Desc"] = "DESC";
+    })(SortOrder = ListIamWorkRequestErrorsRequest.SortOrder || (ListIamWorkRequestErrorsRequest.SortOrder = {}));
+})(ListIamWorkRequestErrorsRequest = exports.ListIamWorkRequestErrorsRequest || (exports.ListIamWorkRequestErrorsRequest = {}));
+//# sourceMappingURL=list-iam-work-request-errors-request.js.map
+
+/***/ }),
+
+/***/ 1698:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ *
+ *
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ListIamWorkRequestLogsRequest = void 0;
+var ListIamWorkRequestLogsRequest;
+(function (ListIamWorkRequestLogsRequest) {
+    let SortOrder;
+    (function (SortOrder) {
+        SortOrder["Asc"] = "ASC";
+        SortOrder["Desc"] = "DESC";
+    })(SortOrder = ListIamWorkRequestLogsRequest.SortOrder || (ListIamWorkRequestLogsRequest.SortOrder = {}));
+})(ListIamWorkRequestLogsRequest = exports.ListIamWorkRequestLogsRequest || (exports.ListIamWorkRequestLogsRequest = {}));
+//# sourceMappingURL=list-iam-work-request-logs-request.js.map
+
+/***/ }),
+
 /***/ 8937:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -37167,7 +40670,7 @@ var ListGroupsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37207,7 +40710,7 @@ var ListIdentityProvidersRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37243,7 +40746,7 @@ var ListMfaTotpDevicesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37279,7 +40782,7 @@ var ListNetworkSourcesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37315,7 +40818,7 @@ var ListPoliciesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37351,7 +40854,7 @@ var ListUsersRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2021, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2022, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -37376,7 +40879,7 @@ module.exports = exports = __nccwpck_require__(8847);
 "use strict";
 
 
-const EventEmitter = __nccwpck_require__(8614);
+const EventEmitter = __nccwpck_require__(2361);
 const Status = __nccwpck_require__(4341);
 const Semaphore = __nccwpck_require__(9160);
 
@@ -38166,7 +41669,7 @@ const PERCENTILES = Symbol('percentiles');
 const BUCKET_INTERVAL = Symbol('bucket-interval');
 const SNAPSHOT_INTERVAL = Symbol('snapshot-interval');
 
-const EventEmitter = __nccwpck_require__(8614).EventEmitter;
+const EventEmitter = (__nccwpck_require__(2361).EventEmitter);
 
 /**
  * Tracks execution status for a given {@link CircuitBreaker}.
@@ -38363,7 +41866,7 @@ module.exports = exports = Status;
 
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /* eslint-disable node/no-deprecated-api */
-var buffer = __nccwpck_require__(4293)
+var buffer = __nccwpck_require__(4300)
 var Buffer = buffer.Buffer
 
 // alternative to using Object.keys for old browsers
@@ -38438,7 +41941,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
 
 
 
-var buffer = __nccwpck_require__(4293)
+var buffer = __nccwpck_require__(4300)
 var Buffer = buffer.Buffer
 
 var safer = {}
@@ -40010,7 +43513,7 @@ function coerce (version) {
 
 // Copyright 2015 Joyent, Inc.
 
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 
 var algInfo = {
 	'dsa': {
@@ -40188,13 +43691,13 @@ module.exports = {
 module.exports = Certificate;
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 var Fingerprint = __nccwpck_require__(3079);
 var Signature = __nccwpck_require__(1394);
 var errs = __nccwpck_require__(7979);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 var utils = __nccwpck_require__(575);
 var Key = __nccwpck_require__(6814);
 var PrivateKey = __nccwpck_require__(9602);
@@ -40609,8 +44112,8 @@ module.exports = {
 };
 
 var assert = __nccwpck_require__(6631);
-var crypto = __nccwpck_require__(6417);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var crypto = __nccwpck_require__(6113);
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var utils = __nccwpck_require__(575);
 var nacl = __nccwpck_require__(8729);
@@ -40622,7 +44125,7 @@ var CRYPTO_HAVE_ECDH = (crypto.createECDH !== undefined);
 
 var ecdh = __nccwpck_require__(9865);
 var ec = __nccwpck_require__(3943);
-var jsbn = __nccwpck_require__(5587).BigInteger;
+var jsbn = (__nccwpck_require__(5587).BigInteger);
 
 function DiffieHellman(key) {
 	utils.assertCompatible(key, Key, [1, 4], 'key');
@@ -41012,10 +44515,10 @@ module.exports = {
 };
 
 var nacl = __nccwpck_require__(8729);
-var stream = __nccwpck_require__(2413);
-var util = __nccwpck_require__(1669);
+var stream = __nccwpck_require__(2781);
+var util = __nccwpck_require__(3837);
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var Signature = __nccwpck_require__(1394);
 
 function Verifier(key, hashAlgo) {
@@ -41106,7 +44609,7 @@ Signer.prototype.sign = function () {
 // Copyright 2015 Joyent, Inc.
 
 var assert = __nccwpck_require__(6631);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 
 function FingerprintFormatError(fp, format) {
 	if (Error.captureStackTrace)
@@ -41199,9 +44702,9 @@ module.exports = {
 module.exports = Fingerprint;
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 var errs = __nccwpck_require__(7979);
 var Key = __nccwpck_require__(6814);
 var PrivateKey = __nccwpck_require__(9602);
@@ -41429,7 +44932,7 @@ module.exports = {
 };
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var utils = __nccwpck_require__(575);
 var Key = __nccwpck_require__(6814);
 var PrivateKey = __nccwpck_require__(9602);
@@ -41560,7 +45063,7 @@ module.exports = {
 };
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var Key = __nccwpck_require__(6814);
 var PrivateKey = __nccwpck_require__(9602);
 var utils = __nccwpck_require__(575);
@@ -41862,8 +45365,8 @@ module.exports = {
 
 var assert = __nccwpck_require__(6631);
 var SSHBuffer = __nccwpck_require__(5621);
-var crypto = __nccwpck_require__(6417);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var crypto = __nccwpck_require__(6113);
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var Key = __nccwpck_require__(6814);
 var PrivateKey = __nccwpck_require__(9602);
@@ -42214,8 +45717,8 @@ module.exports = {
 
 var assert = __nccwpck_require__(6631);
 var asn1 = __nccwpck_require__(970);
-var crypto = __nccwpck_require__(6417);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var crypto = __nccwpck_require__(6113);
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var utils = __nccwpck_require__(575);
 var Key = __nccwpck_require__(6814);
@@ -42513,7 +46016,7 @@ module.exports = {
 
 var assert = __nccwpck_require__(6631);
 var asn1 = __nccwpck_require__(970);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var utils = __nccwpck_require__(575);
 
@@ -42897,7 +46400,7 @@ module.exports = {
 
 var assert = __nccwpck_require__(6631);
 var asn1 = __nccwpck_require__(970);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var utils = __nccwpck_require__(575);
 var Key = __nccwpck_require__(6814);
@@ -43528,7 +47031,7 @@ module.exports = {
 };
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var rfc4253 = __nccwpck_require__(8688);
 var Key = __nccwpck_require__(6814);
 
@@ -43642,7 +47145,7 @@ module.exports = {
 };
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var utils = __nccwpck_require__(575);
 var Key = __nccwpck_require__(6814);
@@ -43809,10 +47312,10 @@ module.exports = {
 
 var assert = __nccwpck_require__(6631);
 var asn1 = __nccwpck_require__(970);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var utils = __nccwpck_require__(575);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 
 var Key = __nccwpck_require__(6814);
 var PrivateKey = __nccwpck_require__(9602);
@@ -44076,7 +47579,7 @@ module.exports = {
 };
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var rfc4253 = __nccwpck_require__(8688);
 var utils = __nccwpck_require__(575);
 var Key = __nccwpck_require__(6814);
@@ -44203,7 +47706,7 @@ module.exports = {
 
 var assert = __nccwpck_require__(6631);
 var asn1 = __nccwpck_require__(970);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var utils = __nccwpck_require__(575);
 var Key = __nccwpck_require__(6814);
@@ -44297,7 +47800,7 @@ module.exports = {
 
 var assert = __nccwpck_require__(6631);
 var asn1 = __nccwpck_require__(970);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
 var utils = __nccwpck_require__(575);
 var Key = __nccwpck_require__(6814);
@@ -45050,14 +48553,14 @@ module.exports = Identity;
 
 var assert = __nccwpck_require__(6631);
 var algs = __nccwpck_require__(6126);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 var Fingerprint = __nccwpck_require__(3079);
 var Signature = __nccwpck_require__(1394);
 var errs = __nccwpck_require__(7979);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 var utils = __nccwpck_require__(575);
 var asn1 = __nccwpck_require__(970);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 
 /*JSSTYLED*/
 var DNS_NAME_RE = /^([*]|[a-z0-9][a-z0-9\-]{0,62})(?:\.([*]|[a-z0-9][a-z0-9\-]{0,62}))*$/i;
@@ -45477,10 +48980,10 @@ module.exports = Key;
 
 var assert = __nccwpck_require__(6631);
 var algs = __nccwpck_require__(6126);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 var Fingerprint = __nccwpck_require__(3079);
 var Signature = __nccwpck_require__(1394);
-var DiffieHellman = __nccwpck_require__(7602).DiffieHellman;
+var DiffieHellman = (__nccwpck_require__(7602).DiffieHellman);
 var errs = __nccwpck_require__(7979);
 var utils = __nccwpck_require__(575);
 var PrivateKey = __nccwpck_require__(9602);
@@ -45777,13 +49280,13 @@ Key._oldVersionDetect = function (obj) {
 module.exports = PrivateKey;
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 var Fingerprint = __nccwpck_require__(3079);
 var Signature = __nccwpck_require__(1394);
 var errs = __nccwpck_require__(7979);
-var util = __nccwpck_require__(1669);
+var util = __nccwpck_require__(3837);
 var utils = __nccwpck_require__(575);
 var dhe = __nccwpck_require__(7602);
 var generateECDSA = dhe.generateECDSA;
@@ -46030,9 +49533,9 @@ PrivateKey._oldVersionDetect = function (obj) {
 module.exports = Signature;
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var algs = __nccwpck_require__(6126);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 var errs = __nccwpck_require__(7979);
 var utils = __nccwpck_require__(575);
 var asn1 = __nccwpck_require__(970);
@@ -46351,7 +49854,7 @@ Signature._oldVersionDetect = function (obj) {
 module.exports = SSHBuffer;
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 
 function SSHBuffer(opts) {
 	assert.object(opts, 'options');
@@ -46526,15 +50029,15 @@ module.exports = {
 };
 
 var assert = __nccwpck_require__(6631);
-var Buffer = __nccwpck_require__(5118).Buffer;
+var Buffer = (__nccwpck_require__(5118).Buffer);
 var PrivateKey = __nccwpck_require__(9602);
 var Key = __nccwpck_require__(6814);
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 var algs = __nccwpck_require__(6126);
 var asn1 = __nccwpck_require__(970);
 
 var ec = __nccwpck_require__(3943);
-var jsbn = __nccwpck_require__(5587).BigInteger;
+var jsbn = (__nccwpck_require__(5587).BigInteger);
 var nacl = __nccwpck_require__(8729);
 
 var MAX_CLASS_DEPTH = 3;
@@ -46924,13 +50427,13 @@ module.exports = __nccwpck_require__(4219);
 "use strict";
 
 
-var net = __nccwpck_require__(1631);
-var tls = __nccwpck_require__(4016);
-var http = __nccwpck_require__(8605);
-var https = __nccwpck_require__(7211);
-var events = __nccwpck_require__(8614);
-var assert = __nccwpck_require__(2357);
-var util = __nccwpck_require__(1669);
+var net = __nccwpck_require__(1808);
+var tls = __nccwpck_require__(4404);
+var http = __nccwpck_require__(3685);
+var https = __nccwpck_require__(5687);
+var events = __nccwpck_require__(2361);
+var assert = __nccwpck_require__(9491);
+var util = __nccwpck_require__(3837);
 
 
 exports.httpOverHttp = httpOverHttp;
@@ -49569,7 +53072,7 @@ nacl.setPRNG = function(fn) {
     });
   } else if (true) {
     // Node.js.
-    crypto = __nccwpck_require__(6417);
+    crypto = __nccwpck_require__(6113);
     if (crypto && crypto.randomBytes) {
       nacl.setPRNG(function(x, n) {
         var i, v = crypto.randomBytes(n);
@@ -49622,7 +53125,7 @@ module.exports = bytesToUuid;
 // Unique ID creation requires a high quality random # generator.  In node.js
 // this is pretty straight-forward - we use the crypto API.
 
-var crypto = __nccwpck_require__(6417);
+var crypto = __nccwpck_require__(6113);
 
 module.exports = function nodeRNG() {
   return crypto.randomBytes(16);
@@ -49755,10 +53258,10 @@ module.exports = v1;
  */
 
 var mod_assertplus = __nccwpck_require__(6631);
-var mod_util = __nccwpck_require__(1669);
+var mod_util = __nccwpck_require__(3837);
 
 var mod_extsprintf = __nccwpck_require__(7264);
-var mod_isError = __nccwpck_require__(5898)/* .isError */ .VZ;
+var mod_isError = (__nccwpck_require__(5898)/* .isError */ .VZ);
 var sprintf = mod_extsprintf.sprintf;
 
 /*
@@ -50213,15 +53716,7 @@ module.exports = eval("require")("encoding");
 
 /***/ }),
 
-/***/ 1717:
-/***/ ((module) => {
-
-"use strict";
-module.exports = JSON.parse('{"name":"oci-common","version":"2.5.0","description":"OCI Common module for NodeJS","repository":{"type":"git","url":"https://github.com/oracle/oci-typescript-sdk"},"main":"./index.js","typings":"./index","scripts":{},"author":{"name":"Oracle Cloud Infrastructure","email":""},"license":"(UPL-1.0 OR Apache-2.0)","dependencies":{"@types/isomorphic-fetch":"0.0.35","@types/jsonwebtoken":"^8.5.0","@types/jssha":"^2.0.0","@types/opossum":"4.1.1","@types/sshpk":"^1.10.3","es6-promise":"4.2.6","http-signature":"1.3.1","isomorphic-fetch":"3.0.0","jsonwebtoken":"8.5.1","jssha":"2.4.1","opossum":"5.0.1","sshpk":"1.16.1","uuid":"3.3.3"},"devDependencies":{"@types/chai":"^4.1.7","@types/node":"14.14.43","@types/mocha":"^5.2.5","awesome-typescript-loader":"3.1.3","chai":"^4.2.0","mocha":"^5.2.0","source-map-loader":"0.2.1","ts-node":"^8.0.2","typescript":"4.1.3","webpack":"4.0.0","webpack-cli":"^3.3.0"},"publishConfig":{"registry":"https://registry.npmjs.org"},"contributors":["Jyoti Saini <jyoti.s.saini@oracle.com>","Joe Levy <joe.levy@oracle.com>","Walt Tran <walt.tran@oracle.com>"]}');
-
-/***/ }),
-
-/***/ 2357:
+/***/ 9491:
 /***/ ((module) => {
 
 "use strict";
@@ -50229,7 +53724,7 @@ module.exports = require("assert");
 
 /***/ }),
 
-/***/ 4293:
+/***/ 4300:
 /***/ ((module) => {
 
 "use strict";
@@ -50237,7 +53732,7 @@ module.exports = require("buffer");
 
 /***/ }),
 
-/***/ 6417:
+/***/ 6113:
 /***/ ((module) => {
 
 "use strict";
@@ -50245,7 +53740,7 @@ module.exports = require("crypto");
 
 /***/ }),
 
-/***/ 8614:
+/***/ 2361:
 /***/ ((module) => {
 
 "use strict";
@@ -50253,7 +53748,7 @@ module.exports = require("events");
 
 /***/ }),
 
-/***/ 5747:
+/***/ 7147:
 /***/ ((module) => {
 
 "use strict";
@@ -50261,7 +53756,7 @@ module.exports = require("fs");
 
 /***/ }),
 
-/***/ 8605:
+/***/ 3685:
 /***/ ((module) => {
 
 "use strict";
@@ -50269,7 +53764,7 @@ module.exports = require("http");
 
 /***/ }),
 
-/***/ 7211:
+/***/ 5687:
 /***/ ((module) => {
 
 "use strict";
@@ -50277,7 +53772,7 @@ module.exports = require("https");
 
 /***/ }),
 
-/***/ 1631:
+/***/ 1808:
 /***/ ((module) => {
 
 "use strict";
@@ -50285,7 +53780,7 @@ module.exports = require("net");
 
 /***/ }),
 
-/***/ 2087:
+/***/ 2037:
 /***/ ((module) => {
 
 "use strict";
@@ -50293,7 +53788,7 @@ module.exports = require("os");
 
 /***/ }),
 
-/***/ 5622:
+/***/ 1017:
 /***/ ((module) => {
 
 "use strict";
@@ -50301,7 +53796,7 @@ module.exports = require("path");
 
 /***/ }),
 
-/***/ 2413:
+/***/ 2781:
 /***/ ((module) => {
 
 "use strict";
@@ -50309,7 +53804,7 @@ module.exports = require("stream");
 
 /***/ }),
 
-/***/ 4016:
+/***/ 4404:
 /***/ ((module) => {
 
 "use strict";
@@ -50317,7 +53812,7 @@ module.exports = require("tls");
 
 /***/ }),
 
-/***/ 8835:
+/***/ 7310:
 /***/ ((module) => {
 
 "use strict";
@@ -50325,7 +53820,7 @@ module.exports = require("url");
 
 /***/ }),
 
-/***/ 1669:
+/***/ 3837:
 /***/ ((module) => {
 
 "use strict";
@@ -50333,11 +53828,19 @@ module.exports = require("util");
 
 /***/ }),
 
-/***/ 8761:
+/***/ 9796:
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("zlib");
+
+/***/ }),
+
+/***/ 8130:
+/***/ ((module) => {
+
+"use strict";
+module.exports = JSON.parse('{"name":"oci-common","version":"2.12.1","description":"OCI Common module for NodeJS","repository":{"type":"git","url":"https://github.com/oracle/oci-typescript-sdk"},"main":"./index.js","typings":"./index","scripts":{},"author":{"name":"Oracle Cloud Infrastructure","email":""},"license":"(UPL-1.0 OR Apache-2.0)","dependencies":{"@types/isomorphic-fetch":"0.0.35","@types/jsonwebtoken":"^8.5.0","@types/jssha":"^2.0.0","@types/opossum":"4.1.1","@types/sshpk":"^1.10.3","es6-promise":"4.2.6","http-signature":"1.3.1","isomorphic-fetch":"3.0.0","jsonwebtoken":"8.5.1","jssha":"2.4.1","opossum":"5.0.1","sshpk":"1.16.1","uuid":"3.3.3"},"devDependencies":{"@types/chai":"^4.1.7","@types/node":"14.14.43","@types/mocha":"^5.2.5","awesome-typescript-loader":"3.1.3","chai":"^4.2.0","mocha":"^5.2.0","source-map-loader":"0.2.1","ts-node":"^8.0.2","typescript":"4.1.3","webpack":"4.0.0","webpack-cli":"^3.3.0"},"publishConfig":{"registry":"https://registry.npmjs.org"},"contributors":["Jyoti Saini <jyoti.s.saini@oracle.com>","Joe Levy <joe.levy@oracle.com>","Walt Tran <walt.tran@oracle.com>"]}');
 
 /***/ })
 
@@ -50374,18 +53877,130 @@ module.exports = require("zlib");
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(3109);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var oci_artifacts__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5758);
+/* harmony import */ var oci_artifacts__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(oci_artifacts__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var oci_identity__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(6408);
+/* harmony import */ var oci_identity__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(oci_identity__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var oci_common__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(5049);
+/* harmony import */ var oci_common__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__nccwpck_require__.n(oci_common__WEBPACK_IMPORTED_MODULE_3__);
+/* Copyright (c) 2021, 2022, Oracle and/or its affiliates.
+ * Licensed under the Universal Permissive License v1.0 as shown at https://oss.oracle.com/licenses/upl.
+ */
+var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+
+
+
+
+function getOcirRepo() {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        // Required environment variables
+        const tenancy = process.env.OCI_CLI_TENANCY || '';
+        const user = process.env.OCI_CLI_USER || '';
+        const fingerprint = process.env.OCI_CLI_FINGERPRINT || '';
+        const privateKey = process.env.OCI_CLI_KEY_CONTENT || '';
+        const region = oci_common__WEBPACK_IMPORTED_MODULE_3__.Region.fromRegionId(process.env.OCI_CLI_REGION || '');
+        const authProvider = new oci_common__WEBPACK_IMPORTED_MODULE_3__.SimpleAuthenticationDetailsProvider(tenancy, user, fingerprint, privateKey, null, region);
+        const ac = new oci_artifacts__WEBPACK_IMPORTED_MODULE_1__.ArtifactsClient({ authenticationDetailsProvider: authProvider });
+        const ic = new oci_identity__WEBPACK_IMPORTED_MODULE_2__.IdentityClient({ authenticationDetailsProvider: authProvider });
+        const compartmentId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('compartment', { required: true });
+        const displayName = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('name', { required: true });
+        const namespace = (yield ac.getContainerConfiguration({ compartmentId: compartmentId })).containerConfiguration
+            .namespace;
+        const regionCode = (_b = (_a = (yield ic.listRegions({})).items
+            .find(x => x.name === authProvider.getRegion().regionId)) === null || _a === void 0 ? void 0 : _a.key) === null || _b === void 0 ? void 0 : _b.toLocaleLowerCase();
+        const ocir = regionCode ? `${regionCode}.ocir.io` : '';
+        if (ocir) {
+            const repo = (yield ac.listContainerRepositories({ compartmentId: compartmentId })).containerRepositoryCollection.items.find(x => x.displayName === displayName);
+            if (repo) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('repo_path', `${ocir}/${namespace}/${repo.displayName}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('repo_ocid', `${repo.id}`);
+            }
+            else {
+                const containerRepository = (yield ac.createContainerRepository({
+                    createContainerRepositoryDetails: {
+                        compartmentId: compartmentId,
+                        displayName: displayName,
+                        isImmutable: false,
+                        isPublic: false
+                    }
+                })).containerRepository;
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('repo_path', `${ocir}/${namespace}/${containerRepository.displayName}`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('repo_ocid', `${containerRepository.id}`);
+            }
+        }
+        else {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed('Failed to identify OCIR endpoint.');
+        }
+    });
+}
+getOcirRepo().catch(e => {
+    if (e instanceof Error)
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(e.message);
+});
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;
-//# sourceMappingURL=index.js.map
