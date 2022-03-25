@@ -1,4 +1,4 @@
-# Get Oracle Cloud Infrastructure Registry Repository URI
+# get-ocir-repository v1.0
 
 Use this GitHub Action to return the OCID and full URI for the specified Oracle
 Cloud Infrastructure Registry (OCIR) repository. If the repository does not exist,
@@ -40,23 +40,25 @@ GitHub Secret named `OCI_COMPARTMENT`.
 jobs:
   my-instances:
     runs-on: ubuntu-latest
-    name: List the display name and shape of the instances in my compartment
+    name: Get the exact URL to the private-repo in OCIR
+    env:
+      OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
+      OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
+      OCI_CLI_FINGERPRINT: ${{ secrets.OCI_CLI_FINGERPRINT }}
+      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
+      OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
     steps:
-      - name: Configure OCI Credentials
-        uses: oracle-actions/configure-oci-credentials@v1
-        with:
-          user: ${{ secrets.OCI_USER }}
-          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
-          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
-          tenancy: ${{ secrets.OCI_TENANCY }}
-          region: 'us-ashburn-1'
-
       - name: Get private OCIR repository
         uses: oracle-actions/get-ocir-repository@v1.0
-        id: get-private-repository
+        id: get-ocir-repository-path
         with:
           compartment: ${{ secrets.OCI_COMPARTMENT }}
           name: 'private-repo'
+
+      - name: Build and push a container image
+        run: |
+          docker build -t "${{ steps.get-ocir-repository-path.outputs.repo_path }}:latest" .
+          docker push "${{ steps.get-ocir-repository-path.outputs.repo_path }}:latest"
 ```
 
 See [`action.yml`](./action.yml) for more details.
@@ -78,4 +80,5 @@ Copyright (c) 2021 Oracle and/or its affiliates.
 Released under the Universal Permissive License v1.0 as shown at
 <https://oss.oracle.com/licenses/upl/>.
 
-[1]: http://github.com/oracle-actions/configure-oci-credentials
+[1]: https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/clienvironmentvariables.htm
+[2]: https://docs.github.com/en/actions/learn-github-actions/environment-variables
