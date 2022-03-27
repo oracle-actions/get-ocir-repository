@@ -1,7 +1,7 @@
-# Copyright (c) 2021, Oracle and/or its affiliates.
+# Copyright (c) 2021, 2022 Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v1.0 as shown at https://oss.oracle.com/licenses/upl.
 ---
-name: Get OCIR Repo URI and OCID
+name: Get or create an Oracle Cloud Infrastructure Registry (OCIR) repository
 description: >-
   Returns the URI and OCID for an existing Oracle Cloud Infrastructure Registry
   (OCIR) repository or creates a new private repository with the name provided
