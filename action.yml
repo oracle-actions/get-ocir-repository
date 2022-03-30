@@ -3,9 +3,8 @@
 ---
 name: Get or create an Oracle Cloud Infrastructure Registry (OCIR) repository
 description: >-
-  Returns the URI and OCID for an existing Oracle Cloud Infrastructure Registry
-  (OCIR) repository or creates a new private repository with the name provided
-  in the compartment provided
+  Create or return the URI and OCID for an existing Oracle Cloud Infrastructure Registry
+  (OCIR) repository
 inputs:
   compartment:
     description: >-
@@ -19,6 +18,9 @@ outputs:
     description: Full path to the repository including OCIR FQDN
   repo_ocid:
     description: The OCID of the repository
+branding:
+  icon: 'circle'
+  color: 'red'
 runs:
   using: 'node12'
   main: 'dist/index.js'
