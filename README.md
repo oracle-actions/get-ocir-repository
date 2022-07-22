@@ -1,4 +1,4 @@
-# Get Oracle Cloud Infrastructure Registry Repository URI
+# get-ocir-repository v1.0
 
 Use this GitHub Action to return the OCID and full URI for the specified Oracle Cloud Infrastructure Registry (OCIR) repository. If the repository does not exist, it will be created automatically.
 
