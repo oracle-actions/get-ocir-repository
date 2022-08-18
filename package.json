@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/oracle-actions/get-ocir-repository#readme",
   "dependencies": {
-    "@actions/core": "^1.6.0",
+    "@actions/core": "^1.9.1",
     "oci-artifacts": "^2.15.0",
     "oci-common": "^2.15.0",
     "oci-identity": "^2.15.0"
