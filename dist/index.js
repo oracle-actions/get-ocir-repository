@@ -140,7 +140,6 @@ const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
 const os = __importStar(__nccwpck_require__(2037));
 const path = __importStar(__nccwpck_require__(1017));
-const uuid_1 = __nccwpck_require__(8974);
 const oidc_utils_1 = __nccwpck_require__(8041);
 /**
  * The code to exit an action
@@ -170,20 +169,9 @@ function exportVariable(name, val) {
     process.env[name] = convertedVal;
     const filePath = process.env['GITHUB_ENV'] || '';
     if (filePath) {
-        const delimiter = `ghadelimiter_${uuid_1.v4()}`;
-        // These should realistically never happen, but just in case someone finds a way to exploit uuid generation let's not allow keys or values that contain the delimiter.
-        if (name.includes(delimiter)) {
-            throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
-        }
-        if (convertedVal.includes(delimiter)) {
-            throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
-        }
-        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
-        file_command_1.issueCommand('ENV', commandValue);
+        return file_command_1.issueFileCommand('ENV', file_command_1.prepareKeyValueMessage(name, val));
     }
-    else {
-        command_1.issueCommand('set-env', { name }, convertedVal);
-    }
+    command_1.issueCommand('set-env', { name }, convertedVal);
 }
 exports.exportVariable = exportVariable;
 /**
@@ -201,7 +189,7 @@ exports.setSecret = setSecret;
 function addPath(inputPath) {
     const filePath = process.env['GITHUB_PATH'] || '';
     if (filePath) {
-        file_command_1.issueCommand('PATH', inputPath);
+        file_command_1.issueFileCommand('PATH', inputPath);
     }
     else {
         command_1.issueCommand('add-path', {}, inputPath);
@@ -241,7 +229,10 @@ function getMultilineInput(name, options) {
     const inputs = getInput(name, options)
         .split('\n')
         .filter(x => x !== '');
-    return inputs;
+    if (options && options.trimWhitespace === false) {
+        return inputs;
+    }
+    return inputs.map(input => input.trim());
 }
 exports.getMultilineInput = getMultilineInput;
 /**
@@ -274,8 +265,12 @@ exports.getBooleanInput = getBooleanInput;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setOutput(name, value) {
+    const filePath = process.env['GITHUB_OUTPUT'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('OUTPUT', file_command_1.prepareKeyValueMessage(name, value));
+    }
     process.stdout.write(os.EOL);
-    command_1.issueCommand('set-output', { name }, value);
+    command_1.issueCommand('set-output', { name }, utils_1.toCommandValue(value));
 }
 exports.setOutput = setOutput;
 /**
@@ -404,7 +399,11 @@ exports.group = group;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function saveState(name, value) {
-    command_1.issueCommand('save-state', { name }, value);
+    const filePath = process.env['GITHUB_STATE'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('STATE', file_command_1.prepareKeyValueMessage(name, value));
+    }
+    command_1.issueCommand('save-state', { name }, utils_1.toCommandValue(value));
 }
 exports.saveState = saveState;
 /**
@@ -470,13 +469,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.issueCommand = void 0;
+exports.prepareKeyValueMessage = exports.issueFileCommand = void 0;
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const fs = __importStar(__nccwpck_require__(7147));
 const os = __importStar(__nccwpck_require__(2037));
+const uuid_1 = __nccwpck_require__(8974);
 const utils_1 = __nccwpck_require__(5278);
-function issueCommand(command, message) {
+function issueFileCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
     if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
@@ -488,7 +488,22 @@ function issueCommand(command, message) {
         encoding: 'utf8'
     });
 }
-exports.issueCommand = issueCommand;
+exports.issueFileCommand = issueFileCommand;
+function prepareKeyValueMessage(key, value) {
+    const delimiter = `ghadelimiter_${uuid_1.v4()}`;
+    const convertedValue = utils_1.toCommandValue(value);
+    // These should realistically never happen, but just in case someone finds a
+    // way to exploit uuid generation let's not allow keys or values that contain
+    // the delimiter.
+    if (key.includes(delimiter)) {
+        throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+    }
+    if (convertedValue.includes(delimiter)) {
+        throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+    }
+    return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
+}
+exports.prepareKeyValueMessage = prepareKeyValueMessage;
 //# sourceMappingURL=file-command.js.map
 
 /***/ }),
@@ -15032,7 +15047,7 @@ class ArtifactsClient {
      * @param ChangeContainerRepositoryCompartmentRequest
      * @return ChangeContainerRepositoryCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/ChangeContainerRepositoryCompartment.ts.html |here} to see how to use ChangeContainerRepositoryCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/ChangeContainerRepositoryCompartment.ts.html |here} to see how to use ChangeContainerRepositoryCompartment API.
      */
     changeContainerRepositoryCompartment(changeContainerRepositoryCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15092,7 +15107,7 @@ class ArtifactsClient {
      * @param ChangeRepositoryCompartmentRequest
      * @return ChangeRepositoryCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/ChangeRepositoryCompartment.ts.html |here} to see how to use ChangeRepositoryCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/ChangeRepositoryCompartment.ts.html |here} to see how to use ChangeRepositoryCompartment API.
      */
     changeRepositoryCompartment(changeRepositoryCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15149,7 +15164,7 @@ class ArtifactsClient {
      * @param CreateContainerImageSignatureRequest
      * @return CreateContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/CreateContainerImageSignature.ts.html |here} to see how to use CreateContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/CreateContainerImageSignature.ts.html |here} to see how to use CreateContainerImageSignature API.
      */
     createContainerImageSignature(createContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15213,7 +15228,7 @@ class ArtifactsClient {
      * @param CreateContainerRepositoryRequest
      * @return CreateContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/CreateContainerRepository.ts.html |here} to see how to use CreateContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/CreateContainerRepository.ts.html |here} to see how to use CreateContainerRepository API.
      */
     createContainerRepository(createContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15276,7 +15291,7 @@ class ArtifactsClient {
      * @param CreateRepositoryRequest
      * @return CreateRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/CreateRepository.ts.html |here} to see how to use CreateRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/CreateRepository.ts.html |here} to see how to use CreateRepository API.
      */
     createRepository(createRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15339,7 +15354,7 @@ class ArtifactsClient {
      * @param DeleteContainerImageRequest
      * @return DeleteContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/DeleteContainerImage.ts.html |here} to see how to use DeleteContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/DeleteContainerImage.ts.html |here} to see how to use DeleteContainerImage API.
      */
     deleteContainerImage(deleteContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15394,7 +15409,7 @@ class ArtifactsClient {
      * @param DeleteContainerImageSignatureRequest
      * @return DeleteContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/DeleteContainerImageSignature.ts.html |here} to see how to use DeleteContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/DeleteContainerImageSignature.ts.html |here} to see how to use DeleteContainerImageSignature API.
      */
     deleteContainerImageSignature(deleteContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15449,7 +15464,7 @@ class ArtifactsClient {
      * @param DeleteContainerRepositoryRequest
      * @return DeleteContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/DeleteContainerRepository.ts.html |here} to see how to use DeleteContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/DeleteContainerRepository.ts.html |here} to see how to use DeleteContainerRepository API.
      */
     deleteContainerRepository(deleteContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15504,7 +15519,7 @@ class ArtifactsClient {
      * @param DeleteGenericArtifactRequest
      * @return DeleteGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/DeleteGenericArtifact.ts.html |here} to see how to use DeleteGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/DeleteGenericArtifact.ts.html |here} to see how to use DeleteGenericArtifact API.
      */
     deleteGenericArtifact(deleteGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15559,7 +15574,7 @@ class ArtifactsClient {
      * @param DeleteGenericArtifactByPathRequest
      * @return DeleteGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/DeleteGenericArtifactByPath.ts.html |here} to see how to use DeleteGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/DeleteGenericArtifactByPath.ts.html |here} to see how to use DeleteGenericArtifactByPath API.
      */
     deleteGenericArtifactByPath(deleteGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15616,7 +15631,7 @@ class ArtifactsClient {
      * @param DeleteRepositoryRequest
      * @return DeleteRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/DeleteRepository.ts.html |here} to see how to use DeleteRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/DeleteRepository.ts.html |here} to see how to use DeleteRepository API.
      */
     deleteRepository(deleteRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15671,7 +15686,7 @@ class ArtifactsClient {
      * @param GetContainerConfigurationRequest
      * @return GetContainerConfigurationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/GetContainerConfiguration.ts.html |here} to see how to use GetContainerConfiguration API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/GetContainerConfiguration.ts.html |here} to see how to use GetContainerConfiguration API.
      */
     getContainerConfiguration(getContainerConfigurationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15734,7 +15749,7 @@ class ArtifactsClient {
      * @param GetContainerImageRequest
      * @return GetContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/GetContainerImage.ts.html |here} to see how to use GetContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/GetContainerImage.ts.html |here} to see how to use GetContainerImage API.
      */
     getContainerImage(getContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15797,7 +15812,7 @@ class ArtifactsClient {
      * @param GetContainerImageSignatureRequest
      * @return GetContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/GetContainerImageSignature.ts.html |here} to see how to use GetContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/GetContainerImageSignature.ts.html |here} to see how to use GetContainerImageSignature API.
      */
     getContainerImageSignature(getContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15860,7 +15875,7 @@ class ArtifactsClient {
      * @param GetContainerRepositoryRequest
      * @return GetContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/GetContainerRepository.ts.html |here} to see how to use GetContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/GetContainerRepository.ts.html |here} to see how to use GetContainerRepository API.
      */
     getContainerRepository(getContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15923,7 +15938,7 @@ class ArtifactsClient {
      * @param GetGenericArtifactRequest
      * @return GetGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/GetGenericArtifact.ts.html |here} to see how to use GetGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/GetGenericArtifact.ts.html |here} to see how to use GetGenericArtifact API.
      */
     getGenericArtifact(getGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -15986,7 +16001,7 @@ class ArtifactsClient {
      * @param GetGenericArtifactByPathRequest
      * @return GetGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/GetGenericArtifactByPath.ts.html |here} to see how to use GetGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/GetGenericArtifactByPath.ts.html |here} to see how to use GetGenericArtifactByPath API.
      */
     getGenericArtifactByPath(getGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16051,7 +16066,7 @@ class ArtifactsClient {
      * @param GetRepositoryRequest
      * @return GetRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/GetRepository.ts.html |here} to see how to use GetRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/GetRepository.ts.html |here} to see how to use GetRepository API.
      */
     getRepository(getRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16114,7 +16129,7 @@ class ArtifactsClient {
      * @param ListContainerImageSignaturesRequest
      * @return ListContainerImageSignaturesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/ListContainerImageSignatures.ts.html |here} to see how to use ListContainerImageSignatures API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/ListContainerImageSignatures.ts.html |here} to see how to use ListContainerImageSignatures API.
      */
     listContainerImageSignatures(listContainerImageSignaturesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16190,7 +16205,7 @@ class ArtifactsClient {
      * @param ListContainerImagesRequest
      * @return ListContainerImagesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/ListContainerImages.ts.html |here} to see how to use ListContainerImages API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/ListContainerImages.ts.html |here} to see how to use ListContainerImages API.
      */
     listContainerImages(listContainerImagesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16265,7 +16280,7 @@ class ArtifactsClient {
      * @param ListContainerRepositoriesRequest
      * @return ListContainerRepositoriesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/ListContainerRepositories.ts.html |here} to see how to use ListContainerRepositories API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/ListContainerRepositories.ts.html |here} to see how to use ListContainerRepositories API.
      */
     listContainerRepositories(listContainerRepositoriesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16337,7 +16352,7 @@ class ArtifactsClient {
      * @param ListGenericArtifactsRequest
      * @return ListGenericArtifactsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/ListGenericArtifacts.ts.html |here} to see how to use ListGenericArtifacts API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/ListGenericArtifacts.ts.html |here} to see how to use ListGenericArtifacts API.
      */
     listGenericArtifacts(listGenericArtifactsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16411,7 +16426,7 @@ class ArtifactsClient {
      * @param ListRepositoriesRequest
      * @return ListRepositoriesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/ListRepositories.ts.html |here} to see how to use ListRepositories API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/ListRepositories.ts.html |here} to see how to use ListRepositories API.
      */
     listRepositories(listRepositoriesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16482,7 +16497,7 @@ class ArtifactsClient {
      * @param RemoveContainerVersionRequest
      * @return RemoveContainerVersionResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/RemoveContainerVersion.ts.html |here} to see how to use RemoveContainerVersion API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/RemoveContainerVersion.ts.html |here} to see how to use RemoveContainerVersion API.
      */
     removeContainerVersion(removeContainerVersionRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16548,7 +16563,7 @@ class ArtifactsClient {
      * @param RestoreContainerImageRequest
      * @return RestoreContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/RestoreContainerImage.ts.html |here} to see how to use RestoreContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/RestoreContainerImage.ts.html |here} to see how to use RestoreContainerImage API.
      */
     restoreContainerImage(restoreContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16614,7 +16629,7 @@ class ArtifactsClient {
      * @param UpdateContainerConfigurationRequest
      * @return UpdateContainerConfigurationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/UpdateContainerConfiguration.ts.html |here} to see how to use UpdateContainerConfiguration API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/UpdateContainerConfiguration.ts.html |here} to see how to use UpdateContainerConfiguration API.
      */
     updateContainerConfiguration(updateContainerConfigurationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16679,7 +16694,7 @@ class ArtifactsClient {
      * @param UpdateContainerRepositoryRequest
      * @return UpdateContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/UpdateContainerRepository.ts.html |here} to see how to use UpdateContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/UpdateContainerRepository.ts.html |here} to see how to use UpdateContainerRepository API.
      */
     updateContainerRepository(updateContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16744,7 +16759,7 @@ class ArtifactsClient {
      * @param UpdateGenericArtifactRequest
      * @return UpdateGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/UpdateGenericArtifact.ts.html |here} to see how to use UpdateGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/UpdateGenericArtifact.ts.html |here} to see how to use UpdateGenericArtifact API.
      */
     updateGenericArtifact(updateGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16809,7 +16824,7 @@ class ArtifactsClient {
      * @param UpdateGenericArtifactByPathRequest
      * @return UpdateGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/UpdateGenericArtifactByPath.ts.html |here} to see how to use UpdateGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/UpdateGenericArtifactByPath.ts.html |here} to see how to use UpdateGenericArtifactByPath API.
      */
     updateGenericArtifactByPath(updateGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -16876,7 +16891,7 @@ class ArtifactsClient {
      * @param UpdateRepositoryRequest
      * @return UpdateRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/artifacts/UpdateRepository.ts.html |here} to see how to use UpdateRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/artifacts/UpdateRepository.ts.html |here} to see how to use UpdateRepository API.
      */
     updateRepository(updateRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -19303,7 +19318,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.utils = exports.getChunk = exports.CircuitBreaker = exports.Constants = exports.OciSdkDefaultRetryConfiguration = exports.NoRetryConfigurationDetails = exports.MaxAttemptsTerminationStrategy = exports.FixedTimeDelayStrategy = exports.GenericRetrier = exports.LOG = exports.ResourcePrincipalAuthenticationDetailsProvider = exports.InstancePrincipalsAuthenticationDetailsProviderBuilder = exports.ConfigFileReader = exports.ConfigFileAuthenticationDetailsProvider = exports.composeResponse = exports.composeRequest = exports.genericPaginateResponses = exports.paginateResponses = exports.genericPaginateRecords = exports.paginatedRecordsWithLimit = exports.paginatedResponsesWithLimit = exports.paginateRecords = exports.genericTerminalConditionWaiter = exports.genericWaiter = exports.MaxTimeTerminationStrategy = exports.ExponentialBackoffDelayStrategy = exports.EndpointBuilder = exports.Realm = exports.Region = exports.Range = exports.byteLength = exports.ObjectSerializer = exports.convertStringToType = exports.handleErrorBody = exports.mapContainer = exports.handleErrorResponse = exports.getStringFromResponseBody = exports.DefaultRequestSigner = exports.OciError = exports.FetchHttpClient = exports.isRegionProvider = exports.SimpleAuthenticationDetailsProvider = void 0;
+exports.utils = exports.getChunk = exports.CircuitBreaker = exports.Constants = exports.OciSdkDefaultRetryConfiguration = exports.NoRetryConfigurationDetails = exports.MaxAttemptsTerminationStrategy = exports.FixedTimeDelayStrategy = exports.GenericRetrier = exports.LOG = exports.ResourcePrincipalAuthenticationDetailsProvider = exports.InstancePrincipalsAuthenticationDetailsProviderBuilder = exports.ConfigFileReader = exports.SessionAuthDetailProvider = exports.ConfigFileAuthenticationDetailsProvider = exports.composeResponse = exports.composeRequest = exports.genericPaginateResponses = exports.paginateResponses = exports.genericPaginateRecords = exports.paginatedRecordsWithLimit = exports.paginatedResponsesWithLimit = exports.paginateRecords = exports.genericTerminalConditionWaiter = exports.genericWaiter = exports.MaxTimeTerminationStrategy = exports.ExponentialBackoffDelayStrategy = exports.EndpointBuilder = exports.Realm = exports.Region = exports.Range = exports.byteLength = exports.ObjectSerializer = exports.convertStringToType = exports.handleErrorBody = exports.mapContainer = exports.handleErrorResponse = exports.getStringFromResponseBody = exports.DefaultRequestSigner = exports.OciError = exports.FetchHttpClient = exports.isRegionProvider = exports.SimpleAuthenticationDetailsProvider = void 0;
 const auth = __importStar(__nccwpck_require__(8154));
 const error = __importStar(__nccwpck_require__(2956));
 const signer = __importStar(__nccwpck_require__(484));
@@ -19349,6 +19364,8 @@ Object.defineProperty(exports, "genericPaginateResponses", ({ enumerable: true, 
 Object.defineProperty(exports, "paginatedResponsesWithLimit", ({ enumerable: true, get: function () { return paginators_1.paginatedResponsesWithLimit; } }));
 const config_file_auth_1 = __nccwpck_require__(3054);
 Object.defineProperty(exports, "ConfigFileAuthenticationDetailsProvider", ({ enumerable: true, get: function () { return config_file_auth_1.ConfigFileAuthenticationDetailsProvider; } }));
+const session_auth_details_provider_1 = __nccwpck_require__(301);
+Object.defineProperty(exports, "SessionAuthDetailProvider", ({ enumerable: true, get: function () { return session_auth_details_provider_1.SessionAuthDetailProvider; } }));
 const chunker_1 = __importDefault(__nccwpck_require__(138));
 exports.getChunk = chunker_1.default;
 const config_file_reader_1 = __nccwpck_require__(7407);
@@ -19404,20 +19421,20 @@ const auth_utils_1 = __importDefault(__nccwpck_require__(7218));
 const signer_1 = __nccwpck_require__(484);
 const http_1 = __nccwpck_require__(6316);
 const helper_1 = __nccwpck_require__(7621);
-const circuit_breaker_1 = __importDefault(__nccwpck_require__(5620));
 /**
  * This class gets a security token from the auth service by signing the request with a PKI issued leaf certificate,
  * passing along a temporary public key that is bounded to the the security token, and the leaf certificate.
  */
 const INSTANCE_PRINCIPAL_GENERIC_ERROR = "Instance principals authentication can only be used on OCI compute instances. Please confirm this code is running on an OCI compute instance. See https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm for more info.";
 class X509FederationClient {
-    constructor(federationEndpoint, _tenancyId, _leafCertificateSupplier, sessionKeySupplier, intermediateCertificateSuppliers, purpose) {
+    constructor(federationEndpoint, _tenancyId, _leafCertificateSupplier, sessionKeySupplier, intermediateCertificateSuppliers, purpose, circuitBreaker) {
         this.federationEndpoint = federationEndpoint;
         this._tenancyId = _tenancyId;
         this._leafCertificateSupplier = _leafCertificateSupplier;
         this.sessionKeySupplier = sessionKeySupplier;
         this.intermediateCertificateSuppliers = intermediateCertificateSuppliers;
         this.purpose = purpose;
+        this.circuitBreaker = circuitBreaker;
         this.retry = 0;
         this.securityTokenAdapter = new security_token_adapter_1.default("", this.sessionKeySupplier);
     }
@@ -19556,7 +19573,7 @@ class X509FederationClient {
                 const privateKey = certificateAndKeyPair.getPrivateKey();
                 // Instantiate AuthTokenRequestSigner to sign the request
                 const signer = new AuthTokenRequestSigner(this.tenancyId, fingerprint, privateKey);
-                const httpClient = new http_1.FetchHttpClient(signer, circuit_breaker_1.default.internalCircuit);
+                const httpClient = new http_1.FetchHttpClient(signer, this.circuitBreaker);
                 // Call Auth Service to get a JSON object which contains the auth token
                 const response = yield httpClient.send(requestObj);
                 //TODO: Implement retry here
@@ -19703,6 +19720,11 @@ class AbstractFederationClientAuthenticationDetailsProviderBuilder {
         this._tenancyId = "";
         // Purpose: Specifies the non-default purpose of the session token to be requested. For internal use only.
         this._purpose = "DEFAULT";
+        this._circuitBreaker = new circuit_breaker_1.default({
+            timeout: 10000,
+            errorThresholdPercentage: 50,
+            resetTimeout: 30000 // After 30 seconds, try again.
+        }).circuit;
     }
     // metadataBaseUrl getter
     get metadataBaseUrl() {
@@ -19719,6 +19741,9 @@ class AbstractFederationClientAuthenticationDetailsProviderBuilder {
     // tenancyId getter
     get tenancyId() {
         return this._tenancyId;
+    }
+    get circuitBreaker() {
+        return this._circuitBreaker;
     }
     // region getter
     getRegion() {
@@ -19774,7 +19799,7 @@ class AbstractFederationClientAuthenticationDetailsProviderBuilder {
      * @return Federation Client
      */
     createFederationClient(sessionKeySupplier) {
-        return new X509_federation_client_1.default(this._federationEndpoint, this._tenancyId, this._leafCertificateSupplier, sessionKeySupplier, this._intermediateCertificateSuppliers, this._purpose);
+        return new X509_federation_client_1.default(this._federationEndpoint, this._tenancyId, this._leafCertificateSupplier, sessionKeySupplier, this._intermediateCertificateSuppliers, this._purpose, this.circuitBreaker);
     }
     /**
      * Auto-detect endpoint and certificate information using Instance metadata.
@@ -19798,7 +19823,7 @@ class AbstractFederationClientAuthenticationDetailsProviderBuilder {
                 headers.append("accept", "text/plain");
                 headers.append("Content-Type", "application/json");
                 headers.append(this.AUTHORIZATION, this.METADATA_AUTH_HEADERS);
-                const httpClient = new http_1.FetchHttpClient(null, circuit_breaker_1.default.internalCircuit);
+                const httpClient = new http_1.FetchHttpClient(null, this.circuitBreaker);
                 const response = yield httpClient.send({
                     uri: url,
                     method: "GET",
@@ -19838,14 +19863,14 @@ class AbstractFederationClientAuthenticationDetailsProviderBuilder {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 if (!this._leafCertificateSupplier) {
-                    this._leafCertificateSupplier = yield new url_based_x509_certificate_supplier_1.URLBasedX509CertificateSupplier(this.getMetaDataResourceDetail("identity/cert.pem"), this.getMetaDataResourceDetail("identity/key.pem"), null).refresh();
+                    this._leafCertificateSupplier = yield new url_based_x509_certificate_supplier_1.URLBasedX509CertificateSupplier(this.getMetaDataResourceDetail("identity/cert.pem", this.circuitBreaker), this.getMetaDataResourceDetail("identity/key.pem", this.circuitBreaker), null).refresh();
                 }
                 if (this._tenancyId === "") {
                     this._tenancyId = auth_utils_1.default.getTenantIdFromCertificate(this._leafCertificateSupplier.getCertificateAndKeyPair().getCertificate());
                 }
                 if (!this._intermediateCertificateSuppliers) {
                     this._intermediateCertificateSuppliers = [
-                        yield new url_based_x509_certificate_supplier_1.URLBasedX509CertificateSupplier(this.getMetaDataResourceDetail("identity/intermediate.pem"), null, null).refresh()
+                        yield new url_based_x509_certificate_supplier_1.URLBasedX509CertificateSupplier(this.getMetaDataResourceDetail("identity/intermediate.pem", this.circuitBreaker), null, null).refresh()
                     ];
                 }
             }
@@ -19854,11 +19879,11 @@ class AbstractFederationClientAuthenticationDetailsProviderBuilder {
             }
         });
     }
-    getMetaDataResourceDetail(path) {
+    getMetaDataResourceDetail(path, circuitBreaker) {
         const url = this._metadataBaseUrl + path;
         let headers = new Headers();
         headers.append(this.AUTHORIZATION, this.METADATA_AUTH_HEADERS);
-        return new url_based_x509_certificate_supplier_1.ResourceDetails(url, headers);
+        return new url_based_x509_certificate_supplier_1.ResourceDetails(url, headers, circuitBreaker);
     }
 }
 exports["default"] = AbstractFederationClientAuthenticationDetailsProviderBuilder;
@@ -19950,7 +19975,7 @@ class SimpleAuthenticationDetailsProvider {
      * @param privateKey    private key to sign the request.
      * @param passphrase    the passphrase of private key.
      */
-    constructor(tenancy, user, fingerprint, privateKey, passphrase, region, authType, delegationToken, profileCredentials) {
+    constructor(tenancy, user, fingerprint, privateKey, passphrase, region, authType, delegationToken, profileCredentials, _sessionToken) {
         this.tenancy = tenancy;
         this.user = user;
         this.fingerprint = fingerprint;
@@ -19960,6 +19985,7 @@ class SimpleAuthenticationDetailsProvider {
         this.authType = authType;
         this.delegationToken = delegationToken;
         this.profileCredentials = profileCredentials;
+        this._sessionToken = _sessionToken;
         // provider is a member variable that may or may not store the actual AuthenticationDetailsProvider.
         // In case of Cloud shell, provider would be the true AuthenticationDetailsProvider.
         this.provider = null;
@@ -20040,6 +20066,12 @@ class SimpleAuthenticationDetailsProvider {
     }
     getProfileCredentials() {
         return this.profileCredentials;
+    }
+    get sessionToken() {
+        return this._sessionToken;
+    }
+    set sessionToken(token) {
+        this._sessionToken = token;
     }
 }
 exports.SimpleAuthenticationDetailsProvider = SimpleAuthenticationDetailsProvider;
@@ -20180,12 +20212,16 @@ class ConfigFileAuthenticationDetailsProvider {
             return new auth_1.SimpleAuthenticationDetailsProvider(tenantId, "", "", "", "", region, authType, delegationToken);
         }
         const fingerprint = utils_1.checkNotNull(file.get("fingerprint"), "missing fingerprint in config");
-        const user = utils_1.checkNotNull(file.get("user"), "missing user in config");
         const pemFilePath = utils_1.checkNotNull(file.get("key_file"), "missing key_file in config");
         const passPhrase = file.get("pass_phrase");
         const privateKey = this.getPvtKey(config_file_reader_1.ConfigFileReader.expandUserHome(pemFilePath));
         const profileCredentials = file.profileCredentials;
-        return new auth_1.SimpleAuthenticationDetailsProvider(tenantId, user, fingerprint, privateKey, passPhrase, region, undefined, undefined, profileCredentials);
+        const sessionTokenPath = file.get("security_token_file");
+        const sessionToken = sessionTokenPath
+            ? this.getPvtKey(config_file_reader_1.ConfigFileReader.expandUserHome(sessionTokenPath))
+            : undefined;
+        const user = sessionToken ? "" : utils_1.checkNotNull(file.get("user"), "missing user in config");
+        return new auth_1.SimpleAuthenticationDetailsProvider(tenantId, user, fingerprint, privateKey, passPhrase, region, undefined, undefined, profileCredentials, sessionToken);
     }
     getPvtKey(filePath) {
         try {
@@ -20269,6 +20305,12 @@ class ConfigFileAuthenticationDetailsProvider {
     }
     getProfileCredentials() {
         return this.delegate.getProfileCredentials();
+    }
+    get sessionToken() {
+        return this.delegate.sessionToken;
+    }
+    set sessionToken(token) {
+        this.delegate.sessionToken = token;
     }
 }
 exports.ConfigFileAuthenticationDetailsProvider = ConfigFileAuthenticationDetailsProvider;
@@ -21081,6 +21123,109 @@ exports["default"] = SecurityTokenAdapter;
 
 /***/ }),
 
+/***/ 301:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SessionAuthDetailProvider = void 0;
+const signer_1 = __nccwpck_require__(484);
+const http_1 = __nccwpck_require__(6316);
+const request_generator_1 = __nccwpck_require__(3719);
+const config_file_auth_1 = __nccwpck_require__(3054);
+const jsonwebtoken_1 = __importDefault(__nccwpck_require__(7486));
+const helper_1 = __nccwpck_require__(7621);
+class SessionAuthDetailProvider extends config_file_auth_1.ConfigFileAuthenticationDetailsProvider {
+    constructor(configurationFilePath, profile) {
+        super(configurationFilePath, profile);
+        this.skipRefresh = false;
+    }
+    getKeyId() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return "ST$" + (yield this.getSecurityToken());
+        });
+    }
+    getSecurityToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.isValidSessionToken() || this.skipRefresh) {
+                return this.sessionToken;
+            }
+            return yield this.refreshSessionToken();
+        });
+    }
+    isValidSessionToken() {
+        let jwt = null;
+        try {
+            const secondsSinceEpoch = Math.round(Date.now() / 1000);
+            jwt = jsonwebtoken_1.default.decode(this.sessionToken, { complete: true });
+            if (jwt == null) {
+                return false;
+            }
+            else if (jwt.payload && jwt.payload.exp > secondsSinceEpoch) {
+                return true;
+            }
+            return false;
+        }
+        catch (e) {
+            throw Error(`Failed to decode token, error: ${e}`);
+        }
+    }
+    refreshSessionToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.skipRefresh = true; // avoid infinite loop on calling refreshSessionToken()
+            try {
+                const signer = new signer_1.DefaultRequestSigner(this);
+                const client = new http_1.FetchHttpClient(signer);
+                const region = this.getRegion().regionId;
+                const request = yield request_generator_1.composeRequest({
+                    baseEndpoint: `https://auth.${region}.oraclecloud.com`,
+                    path: `/v1/authentication/refresh`,
+                    method: "POST",
+                    defaultHeaders: { "content-type": "application/json" },
+                    bodyContent: JSON.stringify({ currentToken: this.sessionToken })
+                });
+                const response = yield client.send(request);
+                this.skipRefresh = false;
+                if (response.status === 200) {
+                    const tokenJson = yield response.json();
+                    const tokenStr = tokenJson.token;
+                    this.sessionToken = tokenStr;
+                    return this.sessionToken;
+                }
+                else if (response.status === 401) {
+                    const errBody = yield helper_1.handleErrorBody(response);
+                    throw new Error(`Authentication Error calling Identity to refresh token. Error: ${JSON.stringify(errBody)}`);
+                }
+                else {
+                    const errBody = yield helper_1.handleErrorBody(response);
+                    throw new Error(`Token cannot be refreshed. Error: ${JSON.stringify(errBody)}`);
+                }
+            }
+            catch (e) {
+                this.skipRefresh = false;
+                throw new Error(`Failed to refresh the session token due to ${e}`);
+            }
+        });
+    }
+}
+exports.SessionAuthDetailProvider = SessionAuthDetailProvider;
+//# sourceMappingURL=session-auth-details-provider.js.map
+
+/***/ }),
+
 /***/ 2306:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -21168,7 +21313,6 @@ const sshpk_1 = __nccwpck_require__(7022);
 const http_1 = __nccwpck_require__(6316);
 const certificate_and_privatekey_pair_1 = __importDefault(__nccwpck_require__(8873));
 const helper_1 = __nccwpck_require__(7621);
-const circuit_breaker_1 = __importDefault(__nccwpck_require__(5620));
 /**
  * A class that retrieves certificate based on metadata service url
  */
@@ -21233,13 +21377,14 @@ class URLBasedX509CertificateSupplier {
 }
 exports.URLBasedX509CertificateSupplier = URLBasedX509CertificateSupplier;
 class ResourceDetails {
-    constructor(url, headers) {
+    constructor(url, headers, circuitBreaker) {
         this.url = url;
         this.headers = headers;
+        this.circuitBreaker = circuitBreaker;
     }
     send() {
         return __awaiter(this, void 0, void 0, function* () {
-            const httpClient = new http_1.FetchHttpClient(null, circuit_breaker_1.default.internalCircuit);
+            const httpClient = new http_1.FetchHttpClient(null, this.circuitBreaker);
             const response = yield httpClient.send({
                 uri: this.url,
                 method: "GET",
@@ -21665,11 +21810,6 @@ CircuitBreaker.DefaultConfiguration = {
     volumeThreshold: 10,
     errorFilter: defaultErrorFilterFunction
 };
-CircuitBreaker.internalCircuit = new Breaker(FetchWrapper, {
-    timeout: 10000,
-    errorThresholdPercentage: 50,
-    resetTimeout: 30000 // After 30 seconds, try again.
-});
 //# sourceMappingURL=circuit-breaker.js.map
 
 /***/ }),
@@ -22853,6 +22993,7 @@ Realm.OC4 = Realm.register("oc4", "oraclegovcloud.uk");
 Realm.OC8 = Realm.register("oc8", "oraclecloud8.com");
 Realm.OC9 = Realm.register("oc9", "oraclecloud9.com");
 Realm.OC10 = Realm.register("oc10", "oraclecloud10.com");
+Realm.OC14 = Realm.register("oc14", "oraclecloud14.com");
 //# sourceMappingURL=realm.js.map
 
 /***/ }),
@@ -23179,6 +23320,8 @@ Region.AP_IBARAKI_1 = Region.register("ap-ibaraki-1", realm_1.Realm.OC8, "ukb");
 Region.ME_DCC_MUSCAT_1 = Region.register("me-dcc-muscat-1", realm_1.Realm.OC9, "mct");
 // OC10
 Region.AP_DCC_CANBERRA_1 = Region.register("ap-dcc-canberra-1", realm_1.Realm.OC10, "wga");
+// OC14
+Region.EU_DCC_MILAN_1 = Region.register("eu-dcc-milan-1", realm_1.Realm.OC14, "bgy");
 //# sourceMappingURL=region.js.map
 
 /***/ }),
@@ -24189,7 +24332,7 @@ class IdentityClient {
        * @param ActivateDomainRequest
        * @return ActivateDomainResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ActivateDomain.ts.html |here} to see how to use ActivateDomain API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ActivateDomain.ts.html |here} to see how to use ActivateDomain API.
        */
     activateDomain(activateDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24251,7 +24394,7 @@ class IdentityClient {
      * @param ActivateMfaTotpDeviceRequest
      * @return ActivateMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ActivateMfaTotpDevice.ts.html |here} to see how to use ActivateMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ActivateMfaTotpDevice.ts.html |here} to see how to use ActivateMfaTotpDevice API.
      */
     activateMfaTotpDevice(activateMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24318,7 +24461,7 @@ class IdentityClient {
      * @param AddTagDefaultLockRequest
      * @return AddTagDefaultLockResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/AddTagDefaultLock.ts.html |here} to see how to use AddTagDefaultLock API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/AddTagDefaultLock.ts.html |here} to see how to use AddTagDefaultLock API.
      */
     addTagDefaultLock(addTagDefaultLockRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24385,7 +24528,7 @@ class IdentityClient {
      * @param AddTagNamespaceLockRequest
      * @return AddTagNamespaceLockResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/AddTagNamespaceLock.ts.html |here} to see how to use AddTagNamespaceLock API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/AddTagNamespaceLock.ts.html |here} to see how to use AddTagNamespaceLock API.
      */
     addTagNamespaceLock(addTagNamespaceLockRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24455,7 +24598,7 @@ class IdentityClient {
        * @param AddUserToGroupRequest
        * @return AddUserToGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/AddUserToGroup.ts.html |here} to see how to use AddUserToGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/AddUserToGroup.ts.html |here} to see how to use AddUserToGroup API.
        */
     addUserToGroup(addUserToGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24521,7 +24664,7 @@ class IdentityClient {
      * @param AssembleEffectiveTagSetRequest
      * @return AssembleEffectiveTagSetResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/AssembleEffectiveTagSet.ts.html |here} to see how to use AssembleEffectiveTagSet API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/AssembleEffectiveTagSet.ts.html |here} to see how to use AssembleEffectiveTagSet API.
      */
     assembleEffectiveTagSet(assembleEffectiveTagSetRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24589,7 +24732,7 @@ class IdentityClient {
      * @param BulkDeleteResourcesRequest
      * @return BulkDeleteResourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/BulkDeleteResources.ts.html |here} to see how to use BulkDeleteResources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/BulkDeleteResources.ts.html |here} to see how to use BulkDeleteResources API.
      */
     bulkDeleteResources(bulkDeleteResourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24671,7 +24814,7 @@ class IdentityClient {
        * @param BulkDeleteTagsRequest
        * @return BulkDeleteTagsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/BulkDeleteTags.ts.html |here} to see how to use BulkDeleteTags API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/BulkDeleteTags.ts.html |here} to see how to use BulkDeleteTags API.
        */
     bulkDeleteTags(bulkDeleteTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24746,7 +24889,7 @@ class IdentityClient {
        * @param BulkEditTagsRequest
        * @return BulkEditTagsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/BulkEditTags.ts.html |here} to see how to use BulkEditTags API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/BulkEditTags.ts.html |here} to see how to use BulkEditTags API.
        */
     bulkEditTags(bulkEditTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24810,7 +24953,7 @@ class IdentityClient {
      * @param BulkMoveResourcesRequest
      * @return BulkMoveResourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/BulkMoveResources.ts.html |here} to see how to use BulkMoveResources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/BulkMoveResources.ts.html |here} to see how to use BulkMoveResources API.
      */
     bulkMoveResources(bulkMoveResourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24890,7 +25033,7 @@ class IdentityClient {
        * @param CascadeDeleteTagNamespaceRequest
        * @return CascadeDeleteTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CascadeDeleteTagNamespace.ts.html |here} to see how to use CascadeDeleteTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CascadeDeleteTagNamespace.ts.html |here} to see how to use CascadeDeleteTagNamespace API.
        */
     cascadeDeleteTagNamespace(cascadeDeleteTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -24957,7 +25100,7 @@ class IdentityClient {
        * @param ChangeDomainCompartmentRequest
        * @return ChangeDomainCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ChangeDomainCompartment.ts.html |here} to see how to use ChangeDomainCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ChangeDomainCompartment.ts.html |here} to see how to use ChangeDomainCompartment API.
        */
     changeDomainCompartment(changeDomainCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25028,7 +25171,7 @@ class IdentityClient {
        * @param ChangeDomainLicenseTypeRequest
        * @return ChangeDomainLicenseTypeResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ChangeDomainLicenseType.ts.html |here} to see how to use ChangeDomainLicenseType API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ChangeDomainLicenseType.ts.html |here} to see how to use ChangeDomainLicenseType API.
        */
     changeDomainLicenseType(changeDomainLicenseTypeRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25096,7 +25239,7 @@ class IdentityClient {
        * @param ChangeTagNamespaceCompartmentRequest
        * @return ChangeTagNamespaceCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ChangeTagNamespaceCompartment.ts.html |here} to see how to use ChangeTagNamespaceCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ChangeTagNamespaceCompartment.ts.html |here} to see how to use ChangeTagNamespaceCompartment API.
        */
     changeTagNamespaceCompartment(changeTagNamespaceCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25163,7 +25306,7 @@ class IdentityClient {
        * @param CreateAuthTokenRequest
        * @return CreateAuthTokenResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateAuthToken.ts.html |here} to see how to use CreateAuthToken API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateAuthToken.ts.html |here} to see how to use CreateAuthToken API.
        */
     createAuthToken(createAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25244,7 +25387,7 @@ class IdentityClient {
        * @param CreateCompartmentRequest
        * @return CreateCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateCompartment.ts.html |here} to see how to use CreateCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateCompartment.ts.html |here} to see how to use CreateCompartment API.
        */
     createCompartment(createCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25317,7 +25460,7 @@ class IdentityClient {
        * @param CreateCustomerSecretKeyRequest
        * @return CreateCustomerSecretKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateCustomerSecretKey.ts.html |here} to see how to use CreateCustomerSecretKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateCustomerSecretKey.ts.html |here} to see how to use CreateCustomerSecretKey API.
        */
     createCustomerSecretKey(createCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25382,7 +25525,7 @@ class IdentityClient {
      * @param CreateDbCredentialRequest
      * @return CreateDbCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateDbCredential.ts.html |here} to see how to use CreateDbCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateDbCredential.ts.html |here} to see how to use CreateDbCredential API.
      */
     createDbCredential(createDbCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25455,7 +25598,7 @@ class IdentityClient {
        * @param CreateDomainRequest
        * @return CreateDomainResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateDomain.ts.html |here} to see how to use CreateDomain API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateDomain.ts.html |here} to see how to use CreateDomain API.
        */
     createDomain(createDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25532,7 +25675,7 @@ class IdentityClient {
        * @param CreateDynamicGroupRequest
        * @return CreateDynamicGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateDynamicGroup.ts.html |here} to see how to use CreateDynamicGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateDynamicGroup.ts.html |here} to see how to use CreateDynamicGroup API.
        */
     createDynamicGroup(createDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25615,7 +25758,7 @@ class IdentityClient {
        * @param CreateGroupRequest
        * @return CreateGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateGroup.ts.html |here} to see how to use CreateGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateGroup.ts.html |here} to see how to use CreateGroup API.
        */
     createGroup(createGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25697,7 +25840,7 @@ class IdentityClient {
        * @param CreateIdentityProviderRequest
        * @return CreateIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateIdentityProvider.ts.html |here} to see how to use CreateIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateIdentityProvider.ts.html |here} to see how to use CreateIdentityProvider API.
        */
     createIdentityProvider(createIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25763,7 +25906,7 @@ class IdentityClient {
        * @param CreateIdpGroupMappingRequest
        * @return CreateIdpGroupMappingResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateIdpGroupMapping.ts.html |here} to see how to use CreateIdpGroupMapping API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateIdpGroupMapping.ts.html |here} to see how to use CreateIdpGroupMapping API.
        */
     createIdpGroupMapping(createIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25828,7 +25971,7 @@ class IdentityClient {
      * @param CreateMfaTotpDeviceRequest
      * @return CreateMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateMfaTotpDevice.ts.html |here} to see how to use CreateMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateMfaTotpDevice.ts.html |here} to see how to use CreateMfaTotpDevice API.
      */
     createMfaTotpDevice(createMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25912,7 +26055,7 @@ class IdentityClient {
        * @param CreateNetworkSourceRequest
        * @return CreateNetworkSourceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateNetworkSource.ts.html |here} to see how to use CreateNetworkSource API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateNetworkSource.ts.html |here} to see how to use CreateNetworkSource API.
        */
     createNetworkSource(createNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25975,7 +26118,7 @@ class IdentityClient {
      * @param CreateOAuthClientCredentialRequest
      * @return CreateOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateOAuthClientCredential.ts.html |here} to see how to use CreateOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateOAuthClientCredential.ts.html |here} to see how to use CreateOAuthClientCredential API.
      */
     createOAuthClientCredential(createOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26054,7 +26197,7 @@ class IdentityClient {
        * @param CreateOrResetUIPasswordRequest
        * @return CreateOrResetUIPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateOrResetUIPassword.ts.html |here} to see how to use CreateOrResetUIPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateOrResetUIPassword.ts.html |here} to see how to use CreateOrResetUIPassword API.
        */
     createOrResetUIPassword(createOrResetUIPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26134,7 +26277,7 @@ class IdentityClient {
        * @param CreatePolicyRequest
        * @return CreatePolicyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreatePolicy.ts.html |here} to see how to use CreatePolicy API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreatePolicy.ts.html |here} to see how to use CreatePolicy API.
        */
     createPolicy(createPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26197,7 +26340,7 @@ class IdentityClient {
      * @param CreateRegionSubscriptionRequest
      * @return CreateRegionSubscriptionResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateRegionSubscription.ts.html |here} to see how to use CreateRegionSubscription API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateRegionSubscription.ts.html |here} to see how to use CreateRegionSubscription API.
      */
     createRegionSubscription(createRegionSubscriptionRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26260,7 +26403,7 @@ class IdentityClient {
      * @param CreateSmtpCredentialRequest
      * @return CreateSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateSmtpCredential.ts.html |here} to see how to use CreateSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateSmtpCredential.ts.html |here} to see how to use CreateSmtpCredential API.
      */
     createSmtpCredential(createSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26336,7 +26479,7 @@ class IdentityClient {
        * @param CreateSwiftPasswordRequest
        * @return CreateSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateSwiftPassword.ts.html |here} to see how to use CreateSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateSwiftPassword.ts.html |here} to see how to use CreateSwiftPassword API.
        */
     createSwiftPassword(createSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26422,7 +26565,7 @@ class IdentityClient {
        * @param CreateTagRequest
        * @return CreateTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateTag.ts.html |here} to see how to use CreateTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateTag.ts.html |here} to see how to use CreateTag API.
        */
     createTag(createTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26496,7 +26639,7 @@ class IdentityClient {
        * @param CreateTagDefaultRequest
        * @return CreateTagDefaultResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateTagDefault.ts.html |here} to see how to use CreateTagDefault API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateTagDefault.ts.html |here} to see how to use CreateTagDefault API.
        */
     createTagDefault(createTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26573,7 +26716,7 @@ class IdentityClient {
        * @param CreateTagNamespaceRequest
        * @return CreateTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateTagNamespace.ts.html |here} to see how to use CreateTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateTagNamespace.ts.html |here} to see how to use CreateTagNamespace API.
        */
     createTagNamespace(createTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26665,7 +26808,7 @@ class IdentityClient {
        * @param CreateUserRequest
        * @return CreateUserResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/CreateUser.ts.html |here} to see how to use CreateUser API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/CreateUser.ts.html |here} to see how to use CreateUser API.
        */
     createUser(createUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26736,7 +26879,7 @@ class IdentityClient {
        * @param DeactivateDomainRequest
        * @return DeactivateDomainResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeactivateDomain.ts.html |here} to see how to use DeactivateDomain API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeactivateDomain.ts.html |here} to see how to use DeactivateDomain API.
        */
     deactivateDomain(deactivateDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26803,7 +26946,7 @@ class IdentityClient {
        * @param DeleteApiKeyRequest
        * @return DeleteApiKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteApiKey.ts.html |here} to see how to use DeleteApiKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteApiKey.ts.html |here} to see how to use DeleteApiKey API.
        */
     deleteApiKey(deleteApiKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26859,7 +27002,7 @@ class IdentityClient {
      * @param DeleteAuthTokenRequest
      * @return DeleteAuthTokenResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteAuthToken.ts.html |here} to see how to use DeleteAuthToken API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteAuthToken.ts.html |here} to see how to use DeleteAuthToken API.
      */
     deleteAuthToken(deleteAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26915,7 +27058,7 @@ class IdentityClient {
      * @param DeleteCompartmentRequest
      * @return DeleteCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteCompartment.ts.html |here} to see how to use DeleteCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteCompartment.ts.html |here} to see how to use DeleteCompartment API.
      */
     deleteCompartment(deleteCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26975,7 +27118,7 @@ class IdentityClient {
      * @param DeleteCustomerSecretKeyRequest
      * @return DeleteCustomerSecretKeyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteCustomerSecretKey.ts.html |here} to see how to use DeleteCustomerSecretKey API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteCustomerSecretKey.ts.html |here} to see how to use DeleteCustomerSecretKey API.
      */
     deleteCustomerSecretKey(deleteCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27031,7 +27174,7 @@ class IdentityClient {
      * @param DeleteDbCredentialRequest
      * @return DeleteDbCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteDbCredential.ts.html |here} to see how to use DeleteDbCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteDbCredential.ts.html |here} to see how to use DeleteDbCredential API.
      */
     deleteDbCredential(deleteDbCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27094,7 +27237,7 @@ class IdentityClient {
      * @param DeleteDomainRequest
      * @return DeleteDomainResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteDomain.ts.html |here} to see how to use DeleteDomain API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteDomain.ts.html |here} to see how to use DeleteDomain API.
      */
     deleteDomain(deleteDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27155,7 +27298,7 @@ class IdentityClient {
      * @param DeleteDynamicGroupRequest
      * @return DeleteDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteDynamicGroup.ts.html |here} to see how to use DeleteDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteDynamicGroup.ts.html |here} to see how to use DeleteDynamicGroup API.
      */
     deleteDynamicGroup(deleteDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27210,7 +27353,7 @@ class IdentityClient {
      * @param DeleteGroupRequest
      * @return DeleteGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteGroup.ts.html |here} to see how to use DeleteGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteGroup.ts.html |here} to see how to use DeleteGroup API.
      */
     deleteGroup(deleteGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27268,7 +27411,7 @@ class IdentityClient {
        * @param DeleteIdentityProviderRequest
        * @return DeleteIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteIdentityProvider.ts.html |here} to see how to use DeleteIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteIdentityProvider.ts.html |here} to see how to use DeleteIdentityProvider API.
        */
     deleteIdentityProvider(deleteIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27325,7 +27468,7 @@ class IdentityClient {
        * @param DeleteIdpGroupMappingRequest
        * @return DeleteIdpGroupMappingResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteIdpGroupMapping.ts.html |here} to see how to use DeleteIdpGroupMapping API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteIdpGroupMapping.ts.html |here} to see how to use DeleteIdpGroupMapping API.
        */
     deleteIdpGroupMapping(deleteIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27381,7 +27524,7 @@ class IdentityClient {
      * @param DeleteMfaTotpDeviceRequest
      * @return DeleteMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteMfaTotpDevice.ts.html |here} to see how to use DeleteMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteMfaTotpDevice.ts.html |here} to see how to use DeleteMfaTotpDevice API.
      */
     deleteMfaTotpDevice(deleteMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27437,7 +27580,7 @@ class IdentityClient {
      * @param DeleteNetworkSourceRequest
      * @return DeleteNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteNetworkSource.ts.html |here} to see how to use DeleteNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteNetworkSource.ts.html |here} to see how to use DeleteNetworkSource API.
      */
     deleteNetworkSource(deleteNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27492,7 +27635,7 @@ class IdentityClient {
      * @param DeleteOAuthClientCredentialRequest
      * @return DeleteOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteOAuthClientCredential.ts.html |here} to see how to use DeleteOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteOAuthClientCredential.ts.html |here} to see how to use DeleteOAuthClientCredential API.
      */
     deleteOAuthClientCredential(deleteOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27547,7 +27690,7 @@ class IdentityClient {
      * @param DeletePolicyRequest
      * @return DeletePolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeletePolicy.ts.html |here} to see how to use DeletePolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeletePolicy.ts.html |here} to see how to use DeletePolicy API.
      */
     deletePolicy(deletePolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27602,7 +27745,7 @@ class IdentityClient {
      * @param DeleteSmtpCredentialRequest
      * @return DeleteSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteSmtpCredential.ts.html |here} to see how to use DeleteSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteSmtpCredential.ts.html |here} to see how to use DeleteSmtpCredential API.
      */
     deleteSmtpCredential(deleteSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27660,7 +27803,7 @@ class IdentityClient {
        * @param DeleteSwiftPasswordRequest
        * @return DeleteSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteSwiftPassword.ts.html |here} to see how to use DeleteSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteSwiftPassword.ts.html |here} to see how to use DeleteSwiftPassword API.
        */
     deleteSwiftPassword(deleteSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27735,7 +27878,7 @@ class IdentityClient {
        * @param DeleteTagRequest
        * @return DeleteTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteTag.ts.html |here} to see how to use DeleteTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteTag.ts.html |here} to see how to use DeleteTag API.
        */
     deleteTag(deleteTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27798,7 +27941,7 @@ class IdentityClient {
      * @param DeleteTagDefaultRequest
      * @return DeleteTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteTagDefault.ts.html |here} to see how to use DeleteTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteTagDefault.ts.html |here} to see how to use DeleteTagDefault API.
      */
     deleteTagDefault(deleteTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27862,7 +28005,7 @@ class IdentityClient {
        * @param DeleteTagNamespaceRequest
        * @return DeleteTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteTagNamespace.ts.html |here} to see how to use DeleteTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteTagNamespace.ts.html |here} to see how to use DeleteTagNamespace API.
        */
     deleteTagNamespace(deleteTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27919,7 +28062,7 @@ class IdentityClient {
      * @param DeleteUserRequest
      * @return DeleteUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/DeleteUser.ts.html |here} to see how to use DeleteUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/DeleteUser.ts.html |here} to see how to use DeleteUser API.
      */
     deleteUser(deleteUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -27983,7 +28126,7 @@ class IdentityClient {
        * @param EnableReplicationToRegionRequest
        * @return EnableReplicationToRegionResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/EnableReplicationToRegion.ts.html |here} to see how to use EnableReplicationToRegion API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/EnableReplicationToRegion.ts.html |here} to see how to use EnableReplicationToRegion API.
        */
     enableReplicationToRegion(enableReplicationToRegionRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28046,7 +28189,7 @@ class IdentityClient {
      * @param GenerateTotpSeedRequest
      * @return GenerateTotpSeedResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GenerateTotpSeed.ts.html |here} to see how to use GenerateTotpSeed API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GenerateTotpSeed.ts.html |here} to see how to use GenerateTotpSeed API.
      */
     generateTotpSeed(generateTotpSeedRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28112,7 +28255,7 @@ class IdentityClient {
      * @param GetAuthenticationPolicyRequest
      * @return GetAuthenticationPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetAuthenticationPolicy.ts.html |here} to see how to use GetAuthenticationPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetAuthenticationPolicy.ts.html |here} to see how to use GetAuthenticationPolicy API.
      */
     getAuthenticationPolicy(getAuthenticationPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28182,7 +28325,7 @@ class IdentityClient {
        * @param GetCompartmentRequest
        * @return GetCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetCompartment.ts.html |here} to see how to use GetCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetCompartment.ts.html |here} to see how to use GetCompartment API.
        */
     getCompartment(getCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28245,7 +28388,7 @@ class IdentityClient {
      * @param GetDomainRequest
      * @return GetDomainResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetDomain.ts.html |here} to see how to use GetDomain API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetDomain.ts.html |here} to see how to use GetDomain API.
      */
     getDomain(getDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28309,7 +28452,7 @@ class IdentityClient {
      * @param GetDynamicGroupRequest
      * @return GetDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetDynamicGroup.ts.html |here} to see how to use GetDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetDynamicGroup.ts.html |here} to see how to use GetDynamicGroup API.
      */
     getDynamicGroup(getDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28376,7 +28519,7 @@ class IdentityClient {
        * @param GetGroupRequest
        * @return GetGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetGroup.ts.html |here} to see how to use GetGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetGroup.ts.html |here} to see how to use GetGroup API.
        */
     getGroup(getGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28439,7 +28582,7 @@ class IdentityClient {
      * @param GetIamWorkRequestRequest
      * @return GetIamWorkRequestResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetIamWorkRequest.ts.html |here} to see how to use GetIamWorkRequest API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetIamWorkRequest.ts.html |here} to see how to use GetIamWorkRequest API.
      */
     getIamWorkRequest(getIamWorkRequestRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28500,7 +28643,7 @@ class IdentityClient {
        * @param GetIdentityProviderRequest
        * @return GetIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetIdentityProvider.ts.html |here} to see how to use GetIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetIdentityProvider.ts.html |here} to see how to use GetIdentityProvider API.
        */
     getIdentityProvider(getIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28565,7 +28708,7 @@ class IdentityClient {
        * @param GetIdpGroupMappingRequest
        * @return GetIdpGroupMappingResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetIdpGroupMapping.ts.html |here} to see how to use GetIdpGroupMapping API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetIdpGroupMapping.ts.html |here} to see how to use GetIdpGroupMapping API.
        */
     getIdpGroupMapping(getIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28629,7 +28772,7 @@ class IdentityClient {
      * @param GetMfaTotpDeviceRequest
      * @return GetMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetMfaTotpDevice.ts.html |here} to see how to use GetMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetMfaTotpDevice.ts.html |here} to see how to use GetMfaTotpDevice API.
      */
     getMfaTotpDevice(getMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28693,7 +28836,7 @@ class IdentityClient {
      * @param GetNetworkSourceRequest
      * @return GetNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetNetworkSource.ts.html |here} to see how to use GetNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetNetworkSource.ts.html |here} to see how to use GetNetworkSource API.
      */
     getNetworkSource(getNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28755,7 +28898,7 @@ class IdentityClient {
      * @param GetPolicyRequest
      * @return GetPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetPolicy.ts.html |here} to see how to use GetPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetPolicy.ts.html |here} to see how to use GetPolicy API.
      */
     getPolicy(getPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28818,7 +28961,7 @@ class IdentityClient {
      * @param GetStandardTagTemplateRequest
      * @return GetStandardTagTemplateResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetStandardTagTemplate.ts.html |here} to see how to use GetStandardTagTemplate API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetStandardTagTemplate.ts.html |here} to see how to use GetStandardTagTemplate API.
      */
     getStandardTagTemplate(getStandardTagTemplateRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28877,7 +29020,7 @@ class IdentityClient {
      * @param GetTagRequest
      * @return GetTagResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetTag.ts.html |here} to see how to use GetTag API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetTag.ts.html |here} to see how to use GetTag API.
      */
     getTag(getTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28941,7 +29084,7 @@ class IdentityClient {
      * @param GetTagDefaultRequest
      * @return GetTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetTagDefault.ts.html |here} to see how to use GetTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetTagDefault.ts.html |here} to see how to use GetTagDefault API.
      */
     getTagDefault(getTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29004,7 +29147,7 @@ class IdentityClient {
      * @param GetTagNamespaceRequest
      * @return GetTagNamespaceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetTagNamespace.ts.html |here} to see how to use GetTagNamespace API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetTagNamespace.ts.html |here} to see how to use GetTagNamespace API.
      */
     getTagNamespace(getTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29063,7 +29206,7 @@ class IdentityClient {
      * @param GetTaggingWorkRequestRequest
      * @return GetTaggingWorkRequestResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetTaggingWorkRequest.ts.html |here} to see how to use GetTaggingWorkRequest API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetTaggingWorkRequest.ts.html |here} to see how to use GetTaggingWorkRequest API.
      */
     getTaggingWorkRequest(getTaggingWorkRequestRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29125,7 +29268,7 @@ class IdentityClient {
      * @param GetTenancyRequest
      * @return GetTenancyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetTenancy.ts.html |here} to see how to use GetTenancy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetTenancy.ts.html |here} to see how to use GetTenancy API.
      */
     getTenancy(getTenancyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29182,7 +29325,7 @@ class IdentityClient {
      * @param GetUserRequest
      * @return GetUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetUser.ts.html |here} to see how to use GetUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetUser.ts.html |here} to see how to use GetUser API.
      */
     getUser(getUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29244,7 +29387,7 @@ class IdentityClient {
      * @param GetUserGroupMembershipRequest
      * @return GetUserGroupMembershipResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetUserGroupMembership.ts.html |here} to see how to use GetUserGroupMembership API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetUserGroupMembership.ts.html |here} to see how to use GetUserGroupMembership API.
      */
     getUserGroupMembership(getUserGroupMembershipRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29308,7 +29451,7 @@ class IdentityClient {
      * @param GetUserUIPasswordInformationRequest
      * @return GetUserUIPasswordInformationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetUserUIPasswordInformation.ts.html |here} to see how to use GetUserUIPasswordInformation API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetUserUIPasswordInformation.ts.html |here} to see how to use GetUserUIPasswordInformation API.
      */
     getUserUIPasswordInformation(getUserUIPasswordInformationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29372,7 +29515,7 @@ class IdentityClient {
      * @param GetWorkRequestRequest
      * @return GetWorkRequestResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/GetWorkRequest.ts.html |here} to see how to use GetWorkRequest API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/GetWorkRequest.ts.html |here} to see how to use GetWorkRequest API.
      */
     getWorkRequest(getWorkRequestRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29436,7 +29579,7 @@ class IdentityClient {
      * @param ImportStandardTagsRequest
      * @return ImportStandardTagsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ImportStandardTags.ts.html |here} to see how to use ImportStandardTags API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ImportStandardTags.ts.html |here} to see how to use ImportStandardTags API.
      */
     importStandardTags(importStandardTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29500,7 +29643,7 @@ class IdentityClient {
        * @param ListAllowedDomainLicenseTypesRequest
        * @return ListAllowedDomainLicenseTypesResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListAllowedDomainLicenseTypes.ts.html |here} to see how to use ListAllowedDomainLicenseTypes API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListAllowedDomainLicenseTypes.ts.html |here} to see how to use ListAllowedDomainLicenseTypes API.
        */
     listAllowedDomainLicenseTypes(listAllowedDomainLicenseTypesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29567,7 +29710,7 @@ class IdentityClient {
        * @param ListApiKeysRequest
        * @return ListApiKeysResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListApiKeys.ts.html |here} to see how to use ListApiKeys API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListApiKeys.ts.html |here} to see how to use ListApiKeys API.
        */
     listApiKeys(listApiKeysRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29631,7 +29774,7 @@ class IdentityClient {
      * @param ListAuthTokensRequest
      * @return ListAuthTokensResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListAuthTokens.ts.html |here} to see how to use ListAuthTokens API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListAuthTokens.ts.html |here} to see how to use ListAuthTokens API.
      */
     listAuthTokens(listAuthTokensRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29698,7 +29841,7 @@ class IdentityClient {
      * @param ListAvailabilityDomainsRequest
      * @return ListAvailabilityDomainsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListAvailabilityDomains.ts.html |here} to see how to use ListAvailabilityDomains API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListAvailabilityDomains.ts.html |here} to see how to use ListAvailabilityDomains API.
      */
     listAvailabilityDomains(listAvailabilityDomainsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29767,7 +29910,7 @@ class IdentityClient {
      * @param ListBulkActionResourceTypesRequest
      * @return ListBulkActionResourceTypesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListBulkActionResourceTypes.ts.html |here} to see how to use ListBulkActionResourceTypes API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListBulkActionResourceTypes.ts.html |here} to see how to use ListBulkActionResourceTypes API.
      */
     listBulkActionResourceTypes(listBulkActionResourceTypesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29832,7 +29975,7 @@ class IdentityClient {
      * @param ListBulkEditTagsResourceTypesRequest
      * @return ListBulkEditTagsResourceTypesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListBulkEditTagsResourceTypes.ts.html |here} to see how to use ListBulkEditTagsResourceTypes API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListBulkEditTagsResourceTypes.ts.html |here} to see how to use ListBulkEditTagsResourceTypes API.
      */
     listBulkEditTagsResourceTypes(listBulkEditTagsResourceTypesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -29913,7 +30056,7 @@ class IdentityClient {
        * @param ListCompartmentsRequest
        * @return ListCompartmentsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListCompartments.ts.html |here} to see how to use ListCompartments API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListCompartments.ts.html |here} to see how to use ListCompartments API.
        */
     listCompartments(listCompartmentsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30025,7 +30168,7 @@ class IdentityClient {
      * @param ListCostTrackingTagsRequest
      * @return ListCostTrackingTagsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListCostTrackingTags.ts.html |here} to see how to use ListCostTrackingTags API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListCostTrackingTags.ts.html |here} to see how to use ListCostTrackingTags API.
      */
     listCostTrackingTags(listCostTrackingTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30131,7 +30274,7 @@ class IdentityClient {
      * @param ListCustomerSecretKeysRequest
      * @return ListCustomerSecretKeysResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListCustomerSecretKeys.ts.html |here} to see how to use ListCustomerSecretKeys API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListCustomerSecretKeys.ts.html |here} to see how to use ListCustomerSecretKeys API.
      */
     listCustomerSecretKeys(listCustomerSecretKeysRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30194,7 +30337,7 @@ class IdentityClient {
      * @param ListDbCredentialsRequest
      * @return ListDbCredentialsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListDbCredentials.ts.html |here} to see how to use ListDbCredentials API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListDbCredentials.ts.html |here} to see how to use ListDbCredentials API.
      */
     listDbCredentials(listDbCredentialsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30305,7 +30448,7 @@ class IdentityClient {
      * @param ListDomainsRequest
      * @return ListDomainsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListDomains.ts.html |here} to see how to use ListDomains API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListDomains.ts.html |here} to see how to use ListDomains API.
      */
     listDomains(listDomainsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30423,7 +30566,7 @@ class IdentityClient {
      * @param ListDynamicGroupsRequest
      * @return ListDynamicGroupsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListDynamicGroups.ts.html |here} to see how to use ListDynamicGroups API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListDynamicGroups.ts.html |here} to see how to use ListDynamicGroups API.
      */
     listDynamicGroups(listDynamicGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30534,7 +30677,7 @@ class IdentityClient {
      * @param ListFaultDomainsRequest
      * @return ListFaultDomainsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListFaultDomains.ts.html |here} to see how to use ListFaultDomains API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListFaultDomains.ts.html |here} to see how to use ListFaultDomains API.
      */
     listFaultDomains(listFaultDomainsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30595,7 +30738,7 @@ class IdentityClient {
      * @param ListGroupsRequest
      * @return ListGroupsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListGroups.ts.html |here} to see how to use ListGroups API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListGroups.ts.html |here} to see how to use ListGroups API.
      */
     listGroups(listGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30704,7 +30847,7 @@ class IdentityClient {
      * @param ListIamWorkRequestErrorsRequest
      * @return ListIamWorkRequestErrorsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListIamWorkRequestErrors.ts.html |here} to see how to use ListIamWorkRequestErrors API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListIamWorkRequestErrors.ts.html |here} to see how to use ListIamWorkRequestErrors API.
      */
     listIamWorkRequestErrors(listIamWorkRequestErrorsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30812,7 +30955,7 @@ class IdentityClient {
      * @param ListIamWorkRequestLogsRequest
      * @return ListIamWorkRequestLogsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListIamWorkRequestLogs.ts.html |here} to see how to use ListIamWorkRequestLogs API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListIamWorkRequestLogs.ts.html |here} to see how to use ListIamWorkRequestLogs API.
      */
     listIamWorkRequestLogs(listIamWorkRequestLogsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -30925,7 +31068,7 @@ class IdentityClient {
      * @param ListIamWorkRequestsRequest
      * @return ListIamWorkRequestsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListIamWorkRequests.ts.html |here} to see how to use ListIamWorkRequests API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListIamWorkRequests.ts.html |here} to see how to use ListIamWorkRequests API.
      */
     listIamWorkRequests(listIamWorkRequestsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31034,7 +31177,7 @@ class IdentityClient {
        * @param ListIdentityProviderGroupsRequest
        * @return ListIdentityProviderGroupsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListIdentityProviderGroups.ts.html |here} to see how to use ListIdentityProviderGroups API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListIdentityProviderGroups.ts.html |here} to see how to use ListIdentityProviderGroups API.
        */
     listIdentityProviderGroups(listIdentityProviderGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31147,7 +31290,7 @@ class IdentityClient {
        * @param ListIdentityProvidersRequest
        * @return ListIdentityProvidersResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListIdentityProviders.ts.html |here} to see how to use ListIdentityProviders API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListIdentityProviders.ts.html |here} to see how to use ListIdentityProviders API.
        */
     listIdentityProviders(listIdentityProvidersRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31259,7 +31402,7 @@ class IdentityClient {
        * @param ListIdpGroupMappingsRequest
        * @return ListIdpGroupMappingsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListIdpGroupMappings.ts.html |here} to see how to use ListIdpGroupMappings API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListIdpGroupMappings.ts.html |here} to see how to use ListIdpGroupMappings API.
        */
     listIdpGroupMappings(listIdpGroupMappingsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31366,7 +31509,7 @@ class IdentityClient {
      * @param ListMfaTotpDevicesRequest
      * @return ListMfaTotpDevicesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListMfaTotpDevices.ts.html |here} to see how to use ListMfaTotpDevices API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListMfaTotpDevices.ts.html |here} to see how to use ListMfaTotpDevices API.
      */
     listMfaTotpDevices(listMfaTotpDevicesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31476,7 +31619,7 @@ class IdentityClient {
      * @param ListNetworkSourcesRequest
      * @return ListNetworkSourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListNetworkSources.ts.html |here} to see how to use ListNetworkSources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListNetworkSources.ts.html |here} to see how to use ListNetworkSources API.
      */
     listNetworkSources(listNetworkSourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31585,7 +31728,7 @@ class IdentityClient {
      * @param ListOAuthClientCredentialsRequest
      * @return ListOAuthClientCredentialsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListOAuthClientCredentials.ts.html |here} to see how to use ListOAuthClientCredentials API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListOAuthClientCredentials.ts.html |here} to see how to use ListOAuthClientCredentials API.
      */
     listOAuthClientCredentials(listOAuthClientCredentialsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31696,7 +31839,7 @@ class IdentityClient {
        * @param ListPoliciesRequest
        * @return ListPoliciesResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListPolicies.ts.html |here} to see how to use ListPolicies API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListPolicies.ts.html |here} to see how to use ListPolicies API.
        */
     listPolicies(listPoliciesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31804,7 +31947,7 @@ class IdentityClient {
      * @param ListRegionSubscriptionsRequest
      * @return ListRegionSubscriptionsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListRegionSubscriptions.ts.html |here} to see how to use ListRegionSubscriptions API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListRegionSubscriptions.ts.html |here} to see how to use ListRegionSubscriptions API.
      */
     listRegionSubscriptions(listRegionSubscriptionsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31861,7 +32004,7 @@ class IdentityClient {
      * @param ListRegionsRequest
      * @return ListRegionsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListRegions.ts.html |here} to see how to use ListRegions API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListRegions.ts.html |here} to see how to use ListRegions API.
      */
     listRegions(listRegionsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31918,7 +32061,7 @@ class IdentityClient {
      * @param ListSmtpCredentialsRequest
      * @return ListSmtpCredentialsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListSmtpCredentials.ts.html |here} to see how to use ListSmtpCredentials API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListSmtpCredentials.ts.html |here} to see how to use ListSmtpCredentials API.
      */
     listSmtpCredentials(listSmtpCredentialsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31981,7 +32124,7 @@ class IdentityClient {
      * @param ListStandardTagNamespacesRequest
      * @return ListStandardTagNamespacesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListStandardTagNamespaces.ts.html |here} to see how to use ListStandardTagNamespaces API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListStandardTagNamespaces.ts.html |here} to see how to use ListStandardTagNamespaces API.
      */
     listStandardTagNamespaces(listStandardTagNamespacesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32089,7 +32232,7 @@ class IdentityClient {
        * @param ListSwiftPasswordsRequest
        * @return ListSwiftPasswordsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListSwiftPasswords.ts.html |here} to see how to use ListSwiftPasswords API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListSwiftPasswords.ts.html |here} to see how to use ListSwiftPasswords API.
        */
     listSwiftPasswords(listSwiftPasswordsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32152,7 +32295,7 @@ class IdentityClient {
      * @param ListTagDefaultsRequest
      * @return ListTagDefaultsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListTagDefaults.ts.html |here} to see how to use ListTagDefaults API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListTagDefaults.ts.html |here} to see how to use ListTagDefaults API.
      */
     listTagDefaults(listTagDefaultsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32260,7 +32403,7 @@ class IdentityClient {
      * @param ListTagNamespacesRequest
      * @return ListTagNamespacesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListTagNamespaces.ts.html |here} to see how to use ListTagNamespaces API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListTagNamespaces.ts.html |here} to see how to use ListTagNamespaces API.
      */
     listTagNamespaces(listTagNamespacesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32367,7 +32510,7 @@ class IdentityClient {
      * @param ListTaggingWorkRequestErrorsRequest
      * @return ListTaggingWorkRequestErrorsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListTaggingWorkRequestErrors.ts.html |here} to see how to use ListTaggingWorkRequestErrors API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListTaggingWorkRequestErrors.ts.html |here} to see how to use ListTaggingWorkRequestErrors API.
      */
     listTaggingWorkRequestErrors(listTaggingWorkRequestErrorsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32478,7 +32621,7 @@ class IdentityClient {
      * @param ListTaggingWorkRequestLogsRequest
      * @return ListTaggingWorkRequestLogsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListTaggingWorkRequestLogs.ts.html |here} to see how to use ListTaggingWorkRequestLogs API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListTaggingWorkRequestLogs.ts.html |here} to see how to use ListTaggingWorkRequestLogs API.
      */
     listTaggingWorkRequestLogs(listTaggingWorkRequestLogsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32589,7 +32732,7 @@ class IdentityClient {
      * @param ListTaggingWorkRequestsRequest
      * @return ListTaggingWorkRequestsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListTaggingWorkRequests.ts.html |here} to see how to use ListTaggingWorkRequests API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListTaggingWorkRequests.ts.html |here} to see how to use ListTaggingWorkRequests API.
      */
     listTaggingWorkRequests(listTaggingWorkRequestsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32695,7 +32838,7 @@ class IdentityClient {
      * @param ListTagsRequest
      * @return ListTagsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListTags.ts.html |here} to see how to use ListTags API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListTags.ts.html |here} to see how to use ListTags API.
      */
     listTags(listTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32811,7 +32954,7 @@ class IdentityClient {
        * @param ListUserGroupMembershipsRequest
        * @return ListUserGroupMembershipsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListUserGroupMemberships.ts.html |here} to see how to use ListUserGroupMemberships API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListUserGroupMemberships.ts.html |here} to see how to use ListUserGroupMemberships API.
        */
     listUserGroupMemberships(listUserGroupMembershipsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32920,7 +33063,7 @@ class IdentityClient {
      * @param ListUsersRequest
      * @return ListUsersResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListUsers.ts.html |here} to see how to use ListUsers API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListUsers.ts.html |here} to see how to use ListUsers API.
      */
     listUsers(listUsersRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33031,7 +33174,7 @@ class IdentityClient {
      * @param ListWorkRequestsRequest
      * @return ListWorkRequestsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ListWorkRequests.ts.html |here} to see how to use ListWorkRequests API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ListWorkRequests.ts.html |here} to see how to use ListWorkRequests API.
      */
     listWorkRequests(listWorkRequestsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33144,7 +33287,7 @@ class IdentityClient {
      * @param MoveCompartmentRequest
      * @return MoveCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/MoveCompartment.ts.html |here} to see how to use MoveCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/MoveCompartment.ts.html |here} to see how to use MoveCompartment API.
      */
     moveCompartment(moveCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33207,7 +33350,7 @@ class IdentityClient {
      * @param RecoverCompartmentRequest
      * @return RecoverCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/RecoverCompartment.ts.html |here} to see how to use RecoverCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/RecoverCompartment.ts.html |here} to see how to use RecoverCompartment API.
      */
     recoverCompartment(recoverCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33272,7 +33415,7 @@ class IdentityClient {
      * @param RemoveTagDefaultLockRequest
      * @return RemoveTagDefaultLockResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/RemoveTagDefaultLock.ts.html |here} to see how to use RemoveTagDefaultLock API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/RemoveTagDefaultLock.ts.html |here} to see how to use RemoveTagDefaultLock API.
      */
     removeTagDefaultLock(removeTagDefaultLockRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33339,7 +33482,7 @@ class IdentityClient {
      * @param RemoveTagNamespaceLockRequest
      * @return RemoveTagNamespaceLockResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/RemoveTagNamespaceLock.ts.html |here} to see how to use RemoveTagNamespaceLock API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/RemoveTagNamespaceLock.ts.html |here} to see how to use RemoveTagNamespaceLock API.
      */
     removeTagNamespaceLock(removeTagNamespaceLockRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33405,7 +33548,7 @@ class IdentityClient {
      * @param RemoveUserFromGroupRequest
      * @return RemoveUserFromGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/RemoveUserFromGroup.ts.html |here} to see how to use RemoveUserFromGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/RemoveUserFromGroup.ts.html |here} to see how to use RemoveUserFromGroup API.
      */
     removeUserFromGroup(removeUserFromGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33460,7 +33603,7 @@ class IdentityClient {
      * @param ResetIdpScimClientRequest
      * @return ResetIdpScimClientResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/ResetIdpScimClient.ts.html |here} to see how to use ResetIdpScimClient API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/ResetIdpScimClient.ts.html |here} to see how to use ResetIdpScimClient API.
      */
     resetIdpScimClient(resetIdpScimClientRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33518,7 +33661,7 @@ class IdentityClient {
      * @param UpdateAuthTokenRequest
      * @return UpdateAuthTokenResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateAuthToken.ts.html |here} to see how to use UpdateAuthToken API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateAuthToken.ts.html |here} to see how to use UpdateAuthToken API.
      */
     updateAuthToken(updateAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33584,7 +33727,7 @@ class IdentityClient {
      * @param UpdateAuthenticationPolicyRequest
      * @return UpdateAuthenticationPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateAuthenticationPolicy.ts.html |here} to see how to use UpdateAuthenticationPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateAuthenticationPolicy.ts.html |here} to see how to use UpdateAuthenticationPolicy API.
      */
     updateAuthenticationPolicy(updateAuthenticationPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33648,7 +33791,7 @@ class IdentityClient {
      * @param UpdateCompartmentRequest
      * @return UpdateCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateCompartment.ts.html |here} to see how to use UpdateCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateCompartment.ts.html |here} to see how to use UpdateCompartment API.
      */
     updateCompartment(updateCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33713,7 +33856,7 @@ class IdentityClient {
      * @param UpdateCustomerSecretKeyRequest
      * @return UpdateCustomerSecretKeyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateCustomerSecretKey.ts.html |here} to see how to use UpdateCustomerSecretKey API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateCustomerSecretKey.ts.html |here} to see how to use UpdateCustomerSecretKey API.
      */
     updateCustomerSecretKey(updateCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33782,7 +33925,7 @@ class IdentityClient {
        * @param UpdateDomainRequest
        * @return UpdateDomainResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateDomain.ts.html |here} to see how to use UpdateDomain API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateDomain.ts.html |here} to see how to use UpdateDomain API.
        */
     updateDomain(updateDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33843,7 +33986,7 @@ class IdentityClient {
      * @param UpdateDynamicGroupRequest
      * @return UpdateDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateDynamicGroup.ts.html |here} to see how to use UpdateDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateDynamicGroup.ts.html |here} to see how to use UpdateDynamicGroup API.
      */
     updateDynamicGroup(updateDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33907,7 +34050,7 @@ class IdentityClient {
      * @param UpdateGroupRequest
      * @return UpdateGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateGroup.ts.html |here} to see how to use UpdateGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateGroup.ts.html |here} to see how to use UpdateGroup API.
      */
     updateGroup(updateGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -33974,7 +34117,7 @@ class IdentityClient {
        * @param UpdateIdentityProviderRequest
        * @return UpdateIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateIdentityProvider.ts.html |here} to see how to use UpdateIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateIdentityProvider.ts.html |here} to see how to use UpdateIdentityProvider API.
        */
     updateIdentityProvider(updateIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34041,7 +34184,7 @@ class IdentityClient {
        * @param UpdateIdpGroupMappingRequest
        * @return UpdateIdpGroupMappingResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateIdpGroupMapping.ts.html |here} to see how to use UpdateIdpGroupMapping API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateIdpGroupMapping.ts.html |here} to see how to use UpdateIdpGroupMapping API.
        */
     updateIdpGroupMapping(updateIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34107,7 +34250,7 @@ class IdentityClient {
      * @param UpdateNetworkSourceRequest
      * @return UpdateNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateNetworkSource.ts.html |here} to see how to use UpdateNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateNetworkSource.ts.html |here} to see how to use UpdateNetworkSource API.
      */
     updateNetworkSource(updateNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34172,7 +34315,7 @@ class IdentityClient {
      * @param UpdateOAuthClientCredentialRequest
      * @return UpdateOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateOAuthClientCredential.ts.html |here} to see how to use UpdateOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateOAuthClientCredential.ts.html |here} to see how to use UpdateOAuthClientCredential API.
      */
     updateOAuthClientCredential(updateOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34240,7 +34383,7 @@ class IdentityClient {
        * @param UpdatePolicyRequest
        * @return UpdatePolicyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdatePolicy.ts.html |here} to see how to use UpdatePolicy API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdatePolicy.ts.html |here} to see how to use UpdatePolicy API.
        */
     updatePolicy(updatePolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34305,7 +34448,7 @@ class IdentityClient {
      * @param UpdateSmtpCredentialRequest
      * @return UpdateSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateSmtpCredential.ts.html |here} to see how to use UpdateSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateSmtpCredential.ts.html |here} to see how to use UpdateSmtpCredential API.
      */
     updateSmtpCredential(updateSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34373,7 +34516,7 @@ class IdentityClient {
        * @param UpdateSwiftPasswordRequest
        * @return UpdateSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateSwiftPassword.ts.html |here} to see how to use UpdateSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateSwiftPassword.ts.html |here} to see how to use UpdateSwiftPassword API.
        */
     updateSwiftPassword(updateSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34448,7 +34591,7 @@ class IdentityClient {
        * @param UpdateTagRequest
        * @return UpdateTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateTag.ts.html |here} to see how to use UpdateTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateTag.ts.html |here} to see how to use UpdateTag API.
        */
     updateTag(updateTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34521,7 +34664,7 @@ class IdentityClient {
      * @param UpdateTagDefaultRequest
      * @return UpdateTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateTagDefault.ts.html |here} to see how to use UpdateTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateTagDefault.ts.html |here} to see how to use UpdateTagDefault API.
      */
     updateTagDefault(updateTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34597,7 +34740,7 @@ class IdentityClient {
        * @param UpdateTagNamespaceRequest
        * @return UpdateTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateTagNamespace.ts.html |here} to see how to use UpdateTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateTagNamespace.ts.html |here} to see how to use UpdateTagNamespace API.
        */
     updateTagNamespace(updateTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34657,7 +34800,7 @@ class IdentityClient {
      * @param UpdateUserRequest
      * @return UpdateUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateUser.ts.html |here} to see how to use UpdateUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateUser.ts.html |here} to see how to use UpdateUser API.
      */
     updateUser(updateUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34722,7 +34865,7 @@ class IdentityClient {
      * @param UpdateUserCapabilitiesRequest
      * @return UpdateUserCapabilitiesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateUserCapabilities.ts.html |here} to see how to use UpdateUserCapabilities API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateUserCapabilities.ts.html |here} to see how to use UpdateUserCapabilities API.
      */
     updateUserCapabilities(updateUserCapabilitiesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34787,7 +34930,7 @@ class IdentityClient {
      * @param UpdateUserStateRequest
      * @return UpdateUserStateResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UpdateUserState.ts.html |here} to see how to use UpdateUserState API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UpdateUserState.ts.html |here} to see how to use UpdateUserState API.
      */
     updateUserState(updateUserStateRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34866,7 +35009,7 @@ class IdentityClient {
        * @param UploadApiKeyRequest
        * @return UploadApiKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.43.0/identity/UploadApiKey.ts.html |here} to see how to use UploadApiKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.50.0/identity/UploadApiKey.ts.html |here} to see how to use UploadApiKey API.
        */
     uploadApiKey(uploadApiKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -58195,7 +58338,7 @@ module.exports = require("zlib");
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"oci-common","version":"2.43.0","description":"OCI Common module for NodeJS","repository":{"type":"git","url":"https://github.com/oracle/oci-typescript-sdk"},"main":"./index.js","typings":"./index","scripts":{},"author":{"name":"Oracle Cloud Infrastructure","email":""},"license":"(UPL-1.0 OR Apache-2.0)","dependencies":{"@types/isomorphic-fetch":"0.0.35","@types/jsonwebtoken":"8.5.0","@types/jssha":"2.0.0","@types/opossum":"4.1.1","@types/sshpk":"1.10.3","es6-promise":"4.2.6","http-signature":"1.3.1","isomorphic-fetch":"3.0.0","jsonwebtoken":"8.5.1","jssha":"2.4.1","opossum":"5.0.1","sshpk":"1.16.1","uuid":"3.3.3"},"devDependencies":{"@types/chai":"4.1.7","@types/node":"14.14.43","@types/mocha":"5.2.5","awesome-typescript-loader":"3.1.3","chai":"^4.2.0","mocha":"^5.2.0","source-map-loader":"0.2.1","ts-node":"^8.0.2","typescript":"4.1.3","webpack":"4.0.0","webpack-cli":"^3.3.0"},"publishConfig":{"registry":"https://registry.npmjs.org"},"contributors":["Jyoti Saini <jyoti.s.saini@oracle.com>","Joe Levy <joe.levy@oracle.com>","Walt Tran <walt.tran@oracle.com>"]}');
+module.exports = JSON.parse('{"name":"oci-common","version":"2.50.0","description":"OCI Common module for NodeJS","repository":{"type":"git","url":"https://github.com/oracle/oci-typescript-sdk"},"main":"./index.js","typings":"./index","scripts":{},"author":{"name":"Oracle Cloud Infrastructure","email":""},"license":"(UPL-1.0 OR Apache-2.0)","dependencies":{"@types/isomorphic-fetch":"0.0.35","@types/jsonwebtoken":"8.5.0","@types/jssha":"2.0.0","@types/opossum":"4.1.1","@types/sshpk":"1.10.3","es6-promise":"4.2.6","http-signature":"1.3.1","isomorphic-fetch":"3.0.0","jsonwebtoken":"8.5.1","jssha":"2.4.1","opossum":"5.0.1","sshpk":"1.16.1","uuid":"3.3.3"},"devDependencies":{"@types/chai":"4.1.7","@types/node":"14.14.43","@types/mocha":"5.2.5","awesome-typescript-loader":"3.1.3","chai":"^4.2.0","mocha":"^5.2.0","source-map-loader":"0.2.1","ts-node":"^8.0.2","typescript":"4.1.3","webpack":"4.0.0","webpack-cli":"^3.3.0"},"publishConfig":{"registry":"https://registry.npmjs.org"},"contributors":["Jyoti Saini <jyoti.s.saini@oracle.com>","Joe Levy <joe.levy@oracle.com>","Walt Tran <walt.tran@oracle.com>"]}');
 
 /***/ }),
 

@@ -33,8 +33,7 @@ This example also uses the [`login-ocir`][3] action which provides a simple mech
 ```yaml
 jobs:
   get-ocir-repository-test:
-    runs-on: ubuntu-latest
-    name: Get OCIR Repository Test
+    runs-on: ubuntu-22.04 Test
     env:
       OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
       OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
@@ -43,14 +42,14 @@ jobs:
       OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
     steps:
       - name: Get or create an OCIR Repository
-        uses: oracle-actions/get-ocir-repository@v1.1
+        uses: oracle-actions/get-ocir-repository@v1.2
         id: get-ocir-repository
         with:
           name: oraclelinux
           compartment: ${{ secrets.OCI_COMPARTMENT_OCID }}
 
       - name: Log into OCIR
-        uses: oracle-actions/login-ocir@v1.1
+        uses: oracle-actions/login-ocir@v1.2
         id: login-ocir
         with:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
