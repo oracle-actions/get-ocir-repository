@@ -32,9 +32,9 @@
   "homepage": "https://github.com/oracle-actions/get-ocir-repository#readme",
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "oci-artifacts": "^2.50.0",
-    "oci-common": "^2.50.0",
-    "oci-identity": "^2.50.0"
+    "oci-artifacts": "^2.57.0",
+    "oci-common": "^2.57.0",
+    "oci-identity": "^2.57.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.15",
