@@ -1,6 +1,6 @@
 {
   "name": "@oracle-actions/get-ocir-repository",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": {
     "name": "Oracle Cloud Infrastructure",
     "email": "oci-dax-tools_ww@oracle.com"
