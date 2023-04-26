@@ -42,14 +42,14 @@ jobs:
       OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
     steps:
       - name: Get or create an OCIR Repository
-        uses: oracle-actions/get-ocir-repository@v1.2
+        uses: oracle-actions/get-ocir-repository@v1.2.1
         id: get-ocir-repository
         with:
           name: oraclelinux
           compartment: ${{ secrets.OCI_COMPARTMENT_OCID }}
 
       - name: Log into OCIR
-        uses: oracle-actions/login-ocir@v1.2
+        uses: oracle-actions/login-ocir@v1.2.1
         id: login-ocir
         with:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}

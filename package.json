@@ -8,7 +8,8 @@
   "description": "GitHub Action to return or create an Oracle Cloud Infrastructure Registry container repository.",
   "main": "src/index.ts",
   "scripts": {
-    "build": "ncc build src/main.ts"
+    "build": "ncc build src/main.ts",
+    "version": "npm run build && git add -A dist"
   },
   "repository": {
     "type": "git",
