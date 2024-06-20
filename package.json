@@ -1,45 +1,68 @@
 {
   "name": "@oracle-actions/get-ocir-repository",
-  "version": "1.2.1",
+  "version": "1.3.0",
+  "description": "GitHub Action to return or create an Oracle Cloud Infrastructure Registry container repository.",
   "author": {
     "name": "Oracle Cloud Infrastructure",
     "email": "oci-dax-tools_ww@oracle.com"
   },
-  "description": "GitHub Action to return or create an Oracle Cloud Infrastructure Registry container repository.",
-  "main": "src/index.ts",
-  "scripts": {
-    "build": "ncc build src/main.ts",
-    "version": "npm run build && git add -A dist"
-  },
+  "private": true,
+  "homepage": "https://github.com/oracle-actions/get-ocir-repository#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/oracle-actions/get-ocir-repository.git"
   },
+  "bugs": {
+    "url": "https://github.com/oracle-actions/get-ocir-repository/issues"
+  },
+  "keywords": [
+    "actions",
+    "cncf",
+    "container-registry",
+    "github",
+    "actions",
+    "oci",
+    "oracle-cloud",
+    "oracle-cloud-infrastructure"
+  ],
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "bundle": "npm run format:write && npm run package",
+    "format:write": "npx prettier --write .",
+    "format:check": "npx prettier --check .",
+    "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
+    "package": "npx ncc build src/index.ts -o dist --source-map --license THIRD_PARTY_LICENSES.txt",
+    "all": "npm run format:write && npm run lint && npm run package"
+  },
+  "license": "UPL-1.0",
   "files": [
     "LICENSE.txt",
     "THIRD_PARTY_LICENSES.txt",
     "lib/*"
   ],
-  "keywords": [
-    "github",
-    "actions",
-    "oracle-cloud",
-    "oracle-cloud-infrastructure"
-  ],
-  "license": "UPL-1.0",
-  "bugs": {
-    "url": "https://github.com/oracle-actions/get-ocir-repository/issues"
-  },
-  "homepage": "https://github.com/oracle-actions/get-ocir-repository#readme",
   "dependencies": {
-    "@actions/core": "^1.10.0",
-    "oci-artifacts": "^2.57.0",
-    "oci-common": "^2.57.0",
-    "oci-identity": "^2.57.0"
+    "@actions/core": "^1.10.1",
+    "oci-artifacts": "^2.88.2",
+    "oci-common": "^2.88.2",
+    "oci-identity": "^2.88.2"
   },
   "devDependencies": {
-    "@types/node": "^18.11.15",
-    "@vercel/ncc": "^0.36.0",
-    "typescript": "^4.9.4"
+    "@types/node": "^20.14.6",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "@vercel/ncc": "^0.38.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-github": "^4.10.2",
+    "eslint-plugin-jest": "^28.6.0",
+    "eslint-plugin-jsonc": "^2.16.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.3.2",
+    "prettier-eslint": "^16.3.0",
+    "typescript": "^5.4.5"
   }
 }

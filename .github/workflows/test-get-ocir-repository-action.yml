@@ -1,0 +1,50 @@
+name: Sanity test login-ocir action
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-action-home-region:
+    runs-on: ubuntu-latest
+    name: Sanity test login-ocir action
+    env:
+      OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
+      OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
+      OCI_CLI_FINGERPRINT: ${{ secrets.OCI_CLI_FINGERPRINT }}
+      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
+      OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Retrieve the OCID of a named compartment in tenancy
+        uses: oracle-actions/run-oci-cli-command@v1.2.0
+        id: find-compartment-id
+        with:
+          command: 'iam compartment list --compartment-id-in-subtree=true'
+          query: "data[?name=='github-actions'].id"
+
+      - name: Get or create an OCIR container repository
+        uses: ./
+        id: get-ocir-repository
+        with:
+          name: oraclelinux
+          compartment: ${{ steps.find-compartment-id.outputs.raw_output }}
+
+      - name: Show OCIR repository path
+        id: show-ocir-repository-path
+        run: |
+          echo "${{ steps.get-ocir-repository.outputs.repo_ocid }}"
+          echo "${{ steps.get-ocir-repository.outputs.repo_path }}"
