@@ -1,4 +1,4 @@
-/******/ (() => { // webpackBootstrap
+require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
 /***/ 7351:
@@ -558,7 +558,7 @@ class OidcClient {
                 .catch(error => {
                 throw new Error(`Failed to get ID Token. \n 
         Error Code : ${error.statusCode}\n 
-        Error Message: ${error.result.message}`);
+        Error Message: ${error.message}`);
             });
             const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
             if (!id_token) {
@@ -28499,348 +28499,6 @@ module.exports = VerifyStream;
 
 /***/ }),
 
-/***/ 7129:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-// A linked list to keep track of recently-used-ness
-const Yallist = __nccwpck_require__(665)
-
-const MAX = Symbol('max')
-const LENGTH = Symbol('length')
-const LENGTH_CALCULATOR = Symbol('lengthCalculator')
-const ALLOW_STALE = Symbol('allowStale')
-const MAX_AGE = Symbol('maxAge')
-const DISPOSE = Symbol('dispose')
-const NO_DISPOSE_ON_SET = Symbol('noDisposeOnSet')
-const LRU_LIST = Symbol('lruList')
-const CACHE = Symbol('cache')
-const UPDATE_AGE_ON_GET = Symbol('updateAgeOnGet')
-
-const naiveLength = () => 1
-
-// lruList is a yallist where the head is the youngest
-// item, and the tail is the oldest.  the list contains the Hit
-// objects as the entries.
-// Each Hit object has a reference to its Yallist.Node.  This
-// never changes.
-//
-// cache is a Map (or PseudoMap) that matches the keys to
-// the Yallist.Node object.
-class LRUCache {
-  constructor (options) {
-    if (typeof options === 'number')
-      options = { max: options }
-
-    if (!options)
-      options = {}
-
-    if (options.max && (typeof options.max !== 'number' || options.max < 0))
-      throw new TypeError('max must be a non-negative number')
-    // Kind of weird to have a default max of Infinity, but oh well.
-    const max = this[MAX] = options.max || Infinity
-
-    const lc = options.length || naiveLength
-    this[LENGTH_CALCULATOR] = (typeof lc !== 'function') ? naiveLength : lc
-    this[ALLOW_STALE] = options.stale || false
-    if (options.maxAge && typeof options.maxAge !== 'number')
-      throw new TypeError('maxAge must be a number')
-    this[MAX_AGE] = options.maxAge || 0
-    this[DISPOSE] = options.dispose
-    this[NO_DISPOSE_ON_SET] = options.noDisposeOnSet || false
-    this[UPDATE_AGE_ON_GET] = options.updateAgeOnGet || false
-    this.reset()
-  }
-
-  // resize the cache when the max changes.
-  set max (mL) {
-    if (typeof mL !== 'number' || mL < 0)
-      throw new TypeError('max must be a non-negative number')
-
-    this[MAX] = mL || Infinity
-    trim(this)
-  }
-  get max () {
-    return this[MAX]
-  }
-
-  set allowStale (allowStale) {
-    this[ALLOW_STALE] = !!allowStale
-  }
-  get allowStale () {
-    return this[ALLOW_STALE]
-  }
-
-  set maxAge (mA) {
-    if (typeof mA !== 'number')
-      throw new TypeError('maxAge must be a non-negative number')
-
-    this[MAX_AGE] = mA
-    trim(this)
-  }
-  get maxAge () {
-    return this[MAX_AGE]
-  }
-
-  // resize the cache when the lengthCalculator changes.
-  set lengthCalculator (lC) {
-    if (typeof lC !== 'function')
-      lC = naiveLength
-
-    if (lC !== this[LENGTH_CALCULATOR]) {
-      this[LENGTH_CALCULATOR] = lC
-      this[LENGTH] = 0
-      this[LRU_LIST].forEach(hit => {
-        hit.length = this[LENGTH_CALCULATOR](hit.value, hit.key)
-        this[LENGTH] += hit.length
-      })
-    }
-    trim(this)
-  }
-  get lengthCalculator () { return this[LENGTH_CALCULATOR] }
-
-  get length () { return this[LENGTH] }
-  get itemCount () { return this[LRU_LIST].length }
-
-  rforEach (fn, thisp) {
-    thisp = thisp || this
-    for (let walker = this[LRU_LIST].tail; walker !== null;) {
-      const prev = walker.prev
-      forEachStep(this, fn, walker, thisp)
-      walker = prev
-    }
-  }
-
-  forEach (fn, thisp) {
-    thisp = thisp || this
-    for (let walker = this[LRU_LIST].head; walker !== null;) {
-      const next = walker.next
-      forEachStep(this, fn, walker, thisp)
-      walker = next
-    }
-  }
-
-  keys () {
-    return this[LRU_LIST].toArray().map(k => k.key)
-  }
-
-  values () {
-    return this[LRU_LIST].toArray().map(k => k.value)
-  }
-
-  reset () {
-    if (this[DISPOSE] &&
-        this[LRU_LIST] &&
-        this[LRU_LIST].length) {
-      this[LRU_LIST].forEach(hit => this[DISPOSE](hit.key, hit.value))
-    }
-
-    this[CACHE] = new Map() // hash of items by key
-    this[LRU_LIST] = new Yallist() // list of items in order of use recency
-    this[LENGTH] = 0 // length of items in the list
-  }
-
-  dump () {
-    return this[LRU_LIST].map(hit =>
-      isStale(this, hit) ? false : {
-        k: hit.key,
-        v: hit.value,
-        e: hit.now + (hit.maxAge || 0)
-      }).toArray().filter(h => h)
-  }
-
-  dumpLru () {
-    return this[LRU_LIST]
-  }
-
-  set (key, value, maxAge) {
-    maxAge = maxAge || this[MAX_AGE]
-
-    if (maxAge && typeof maxAge !== 'number')
-      throw new TypeError('maxAge must be a number')
-
-    const now = maxAge ? Date.now() : 0
-    const len = this[LENGTH_CALCULATOR](value, key)
-
-    if (this[CACHE].has(key)) {
-      if (len > this[MAX]) {
-        del(this, this[CACHE].get(key))
-        return false
-      }
-
-      const node = this[CACHE].get(key)
-      const item = node.value
-
-      // dispose of the old one before overwriting
-      // split out into 2 ifs for better coverage tracking
-      if (this[DISPOSE]) {
-        if (!this[NO_DISPOSE_ON_SET])
-          this[DISPOSE](key, item.value)
-      }
-
-      item.now = now
-      item.maxAge = maxAge
-      item.value = value
-      this[LENGTH] += len - item.length
-      item.length = len
-      this.get(key)
-      trim(this)
-      return true
-    }
-
-    const hit = new Entry(key, value, len, now, maxAge)
-
-    // oversized objects fall out of cache automatically.
-    if (hit.length > this[MAX]) {
-      if (this[DISPOSE])
-        this[DISPOSE](key, value)
-
-      return false
-    }
-
-    this[LENGTH] += hit.length
-    this[LRU_LIST].unshift(hit)
-    this[CACHE].set(key, this[LRU_LIST].head)
-    trim(this)
-    return true
-  }
-
-  has (key) {
-    if (!this[CACHE].has(key)) return false
-    const hit = this[CACHE].get(key).value
-    return !isStale(this, hit)
-  }
-
-  get (key) {
-    return get(this, key, true)
-  }
-
-  peek (key) {
-    return get(this, key, false)
-  }
-
-  pop () {
-    const node = this[LRU_LIST].tail
-    if (!node)
-      return null
-
-    del(this, node)
-    return node.value
-  }
-
-  del (key) {
-    del(this, this[CACHE].get(key))
-  }
-
-  load (arr) {
-    // reset the cache
-    this.reset()
-
-    const now = Date.now()
-    // A previous serialized cache has the most recent items first
-    for (let l = arr.length - 1; l >= 0; l--) {
-      const hit = arr[l]
-      const expiresAt = hit.e || 0
-      if (expiresAt === 0)
-        // the item was created without expiration in a non aged cache
-        this.set(hit.k, hit.v)
-      else {
-        const maxAge = expiresAt - now
-        // dont add already expired items
-        if (maxAge > 0) {
-          this.set(hit.k, hit.v, maxAge)
-        }
-      }
-    }
-  }
-
-  prune () {
-    this[CACHE].forEach((value, key) => get(this, key, false))
-  }
-}
-
-const get = (self, key, doUse) => {
-  const node = self[CACHE].get(key)
-  if (node) {
-    const hit = node.value
-    if (isStale(self, hit)) {
-      del(self, node)
-      if (!self[ALLOW_STALE])
-        return undefined
-    } else {
-      if (doUse) {
-        if (self[UPDATE_AGE_ON_GET])
-          node.value.now = Date.now()
-        self[LRU_LIST].unshiftNode(node)
-      }
-    }
-    return hit.value
-  }
-}
-
-const isStale = (self, hit) => {
-  if (!hit || (!hit.maxAge && !self[MAX_AGE]))
-    return false
-
-  const diff = Date.now() - hit.now
-  return hit.maxAge ? diff > hit.maxAge
-    : self[MAX_AGE] && (diff > self[MAX_AGE])
-}
-
-const trim = self => {
-  if (self[LENGTH] > self[MAX]) {
-    for (let walker = self[LRU_LIST].tail;
-      self[LENGTH] > self[MAX] && walker !== null;) {
-      // We know that we're about to delete this one, and also
-      // what the next least recently used key will be, so just
-      // go ahead and set it now.
-      const prev = walker.prev
-      del(self, walker)
-      walker = prev
-    }
-  }
-}
-
-const del = (self, node) => {
-  if (node) {
-    const hit = node.value
-    if (self[DISPOSE])
-      self[DISPOSE](hit.key, hit.value)
-
-    self[LENGTH] -= hit.length
-    self[CACHE].delete(hit.key)
-    self[LRU_LIST].removeNode(node)
-  }
-}
-
-class Entry {
-  constructor (key, value, length, now, maxAge) {
-    this.key = key
-    this.value = value
-    this.length = length
-    this.now = now
-    this.maxAge = maxAge || 0
-  }
-}
-
-const forEachStep = (self, fn, node, thisp) => {
-  let hit = node.value
-  if (isStale(self, hit)) {
-    del(self, node)
-    if (!self[ALLOW_STALE])
-      hit = undefined
-  }
-  if (hit)
-    fn.call(thisp, hit.value, hit.key, self)
-}
-
-module.exports = LRUCache
-
-
-/***/ }),
-
 /***/ 900:
 /***/ ((module) => {
 
@@ -30731,7 +30389,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -30785,7 +30443,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -30835,6 +30493,18 @@ class ArtifactsWaiter {
     forContainerImage(request, ...targetStates) {
         return __awaiter(this, void 0, void 0, function* () {
             return oci_common_1.genericTerminalConditionWaiter(this.config, () => this.client.getContainerImage(request), response => targetStates.includes(response.containerImage.lifecycleState), targetStates.includes(models.ContainerImage.LifecycleState.Deleted));
+        });
+    }
+    /**
+     * Waits forContainerImageSignature till it reaches any of the provided states
+     *
+     * @param request the request to send
+     * @param targetStates the desired states to wait for. The waiter will return once the resource reaches any of the provided states
+     * @return response returns GetContainerImageSignatureResponse | null (null in case of 404 response)
+     */
+    forContainerImageSignature(request, ...targetStates) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return oci_common_1.genericTerminalConditionWaiter(this.config, () => this.client.getContainerImageSignature(request), response => targetStates.includes(response.containerImageSignature.lifecycleState), targetStates.includes(models.ContainerImageSignature.LifecycleState.Deleted));
         });
     }
     /**
@@ -30895,7 +30565,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -30932,6 +30602,7 @@ const common = __nccwpck_require__(5049);
 const model = __importStar(__nccwpck_require__(2972));
 const artifacts_waiter_1 = __nccwpck_require__(4494);
 const oci_common_1 = __nccwpck_require__(5049);
+const Breaker = __nccwpck_require__(3857);
 // ===============================================
 // This file is autogenerated - Please do not edit
 // ===============================================
@@ -30943,11 +30614,15 @@ var ArtifactsApiKeys;
  */
 class ArtifactsClient {
     constructor(params, clientConfiguration) {
+        this["_realmSpecificEndpointTemplateEnabled"] = undefined;
         this["_endpoint"] = "";
         this["_defaultHeaders"] = {};
         this._circuitBreaker = null;
         this._httpOptions = undefined;
+        this._bodyDuplexMode = undefined;
         this.targetService = "Artifacts";
+        this._regionId = "";
+        this._lastSetRegionOrRegionId = "";
         const requestSigner = params.authenticationDetailsProvider
             ? new common.DefaultRequestSigner(params.authenticationDetailsProvider)
             : null;
@@ -30959,6 +30634,13 @@ class ArtifactsClient {
             this._httpOptions = clientConfiguration.httpOptions
                 ? clientConfiguration.httpOptions
                 : undefined;
+            this._bodyDuplexMode = clientConfiguration.bodyDuplexMode
+                ? clientConfiguration.bodyDuplexMode
+                : undefined;
+        }
+        if (!oci_common_1.developerToolConfiguration.isServiceEnabled("artifacts")) {
+            let errmsg = "The developerToolConfiguration configuration disabled this service, this behavior is controlled by developerToolConfiguration.ociEnabledServiceSet variable. Please check if your local developer_tool_configuration file has configured the service you're targeting or contact the cloud provider on the availability of this service : ";
+            throw errmsg.concat("artifacts");
         }
         // if circuit breaker is not created, check if circuit breaker system is enabled to use default circuit breaker
         const specCircuitBreakerEnabled = true;
@@ -30969,7 +30651,7 @@ class ArtifactsClient {
         }
         this._httpClient =
             params.httpClient ||
-                new common.FetchHttpClient(requestSigner, this._circuitBreaker, this._httpOptions);
+                new common.FetchHttpClient(requestSigner, this._circuitBreaker, this._httpOptions, this._bodyDuplexMode);
         if (params.authenticationDetailsProvider &&
             common.isRegionProvider(params.authenticationDetailsProvider)) {
             const provider = params.authenticationDetailsProvider;
@@ -30998,12 +30680,30 @@ class ArtifactsClient {
         return common.LOG.logger;
     }
     /**
+     * Determines whether realm specific endpoint should be used or not.
+     * Set realmSpecificEndpointTemplateEnabled to "true" if the user wants to enable use of realm specific endpoint template, otherwise set it to "false"
+     * @param realmSpecificEndpointTemplateEnabled flag to enable the use of realm specific endpoint template
+     */
+    set useRealmSpecificEndpointTemplate(realmSpecificEndpointTemplateEnabled) {
+        this._realmSpecificEndpointTemplateEnabled = realmSpecificEndpointTemplateEnabled;
+        if (this.logger)
+            this.logger.info(`realmSpecificEndpointTemplateEnabled set to ${this._realmSpecificEndpointTemplateEnabled}`);
+        if (this._lastSetRegionOrRegionId === common.Region.REGION_STRING) {
+            this.endpoint = common.EndpointBuilder.createEndpointFromRegion(ArtifactsClient.serviceEndpointTemplate, this._region, ArtifactsClient.endpointServiceName);
+        }
+        else if (this._lastSetRegionOrRegionId === common.Region.REGION_ID_STRING) {
+            this.endpoint = common.EndpointBuilder.createEndpointFromRegionId(ArtifactsClient.serviceEndpointTemplate, this._regionId, ArtifactsClient.endpointServiceName);
+        }
+    }
+    /**
      * Sets the region to call (ex, Region.US_PHOENIX_1).
      * Note, this will call {@link #endpoint(String) endpoint} after resolving the endpoint.
      * @param region The region of the service.
      */
     set region(region) {
+        this._region = region;
         this.endpoint = common.EndpointBuilder.createEndpointFromRegion(ArtifactsClient.serviceEndpointTemplate, region, ArtifactsClient.endpointServiceName);
+        this._lastSetRegionOrRegionId = common.Region.REGION_STRING;
     }
     /**
      * Sets the regionId to call (ex, 'us-phoenix-1').
@@ -31014,7 +30714,9 @@ class ArtifactsClient {
      * @param regionId The public region ID.
      */
     set regionId(regionId) {
+        this._regionId = regionId;
         this.endpoint = common.EndpointBuilder.createEndpointFromRegionId(ArtifactsClient.serviceEndpointTemplate, regionId, ArtifactsClient.endpointServiceName);
+        this._lastSetRegionOrRegionId = common.Region.REGION_ID_STRING;
     }
     /**
      * Creates a new ArtifactsWaiter for resources for this service.
@@ -31038,15 +30740,29 @@ class ArtifactsClient {
         throw Error("Waiters do not exist. Please create waiters.");
     }
     /**
+     * Shutdown the circuit breaker used by the client when it is no longer needed
+     */
+    shutdownCircuitBreaker() {
+        if (this._circuitBreaker) {
+            this._circuitBreaker.shutdown();
+        }
+    }
+    /**
+     * Close the client once it is no longer needed
+     */
+    close() {
+        this.shutdownCircuitBreaker();
+    }
+    /**
      * Moves a container repository into a different compartment within the same tenancy. For information about moving
      * resources between compartments, see
      * [Moving Resources to a Different Compartment](https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
      *
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param ChangeContainerRepositoryCompartmentRequest
      * @return ChangeContainerRepositoryCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/ChangeContainerRepositoryCompartment.ts.html |here} to see how to use ChangeContainerRepositoryCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/ChangeContainerRepositoryCompartment.ts.html |here} to see how to use ChangeContainerRepositoryCompartment API.
      */
     changeContainerRepositoryCompartment(changeContainerRepositoryCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31064,7 +30780,7 @@ class ArtifactsClient {
                 "opc-request-id": changeContainerRepositoryCompartmentRequest.opcRequestId,
                 "opc-retry-token": changeContainerRepositoryCompartmentRequest.opcRetryToken
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, changeContainerRepositoryCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31102,11 +30818,11 @@ class ArtifactsClient {
      * resources between compartments, see
      * [Moving Resources to a Different Compartment](https://docs.cloud.oracle.com/iaas/Content/Identity/Tasks/managingcompartments.htm#moveRes).
      *
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param ChangeRepositoryCompartmentRequest
      * @return ChangeRepositoryCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/ChangeRepositoryCompartment.ts.html |here} to see how to use ChangeRepositoryCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/ChangeRepositoryCompartment.ts.html |here} to see how to use ChangeRepositoryCompartment API.
      */
     changeRepositoryCompartment(changeRepositoryCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31124,7 +30840,7 @@ class ArtifactsClient {
                 "opc-request-id": changeRepositoryCompartmentRequest.opcRequestId,
                 "opc-retry-token": changeRepositoryCompartmentRequest.opcRetryToken
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, changeRepositoryCompartmentRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31159,11 +30875,11 @@ class ArtifactsClient {
     }
     /**
      * Upload a signature to an image.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param CreateContainerImageSignatureRequest
      * @return CreateContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/CreateContainerImageSignature.ts.html |here} to see how to use CreateContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/CreateContainerImageSignature.ts.html |here} to see how to use CreateContainerImageSignature API.
      */
     createContainerImageSignature(createContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31179,7 +30895,7 @@ class ArtifactsClient {
                 "opc-retry-token": createContainerImageSignatureRequest.opcRetryToken,
                 "if-match": createContainerImageSignatureRequest.ifMatch
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createContainerImageSignatureRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31223,11 +30939,11 @@ class ArtifactsClient {
     }
     /**
      * Create a new empty container repository. Avoid entering confidential information.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param CreateContainerRepositoryRequest
      * @return CreateContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/CreateContainerRepository.ts.html |here} to see how to use CreateContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/CreateContainerRepository.ts.html |here} to see how to use CreateContainerRepository API.
      */
     createContainerRepository(createContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31242,7 +30958,7 @@ class ArtifactsClient {
                 "opc-request-id": createContainerRepositoryRequest.opcRequestId,
                 "opc-retry-token": createContainerRepositoryRequest.opcRetryToken
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, createContainerRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31290,7 +31006,7 @@ class ArtifactsClient {
      * @param CreateRepositoryRequest
      * @return CreateRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/CreateRepository.ts.html |here} to see how to use CreateRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/CreateRepository.ts.html |here} to see how to use CreateRepository API.
      */
     createRepository(createRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31349,11 +31065,11 @@ class ArtifactsClient {
     }
     /**
      * Delete a container image.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param DeleteContainerImageRequest
      * @return DeleteContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/DeleteContainerImage.ts.html |here} to see how to use DeleteContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/DeleteContainerImage.ts.html |here} to see how to use DeleteContainerImage API.
      */
     deleteContainerImage(deleteContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31370,7 +31086,7 @@ class ArtifactsClient {
                 "if-match": deleteContainerImageRequest.ifMatch,
                 "opc-request-id": deleteContainerImageRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteContainerImageRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31404,11 +31120,11 @@ class ArtifactsClient {
     }
     /**
      * Delete a container image signature.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param DeleteContainerImageSignatureRequest
      * @return DeleteContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/DeleteContainerImageSignature.ts.html |here} to see how to use DeleteContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/DeleteContainerImageSignature.ts.html |here} to see how to use DeleteContainerImageSignature API.
      */
     deleteContainerImageSignature(deleteContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31425,7 +31141,7 @@ class ArtifactsClient {
                 "opc-request-id": deleteContainerImageSignatureRequest.opcRequestId,
                 "if-match": deleteContainerImageSignatureRequest.ifMatch
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteContainerImageSignatureRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31459,11 +31175,11 @@ class ArtifactsClient {
     }
     /**
      * Delete container repository.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param DeleteContainerRepositoryRequest
      * @return DeleteContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/DeleteContainerRepository.ts.html |here} to see how to use DeleteContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/DeleteContainerRepository.ts.html |here} to see how to use DeleteContainerRepository API.
      */
     deleteContainerRepository(deleteContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31480,7 +31196,7 @@ class ArtifactsClient {
                 "if-match": deleteContainerRepositoryRequest.ifMatch,
                 "opc-request-id": deleteContainerRepositoryRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteContainerRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31514,11 +31230,11 @@ class ArtifactsClient {
     }
     /**
      * Deletes an artifact with a specified [OCID](https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm).
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param DeleteGenericArtifactRequest
      * @return DeleteGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/DeleteGenericArtifact.ts.html |here} to see how to use DeleteGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/DeleteGenericArtifact.ts.html |here} to see how to use DeleteGenericArtifact API.
      */
     deleteGenericArtifact(deleteGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31535,7 +31251,7 @@ class ArtifactsClient {
                 "if-match": deleteGenericArtifactRequest.ifMatch,
                 "opc-request-id": deleteGenericArtifactRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteGenericArtifactRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31569,11 +31285,11 @@ class ArtifactsClient {
     }
     /**
      * Deletes an artifact with a specified `artifactPath` and `version`.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param DeleteGenericArtifactByPathRequest
      * @return DeleteGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/DeleteGenericArtifactByPath.ts.html |here} to see how to use DeleteGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/DeleteGenericArtifactByPath.ts.html |here} to see how to use DeleteGenericArtifactByPath API.
      */
     deleteGenericArtifactByPath(deleteGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31592,7 +31308,7 @@ class ArtifactsClient {
                 "if-match": deleteGenericArtifactByPathRequest.ifMatch,
                 "opc-request-id": deleteGenericArtifactByPathRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteGenericArtifactByPathRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31626,11 +31342,11 @@ class ArtifactsClient {
     }
     /**
      * Deletes the specified repository. This operation fails unless all associated artifacts are in a DELETED state. You must delete all associated artifacts before deleting a repository.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param DeleteRepositoryRequest
      * @return DeleteRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/DeleteRepository.ts.html |here} to see how to use DeleteRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/DeleteRepository.ts.html |here} to see how to use DeleteRepository API.
      */
     deleteRepository(deleteRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31647,7 +31363,7 @@ class ArtifactsClient {
                 "if-match": deleteRepositoryRequest.ifMatch,
                 "opc-request-id": deleteRepositoryRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, deleteRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31681,11 +31397,11 @@ class ArtifactsClient {
     }
     /**
      * Get container configuration.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param GetContainerConfigurationRequest
      * @return GetContainerConfigurationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/GetContainerConfiguration.ts.html |here} to see how to use GetContainerConfiguration API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/GetContainerConfiguration.ts.html |here} to see how to use GetContainerConfiguration API.
      */
     getContainerConfiguration(getContainerConfigurationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31701,7 +31417,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getContainerConfigurationRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getContainerConfigurationRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31744,11 +31460,11 @@ class ArtifactsClient {
     }
     /**
      * Get container image metadata.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param GetContainerImageRequest
      * @return GetContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/GetContainerImage.ts.html |here} to see how to use GetContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/GetContainerImage.ts.html |here} to see how to use GetContainerImage API.
      */
     getContainerImage(getContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31764,7 +31480,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getContainerImageRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getContainerImageRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31807,11 +31523,11 @@ class ArtifactsClient {
     }
     /**
      * Get container image signature metadata.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param GetContainerImageSignatureRequest
      * @return GetContainerImageSignatureResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/GetContainerImageSignature.ts.html |here} to see how to use GetContainerImageSignature API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/GetContainerImageSignature.ts.html |here} to see how to use GetContainerImageSignature API.
      */
     getContainerImageSignature(getContainerImageSignatureRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31827,7 +31543,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getContainerImageSignatureRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getContainerImageSignatureRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31870,11 +31586,11 @@ class ArtifactsClient {
     }
     /**
      * Get container repository.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param GetContainerRepositoryRequest
      * @return GetContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/GetContainerRepository.ts.html |here} to see how to use GetContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/GetContainerRepository.ts.html |here} to see how to use GetContainerRepository API.
      */
     getContainerRepository(getContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31890,7 +31606,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getContainerRepositoryRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getContainerRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31933,11 +31649,11 @@ class ArtifactsClient {
     }
     /**
      * Gets information about an artifact with a specified [OCID](https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm).
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param GetGenericArtifactRequest
      * @return GetGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/GetGenericArtifact.ts.html |here} to see how to use GetGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/GetGenericArtifact.ts.html |here} to see how to use GetGenericArtifact API.
      */
     getGenericArtifact(getGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31953,7 +31669,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getGenericArtifactRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getGenericArtifactRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -31996,11 +31712,11 @@ class ArtifactsClient {
     }
     /**
      * Gets information about an artifact with a specified `artifactPath` and `version`.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param GetGenericArtifactByPathRequest
      * @return GetGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/GetGenericArtifactByPath.ts.html |here} to see how to use GetGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/GetGenericArtifactByPath.ts.html |here} to see how to use GetGenericArtifactByPath API.
      */
     getGenericArtifactByPath(getGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32018,7 +31734,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getGenericArtifactByPathRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getGenericArtifactByPathRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32061,11 +31777,11 @@ class ArtifactsClient {
     }
     /**
      * Gets the specified repository's information.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param GetRepositoryRequest
      * @return GetRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/GetRepository.ts.html |here} to see how to use GetRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/GetRepository.ts.html |here} to see how to use GetRepository API.
      */
     getRepository(getRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32081,7 +31797,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": getRepositoryRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, getRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32124,11 +31840,11 @@ class ArtifactsClient {
     }
     /**
      * List container image signatures in an image.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param ListContainerImageSignaturesRequest
      * @return ListContainerImageSignaturesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/ListContainerImageSignatures.ts.html |here} to see how to use ListContainerImageSignatures API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/ListContainerImageSignatures.ts.html |here} to see how to use ListContainerImageSignatures API.
      */
     listContainerImageSignatures(listContainerImageSignaturesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32157,7 +31873,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listContainerImageSignaturesRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listContainerImageSignaturesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32200,11 +31916,11 @@ class ArtifactsClient {
     }
     /**
      * List container images in a compartment.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param ListContainerImagesRequest
      * @return ListContainerImagesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/ListContainerImages.ts.html |here} to see how to use ListContainerImages API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/ListContainerImages.ts.html |here} to see how to use ListContainerImages API.
      */
     listContainerImages(listContainerImagesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32232,7 +31948,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listContainerImagesRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listContainerImagesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32275,11 +31991,11 @@ class ArtifactsClient {
     }
     /**
      * List container repositories in a compartment.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param ListContainerRepositoriesRequest
      * @return ListContainerRepositoriesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/ListContainerRepositories.ts.html |here} to see how to use ListContainerRepositories API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/ListContainerRepositories.ts.html |here} to see how to use ListContainerRepositories API.
      */
     listContainerRepositories(listContainerRepositoriesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32304,7 +32020,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listContainerRepositoriesRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listContainerRepositoriesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32347,11 +32063,11 @@ class ArtifactsClient {
     }
     /**
      * Lists artifacts in the specified repository.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param ListGenericArtifactsRequest
      * @return ListGenericArtifactsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/ListGenericArtifacts.ts.html |here} to see how to use ListGenericArtifacts API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/ListGenericArtifacts.ts.html |here} to see how to use ListGenericArtifacts API.
      */
     listGenericArtifacts(listGenericArtifactsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32378,7 +32094,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listGenericArtifactsRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listGenericArtifactsRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32421,11 +32137,11 @@ class ArtifactsClient {
     }
     /**
      * Lists repositories in the specified compartment.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param ListRepositoriesRequest
      * @return ListRepositoriesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/ListRepositories.ts.html |here} to see how to use ListRepositories API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/ListRepositories.ts.html |here} to see how to use ListRepositories API.
      */
     listRepositories(listRepositoriesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32449,7 +32165,7 @@ class ArtifactsClient {
                 "Content-Type": common.Constants.APPLICATION_JSON,
                 "opc-request-id": listRepositoriesRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, listRepositoriesRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32492,11 +32208,11 @@ class ArtifactsClient {
     }
     /**
      * Remove version from container image.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param RemoveContainerVersionRequest
      * @return RemoveContainerVersionResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/RemoveContainerVersion.ts.html |here} to see how to use RemoveContainerVersion API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/RemoveContainerVersion.ts.html |here} to see how to use RemoveContainerVersion API.
      */
     removeContainerVersion(removeContainerVersionRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32514,7 +32230,7 @@ class ArtifactsClient {
                 "opc-request-id": removeContainerVersionRequest.opcRequestId,
                 "opc-retry-token": removeContainerVersionRequest.opcRetryToken
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, removeContainerVersionRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32558,11 +32274,11 @@ class ArtifactsClient {
     }
     /**
      * Restore a container image.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param RestoreContainerImageRequest
      * @return RestoreContainerImageResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/RestoreContainerImage.ts.html |here} to see how to use RestoreContainerImage API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/RestoreContainerImage.ts.html |here} to see how to use RestoreContainerImage API.
      */
     restoreContainerImage(restoreContainerImageRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32580,7 +32296,7 @@ class ArtifactsClient {
                 "opc-request-id": restoreContainerImageRequest.opcRequestId,
                 "opc-retry-token": restoreContainerImageRequest.opcRetryToken
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, restoreContainerImageRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32624,11 +32340,11 @@ class ArtifactsClient {
     }
     /**
      * Update container configuration.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param UpdateContainerConfigurationRequest
      * @return UpdateContainerConfigurationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/UpdateContainerConfiguration.ts.html |here} to see how to use UpdateContainerConfiguration API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/UpdateContainerConfiguration.ts.html |here} to see how to use UpdateContainerConfiguration API.
      */
     updateContainerConfiguration(updateContainerConfigurationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32645,7 +32361,7 @@ class ArtifactsClient {
                 "if-match": updateContainerConfigurationRequest.ifMatch,
                 "opc-request-id": updateContainerConfigurationRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateContainerConfigurationRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32688,12 +32404,142 @@ class ArtifactsClient {
         });
     }
     /**
+     * Modify the properties of a container image. Avoid entering confidential information.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
+     * @param UpdateContainerImageRequest
+     * @return UpdateContainerImageResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/UpdateContainerImage.ts.html |here} to see how to use UpdateContainerImage API.
+     */
+    updateContainerImage(updateContainerImageRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation ArtifactsClient#updateContainerImage.");
+            const operationName = "updateContainerImage";
+            const apiReferenceLink = "https://docs.oracle.com/iaas/api/#/en/registry/20160918/ContainerImage/UpdateContainerImage";
+            const pathParams = {
+                "{imageId}": updateContainerImageRequest.imageId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "if-match": updateContainerImageRequest.ifMatch,
+                "opc-request-id": updateContainerImageRequest.opcRequestId
+            };
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateContainerImageRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_1.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/container/images/{imageId}",
+                method: "PUT",
+                bodyContent: common.ObjectSerializer.serialize(updateContainerImageRequest.updateContainerImageDetails, "UpdateContainerImageDetails", model.UpdateContainerImageDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request, this.targetService, operationName, apiReferenceLink);
+                const sdkResponse = oci_common_1.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "containerImage",
+                    bodyModel: model.ContainerImage,
+                    type: "model.ContainerImage",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("etag"),
+                            key: "etag",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
+     * Modify the properties of a container image signature. Avoid entering confidential information.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
+     * @param UpdateContainerImageSignatureRequest
+     * @return UpdateContainerImageSignatureResponse
+     * @throws OciError when an error occurs
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/UpdateContainerImageSignature.ts.html |here} to see how to use UpdateContainerImageSignature API.
+     */
+    updateContainerImageSignature(updateContainerImageSignatureRequest) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.logger)
+                this.logger.debug("Calling operation ArtifactsClient#updateContainerImageSignature.");
+            const operationName = "updateContainerImageSignature";
+            const apiReferenceLink = "https://docs.oracle.com/iaas/api/#/en/registry/20160918/ContainerImageSignature/UpdateContainerImageSignature";
+            const pathParams = {
+                "{imageSignatureId}": updateContainerImageSignatureRequest.imageSignatureId
+            };
+            const queryParams = {};
+            let headerParams = {
+                "Content-Type": common.Constants.APPLICATION_JSON,
+                "opc-request-id": updateContainerImageSignatureRequest.opcRequestId,
+                "if-match": updateContainerImageSignatureRequest.ifMatch
+            };
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
+            const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateContainerImageSignatureRequest.retryConfiguration, specRetryConfiguration);
+            if (this.logger)
+                retrier.logger = this.logger;
+            const request = yield oci_common_1.composeRequest({
+                baseEndpoint: this._endpoint,
+                defaultHeaders: this._defaultHeaders,
+                path: "/container/imageSignatures/{imageSignatureId}",
+                method: "PUT",
+                bodyContent: common.ObjectSerializer.serialize(updateContainerImageSignatureRequest.updateContainerImageSignatureDetails, "UpdateContainerImageSignatureDetails", model.UpdateContainerImageSignatureDetails.getJsonObj),
+                pathParams: pathParams,
+                headerParams: headerParams,
+                queryParams: queryParams
+            });
+            try {
+                const response = yield retrier.makeServiceCall(this._httpClient, request, this.targetService, operationName, apiReferenceLink);
+                const sdkResponse = oci_common_1.composeResponse({
+                    responseObject: {},
+                    body: yield response.json(),
+                    bodyKey: "containerImageSignature",
+                    bodyModel: model.ContainerImageSignature,
+                    type: "model.ContainerImageSignature",
+                    responseHeaders: [
+                        {
+                            value: response.headers.get("etag"),
+                            key: "etag",
+                            dataType: "string"
+                        },
+                        {
+                            value: response.headers.get("opc-request-id"),
+                            key: "opcRequestId",
+                            dataType: "string"
+                        }
+                    ]
+                });
+                return sdkResponse;
+            }
+            catch (err) {
+                throw err;
+            }
+        });
+    }
+    /**
      * Modify the properties of a container repository. Avoid entering confidential information.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param UpdateContainerRepositoryRequest
      * @return UpdateContainerRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/UpdateContainerRepository.ts.html |here} to see how to use UpdateContainerRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/UpdateContainerRepository.ts.html |here} to see how to use UpdateContainerRepository API.
      */
     updateContainerRepository(updateContainerRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32710,7 +32556,7 @@ class ArtifactsClient {
                 "if-match": updateContainerRepositoryRequest.ifMatch,
                 "opc-request-id": updateContainerRepositoryRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateContainerRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32754,11 +32600,11 @@ class ArtifactsClient {
     }
     /**
      * Updates the artifact with the specified [OCID](https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm). You can only update the tags of an artifact.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param UpdateGenericArtifactRequest
      * @return UpdateGenericArtifactResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/UpdateGenericArtifact.ts.html |here} to see how to use UpdateGenericArtifact API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/UpdateGenericArtifact.ts.html |here} to see how to use UpdateGenericArtifact API.
      */
     updateGenericArtifact(updateGenericArtifactRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32775,7 +32621,7 @@ class ArtifactsClient {
                 "if-match": updateGenericArtifactRequest.ifMatch,
                 "opc-request-id": updateGenericArtifactRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateGenericArtifactRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32819,11 +32665,11 @@ class ArtifactsClient {
     }
     /**
      * Updates an artifact with a specified `artifactPath` and `version`. You can only update the tags of an artifact.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param UpdateGenericArtifactByPathRequest
      * @return UpdateGenericArtifactByPathResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/UpdateGenericArtifactByPath.ts.html |here} to see how to use UpdateGenericArtifactByPath API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/UpdateGenericArtifactByPath.ts.html |here} to see how to use UpdateGenericArtifactByPath API.
      */
     updateGenericArtifactByPath(updateGenericArtifactByPathRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32842,7 +32688,7 @@ class ArtifactsClient {
                 "if-match": updateGenericArtifactByPathRequest.ifMatch,
                 "opc-request-id": updateGenericArtifactByPathRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateGenericArtifactByPathRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32886,11 +32732,11 @@ class ArtifactsClient {
     }
     /**
      * Updates the properties of a repository. You can update the `displayName` and  `description` properties.
-     * This operation does not retry by default if the user has not defined a retry configuration.
+     * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param UpdateRepositoryRequest
      * @return UpdateRepositoryResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/artifacts/UpdateRepository.ts.html |here} to see how to use UpdateRepository API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/artifacts/UpdateRepository.ts.html |here} to see how to use UpdateRepository API.
      */
     updateRepository(updateRepositoryRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -32907,7 +32753,7 @@ class ArtifactsClient {
                 "if-match": updateRepositoryRequest.ifMatch,
                 "opc-request-id": updateRepositoryRequest.opcRequestId
             };
-            const specRetryConfiguration = common.NoRetryConfigurationDetails;
+            const specRetryConfiguration = common.OciSdkDefaultRetryConfiguration;
             const retrier = oci_common_1.GenericRetrier.createPreferredRetrier(this._clientConfiguration ? this._clientConfiguration.retryConfiguration : undefined, updateRepositoryRequest.retryConfiguration, specRetryConfiguration);
             if (this.logger)
                 retrier.logger = this.logger;
@@ -32973,7 +32819,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33011,7 +32857,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33049,7 +32895,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33087,7 +32933,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33157,7 +33003,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33195,7 +33041,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33265,7 +33111,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33315,7 +33161,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33334,6 +33180,17 @@ var ContainerImageSignature;
          */
         SigningAlgorithm["UnknownValue"] = "UNKNOWN_VALUE";
     })(SigningAlgorithm = ContainerImageSignature.SigningAlgorithm || (ContainerImageSignature.SigningAlgorithm = {}));
+    let LifecycleState;
+    (function (LifecycleState) {
+        LifecycleState["Available"] = "AVAILABLE";
+        LifecycleState["Deleting"] = "DELETING";
+        LifecycleState["Deleted"] = "DELETED";
+        /**
+         * This value is used if a service returns a value for this enum that is not recognized by this
+         * version of the SDK.
+         */
+        LifecycleState["UnknownValue"] = "UNKNOWN_VALUE";
+    })(LifecycleState = ContainerImageSignature.LifecycleState || (ContainerImageSignature.LifecycleState = {}));
     function getJsonObj(obj) {
         const jsonObj = Object.assign(Object.assign({}, obj), {});
         return jsonObj;
@@ -33365,7 +33222,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33403,7 +33260,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33494,7 +33351,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33564,7 +33421,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33612,7 +33469,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33650,7 +33507,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33725,7 +33582,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33763,7 +33620,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -33808,7 +33665,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33872,7 +33729,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -33935,7 +33792,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34012,7 +33869,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34082,7 +33939,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34120,7 +33977,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34169,7 +34026,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34232,7 +34089,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34293,7 +34150,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34316,7 +34173,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UpdateGenericRepositoryDetails = exports.GenericRepositorySummary = exports.GenericRepository = exports.CreateGenericRepositoryDetails = exports.UpdateRepositoryDetails = exports.UpdateGenericArtifactDetails = exports.UpdateGenericArtifactByPathDetails = exports.UpdateContainerRepositoryDetails = exports.UpdateContainerConfigurationDetails = exports.RestoreContainerImageDetails = exports.RepositorySummary = exports.RepositoryCollection = exports.Repository = exports.RemoveContainerVersionDetails = exports.GenericArtifactSummary = exports.GenericArtifactCollection = exports.GenericArtifact = exports.CreateRepositoryDetails = exports.CreateContainerRepositoryDetails = exports.CreateContainerImageSignatureDetails = exports.ContainerVersion = exports.ContainerRepositorySummary = exports.ContainerRepositoryReadme = exports.ContainerRepositoryCollection = exports.ContainerRepository = exports.ContainerImageSummary = exports.ContainerImageSignatureSummary = exports.ContainerImageSignatureCollection = exports.ContainerImageSignature = exports.ContainerImageLayer = exports.ContainerImageCollection = exports.ContainerImage = exports.ContainerConfiguration = exports.ChangeRepositoryCompartmentDetails = exports.ChangeContainerRepositoryCompartmentDetails = void 0;
+exports.UpdateGenericRepositoryDetails = exports.GenericRepositorySummary = exports.GenericRepository = exports.CreateGenericRepositoryDetails = exports.UpdateRepositoryDetails = exports.UpdateGenericArtifactDetails = exports.UpdateGenericArtifactByPathDetails = exports.UpdateContainerRepositoryDetails = exports.UpdateContainerImageSignatureDetails = exports.UpdateContainerImageDetails = exports.UpdateContainerConfigurationDetails = exports.RestoreContainerImageDetails = exports.RepositorySummary = exports.RepositoryCollection = exports.Repository = exports.RemoveContainerVersionDetails = exports.GenericArtifactSummary = exports.GenericArtifactCollection = exports.GenericArtifact = exports.CreateRepositoryDetails = exports.CreateContainerRepositoryDetails = exports.CreateContainerImageSignatureDetails = exports.ContainerVersion = exports.ContainerRepositorySummary = exports.ContainerRepositoryReadme = exports.ContainerRepositoryCollection = exports.ContainerRepository = exports.ContainerImageSummary = exports.ContainerImageSignatureSummary = exports.ContainerImageSignatureCollection = exports.ContainerImageSignature = exports.ContainerImageLayer = exports.ContainerImageCollection = exports.ContainerImage = exports.ContainerConfiguration = exports.ChangeRepositoryCompartmentDetails = exports.ChangeContainerRepositoryCompartmentDetails = void 0;
 const ChangeContainerRepositoryCompartmentDetails = __importStar(__nccwpck_require__(3967));
 exports.ChangeContainerRepositoryCompartmentDetails = ChangeContainerRepositoryCompartmentDetails.ChangeContainerRepositoryCompartmentDetails;
 const ChangeRepositoryCompartmentDetails = __importStar(__nccwpck_require__(7231));
@@ -34371,6 +34228,10 @@ const RestoreContainerImageDetails = __importStar(__nccwpck_require__(9470));
 exports.RestoreContainerImageDetails = RestoreContainerImageDetails.RestoreContainerImageDetails;
 const UpdateContainerConfigurationDetails = __importStar(__nccwpck_require__(8741));
 exports.UpdateContainerConfigurationDetails = UpdateContainerConfigurationDetails.UpdateContainerConfigurationDetails;
+const UpdateContainerImageDetails = __importStar(__nccwpck_require__(8896));
+exports.UpdateContainerImageDetails = UpdateContainerImageDetails.UpdateContainerImageDetails;
+const UpdateContainerImageSignatureDetails = __importStar(__nccwpck_require__(1413));
+exports.UpdateContainerImageSignatureDetails = UpdateContainerImageSignatureDetails.UpdateContainerImageSignatureDetails;
 const UpdateContainerRepositoryDetails = __importStar(__nccwpck_require__(4869));
 exports.UpdateContainerRepositoryDetails = UpdateContainerRepositoryDetails.UpdateContainerRepositoryDetails;
 const UpdateGenericArtifactByPathDetails = __importStar(__nccwpck_require__(3027));
@@ -34407,7 +34268,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34445,7 +34306,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34515,7 +34376,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34592,7 +34453,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34680,7 +34541,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34718,7 +34579,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34740,6 +34601,82 @@ var UpdateContainerConfigurationDetails;
 
 /***/ }),
 
+/***/ 8896:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Artifacts and Container Images API
+ * API covering the Artifacts and [Registry](/iaas/Content/Registry/Concepts/registryoverview.htm) services.
+Use this API to manage resources such as generic artifacts and container images.
+
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UpdateContainerImageDetails = void 0;
+var UpdateContainerImageDetails;
+(function (UpdateContainerImageDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    UpdateContainerImageDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    UpdateContainerImageDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(UpdateContainerImageDetails = exports.UpdateContainerImageDetails || (exports.UpdateContainerImageDetails = {}));
+//# sourceMappingURL=update-container-image-details.js.map
+
+/***/ }),
+
+/***/ 1413:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Artifacts and Container Images API
+ * API covering the Artifacts and [Registry](/iaas/Content/Registry/Concepts/registryoverview.htm) services.
+Use this API to manage resources such as generic artifacts and container images.
+
+ * OpenAPI spec version: 20160918
+ *
+ *
+ * NOTE: This class is auto generated by OracleSDKGenerator.
+ * Do not edit the class manually.
+ *
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UpdateContainerImageSignatureDetails = void 0;
+var UpdateContainerImageSignatureDetails;
+(function (UpdateContainerImageSignatureDetails) {
+    function getJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    UpdateContainerImageSignatureDetails.getJsonObj = getJsonObj;
+    function getDeserializedJsonObj(obj) {
+        const jsonObj = Object.assign(Object.assign({}, obj), {});
+        return jsonObj;
+    }
+    UpdateContainerImageSignatureDetails.getDeserializedJsonObj = getDeserializedJsonObj;
+})(UpdateContainerImageSignatureDetails = exports.UpdateContainerImageSignatureDetails || (exports.UpdateContainerImageSignatureDetails = {}));
+//# sourceMappingURL=update-container-image-signature-details.js.map
+
+/***/ }),
+
 /***/ 4869:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -34756,7 +34693,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34820,7 +34757,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34858,7 +34795,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -34896,7 +34833,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -34959,7 +34896,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -35036,7 +34973,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -35088,7 +35025,7 @@ exports.ListRepositoriesRequest = ListRepositoriesRequest.ListRepositoriesReques
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35131,7 +35068,7 @@ var ListContainerImageSignaturesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35167,7 +35104,7 @@ var ListContainerImagesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35203,7 +35140,7 @@ var ListContainerRepositoriesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35239,7 +35176,7 @@ var ListGenericArtifactsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35277,7 +35214,7 @@ Use this API to manage resources such as generic artifacts and container images.
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -35317,7 +35254,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.utils = exports.getChunk = exports.CircuitBreaker = exports.Constants = exports.OciSdkDefaultRetryConfiguration = exports.NoRetryConfigurationDetails = exports.MaxAttemptsTerminationStrategy = exports.FixedTimeDelayStrategy = exports.GenericRetrier = exports.LOG = exports.ResourcePrincipalAuthenticationDetailsProvider = exports.InstancePrincipalsAuthenticationDetailsProviderBuilder = exports.ConfigFileReader = exports.SessionAuthDetailProvider = exports.ConfigFileAuthenticationDetailsProvider = exports.composeResponse = exports.composeRequest = exports.genericPaginateResponses = exports.paginateResponses = exports.genericPaginateRecords = exports.paginatedRecordsWithLimit = exports.paginatedResponsesWithLimit = exports.paginateRecords = exports.genericTerminalConditionWaiter = exports.genericWaiter = exports.MaxTimeTerminationStrategy = exports.ExponentialBackoffDelayStrategy = exports.EndpointBuilder = exports.Realm = exports.Region = exports.Range = exports.byteLength = exports.ObjectSerializer = exports.convertStringToType = exports.handleErrorBody = exports.mapContainer = exports.handleErrorResponse = exports.getStringFromResponseBody = exports.DefaultRequestSigner = exports.OciError = exports.FetchHttpClient = exports.isRegionProvider = exports.SimpleAuthenticationDetailsProvider = void 0;
+exports.developerToolConfiguration = exports.OkeWorkloadIdentityAuthenticationDetailsProvider = exports.utils = exports.getChunk = exports.CircuitBreaker = exports.Constants = exports.OciSdkDefaultRetryConfiguration = exports.NoRetryConfigurationDetails = exports.MaxAttemptsTerminationStrategy = exports.FixedTimeDelayStrategy = exports.GenericRetrier = exports.LOG = exports.ResourcePrincipalAuthenticationDetailsProvider = exports.InstancePrincipalsAuthenticationDetailsProviderBuilder = exports.ConfigFileReader = exports.SessionAuthDetailProvider = exports.ConfigFileAuthenticationDetailsProvider = exports.composeResponse = exports.composeRequest = exports.genericPaginateResponses = exports.paginateResponses = exports.genericPaginateRecords = exports.paginatedRecordsWithLimit = exports.paginatedResponsesWithLimit = exports.paginateRecords = exports.genericTerminalConditionWaiter = exports.genericWaiter = exports.MaxTimeTerminationStrategy = exports.ExponentialBackoffDelayStrategy = exports.EndpointBuilder = exports.Realm = exports.Region = exports.Range = exports.byteLength = exports.ObjectSerializer = exports.convertStringToType = exports.handleErrorBody = exports.mapContainer = exports.handleErrorResponse = exports.getStringFromResponseBody = exports.DefaultRequestSigner = exports.OciError = exports.FetchHttpClient = exports.isRegionProvider = exports.SimpleAuthenticationDetailsProvider = void 0;
 const auth = __importStar(__nccwpck_require__(8154));
 const error = __importStar(__nccwpck_require__(2956));
 const signer = __importStar(__nccwpck_require__(484));
@@ -35354,6 +35291,8 @@ const instance_principals_authentication_detail_provider_1 = __importDefault(__n
 exports.InstancePrincipalsAuthenticationDetailsProviderBuilder = instance_principals_authentication_detail_provider_1.default;
 const resource_principal_authentication_details_provider_1 = __importDefault(__nccwpck_require__(5228));
 exports.ResourcePrincipalAuthenticationDetailsProvider = resource_principal_authentication_details_provider_1.default;
+const oke_workload_identity_authentication_details_provider_1 = __importDefault(__nccwpck_require__(8790));
+exports.OkeWorkloadIdentityAuthenticationDetailsProvider = oke_workload_identity_authentication_details_provider_1.default;
 const paginators_1 = __nccwpck_require__(4310);
 Object.defineProperty(exports, "paginateRecords", ({ enumerable: true, get: function () { return paginators_1.paginateRecords; } }));
 Object.defineProperty(exports, "genericPaginateRecords", ({ enumerable: true, get: function () { return paginators_1.genericPaginateRecords; } }));
@@ -35373,6 +35312,8 @@ const request_generator_1 = __nccwpck_require__(3719);
 Object.defineProperty(exports, "composeRequest", ({ enumerable: true, get: function () { return request_generator_1.composeRequest; } }));
 const response_generator_1 = __nccwpck_require__(6192);
 Object.defineProperty(exports, "composeResponse", ({ enumerable: true, get: function () { return response_generator_1.composeResponse; } }));
+const developerToolConfiguration = __importStar(__nccwpck_require__(6505));
+exports.developerToolConfiguration = developerToolConfiguration;
 exports.SimpleAuthenticationDetailsProvider = auth.SimpleAuthenticationDetailsProvider;
 exports.isRegionProvider = auth.isRegionProvider;
 exports.FetchHttpClient = http.FetchHttpClient;
@@ -35387,6 +35328,188 @@ exports.ObjectSerializer = serializer.ObjectSerializer;
 exports.byteLength = helper.byteLength;
 exports.Range = range.Range;
 //# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 1619:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const tls_1 = __nccwpck_require__(4404);
+const https_1 = __nccwpck_require__(5687);
+const security_token_adapter_1 = __importDefault(__nccwpck_require__(84));
+const auth_utils_1 = __importDefault(__nccwpck_require__(7218));
+const http_1 = __nccwpck_require__(6316);
+/**
+ * This class gets a security token from the OKE Proxymux service by authenticating the request with the kubernetes service account,
+ * passing along a temporary public key that is bounded to the service account.
+ */
+const OKE_WORKLOAD_IDENTITY_GENERIC_ERROR = "Failed to get a RPST token from Proxymux. See https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm for more info.";
+class X509FederationClientForOkeWorkloadIdentity {
+    constructor(proxymuxEndpoint, kubernetesServiceAccountToken, kubernetesServiceAccountCert, sessionKeySupplier) {
+        this.proxymuxEndpoint = proxymuxEndpoint;
+        this.kubernetesServiceAccountToken = kubernetesServiceAccountToken;
+        this.kubernetesServiceAccountCert = kubernetesServiceAccountCert;
+        this.sessionKeySupplier = sessionKeySupplier;
+        this.retry = 0;
+        this.securityTokenAdapter = new security_token_adapter_1.default("", this.sessionKeySupplier);
+    }
+    /**
+     * Gets a security token. If there is already a valid token cached, it will be returned. Else this will make a call
+     * to the OKE Proxymux service to get a new token, using the provided suppliers.
+     *
+     * This method is thread-safe.
+     * @return the security token
+     * @throws OciError If there is any issue with getting a token from the OKE Proxymux server
+     */
+    getSecurityToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.securityTokenAdapter.isValid()) {
+                return this.securityTokenAdapter.getSecurityToken();
+            }
+            return yield this.refreshAndGetSecurityTokenInner(true);
+        });
+    }
+    /**
+     * Return a claim embedded in the security token
+     * @param key the name of the claim
+     * @return the value of the claim or null if unable to find
+     */
+    getStringClaim(key) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.refreshAndGetSecurityTokenInner(true);
+            return this.securityTokenAdapter.getStringClaim(key);
+        });
+    }
+    refreshAndGetSecurityToken() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.refreshAndGetSecurityTokenInner(false);
+        });
+    }
+    refreshAndGetSecurityTokenInner(doFinalTokenValidityCheck) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Check again to see if the JWT is still invalid, unless we want to skip that check
+            if (!doFinalTokenValidityCheck || !this.securityTokenAdapter.isValid()) {
+                this.sessionKeySupplier.refreshKeys();
+                this.securityTokenAdapter = yield this.getSecurityTokenFromServer();
+                return this.securityTokenAdapter.getSecurityToken();
+            }
+            return this.securityTokenAdapter.getSecurityToken();
+        });
+    }
+    /**
+     * Gets a security token from the OKE Proxymux service
+     * @return the security token, which is basically a JWT token string
+     */
+    getSecurityTokenFromServer() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const keyPair = this.sessionKeySupplier.getKeyPair();
+            if (!keyPair) {
+                throw Error("keyPair for session was not provided");
+            }
+            const publicKey = keyPair.getPublic();
+            if (!publicKey) {
+                throw Error("Public key is not present");
+            }
+            try {
+                // Create request body and call auth service.
+                const url = this.proxymuxEndpoint;
+                const requestPayload = {
+                    podKey: auth_utils_1.default.sanitizeCertificateString(publicKey)
+                };
+                let jsonPayload = JSON.stringify(requestPayload);
+                jsonPayload = jsonPayload.replace(/\\n/g, "");
+                const requestObj = {
+                    uri: url,
+                    body: jsonPayload,
+                    method: "POST",
+                    headers: new Headers({
+                        "Authorization": `Bearer ${this.kubernetesServiceAccountToken}`,
+                        "Content-Type": "application/json"
+                    })
+                };
+                const httpOptions = {};
+                httpOptions.agent = new https_1.Agent({
+                    ca: [...tls_1.rootCertificates, this.kubernetesServiceAccountCert]
+                });
+                const httpClient = new http_1.FetchHttpClient(null, null, httpOptions);
+                // Call OKE Proxymux Service to get a base64 encoded JSON object which contains the auth token
+                const response = yield httpClient.send(requestObj);
+                //TODO: Implement retry here
+                // retry here
+                if (response.status !== 200) {
+                    if (this.retry < 3) {
+                        this.retry += 1;
+                        return yield this.getSecurityTokenFromServer();
+                    }
+                    else {
+                        throw Error(`Failed to call Proxymux for RPST token. Status: ${response.status}. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+                    }
+                }
+                this.retry = 0;
+                // The response is a base64 blob of a json object, we need to decode and parse it
+                let responseBody;
+                try {
+                    responseBody = yield response.text();
+                }
+                catch (e) {
+                    throw Error(`Failed to read response body from Proxymux. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+                }
+                let decodedBodyStr;
+                try {
+                    decodedBodyStr = Buffer.from(responseBody, "base64").toString("utf8");
+                }
+                catch (e) {
+                    throw Error(`Invalid JSON response received from Proxymux. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+                }
+                let parsedBody;
+                try {
+                    parsedBody = JSON.parse(decodedBodyStr);
+                }
+                catch (e) {
+                    throw Error(`Invalid JSON response received from Proxymux. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+                }
+                if (!parsedBody) {
+                    throw Error(`Invalid (undefined) RPST token received from Proxymux. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+                }
+                if (typeof parsedBody.token !== "string") {
+                    throw Error(`Invalid (string) RPST token received from Proxymux. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+                }
+                const token = parsedBody.token;
+                if (!token || token.length === 0) {
+                    throw Error(`Invalid (empty) RPST token received from Proxymux. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+                }
+                if (token.length < 3) {
+                    throw Error(`Invalid RPST token received from Proxymux. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+                }
+                return new security_token_adapter_1.default(token.slice(3), this.sessionKeySupplier);
+            }
+            catch (e) {
+                throw Error(`Failed to call Proxymux, error: ${e}. ${OKE_WORKLOAD_IDENTITY_GENERIC_ERROR}`);
+            }
+        });
+    }
+}
+exports["default"] = X509FederationClientForOkeWorkloadIdentity;
+//# sourceMappingURL=X509-federation-client-for-oke-workload-identity.js.map
 
 /***/ }),
 
@@ -35701,6 +35824,7 @@ const X509_federation_client_1 = __importDefault(__nccwpck_require__(5149));
 const session_key_supplier_1 = __importDefault(__nccwpck_require__(2306));
 const url_based_x509_certificate_supplier_1 = __nccwpck_require__(8052);
 const circuit_breaker_1 = __importDefault(__nccwpck_require__(5620));
+const log_1 = __nccwpck_require__(6109);
 const INSTANCE_PRINCIPAL_GENERIC_ERROR = "Instance principals authentication can only be used on OCI compute instances. Please confirm this code is running on an OCI compute instance. See https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/callingservicesfrominstances.htm for more info.";
 class AbstractFederationClientAuthenticationDetailsProviderBuilder {
     constructor() {
@@ -35836,7 +35960,8 @@ class AbstractFederationClientAuthenticationDetailsProviderBuilder {
                     this.region = region_1.Region.fromRegionId(regionId);
                 }
                 catch (e) {
-                    console.log(`
+                    if (log_1.LOG.logger)
+                        log_1.LOG.logger.error(`
           failed reason: ${e},
           Region not supported by this version of the SDK, registering region ${regionId} under OC1
         `);
@@ -36700,6 +36825,32 @@ exports.delegateAuthProvider = delegateAuthProvider;
 
 /***/ }),
 
+/***/ 7932:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/**
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.loadFromFile = void 0;
+const fs_1 = __nccwpck_require__(7147);
+function loadFromFile(filePath) {
+    try {
+        const fileContent = fs_1.readFileSync(filePath, "utf8");
+        return fileContent;
+    }
+    catch (e) {
+        throw Error(`Failed to read file contents, error: ${e}`);
+    }
+}
+exports.loadFromFile = loadFromFile;
+//# sourceMappingURL=load-from-file.js.map
+
+/***/ }),
+
 /***/ 6686:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -36850,6 +37001,152 @@ class KeyPair {
 }
 exports["default"] = KeyPair;
 //# sourceMappingURL=key-pair.js.map
+
+/***/ }),
+
+/***/ 8790:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+/**
+ * This constructs a default implementation of the {@link OkeWorkloadIdentityAuthenticationDetailsProvider}, constructed
+ * in accordance with the following environment variable settings:
+ * <ul>
+ *
+ * <li>{@code KUBERNETES_SERVICE_HOST}:
+ * <p>This environment variable represents the Kubernetes service host.</p>
+ * </li>
+ *
+ * <li>{@code KUBERNETES_SERVICE_PORT_PROXYMUX}:
+ * <p>This environment variable represents the Kubernetes service port for proxymux.</p>
+ * </li>
+ *
+ * </ul>
+ */
+const load_from_file_1 = __nccwpck_require__(7932);
+const abstract_requesting_authentication_detail_provider_1 = __importDefault(__nccwpck_require__(3416));
+const X509_federation_client_for_oke_workload_identity_1 = __importDefault(__nccwpck_require__(1619));
+const session_key_supplier_1 = __importDefault(__nccwpck_require__(2306));
+const OKE_WORKLOAD_IDENTITY_DEBUG_INFORMATION_LOG = "OKE workload identity can only be used in Enhanced OKE clusters. See https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contenggrantingworkloadaccesstoresources.htm for more info.";
+class OkeWorkloadIdentityAuthenticationDetailsProvider extends abstract_requesting_authentication_detail_provider_1.default {
+    constructor(federationClient, sessionKeySupplier) {
+        super(federationClient, sessionKeySupplier);
+        this.federationClient = federationClient;
+        this.sessionKeySupplier = sessionKeySupplier;
+    }
+    // Builder method to create OkeWorkloadIdentityAuthenticationDetailsProviderBuilder which will build
+    // OkeWorkloadIdentityAuthenticationDetailsProvider
+    static builder(customKubernetesServiceAccountCertPath, customKubernetesServiceAccountTokenPath) {
+        return new OkeWorkloadIdentityAuthenticationDetailsProvider.OkeWorkloadIdentityAuthenticationDetailsProviderBuilder(customKubernetesServiceAccountCertPath, customKubernetesServiceAccountTokenPath).build();
+    }
+    /**
+     * Session tokens carry JWT-like claims. Permit the retrieval of the value of those
+     * claims from the token.
+     * At the least, the token should carry claims for {@link ClaimKeys#COMPARTMENT_ID_CLAIM_KEY} and {@link ClaimKeys#TENANT_ID_CLAIM_KEY}
+     * @param key the name of a claim in the session token
+     * @return the claim value.
+     */
+    getStringClaim(key) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.federationClient.getStringClaim(key);
+        });
+    }
+    /**
+     * Refreshes the authentication data used by the provider
+     * @return the refreshed authentication data
+     */
+    refresh() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.federationClient.refreshAndGetSecurityToken();
+        });
+    }
+}
+exports["default"] = OkeWorkloadIdentityAuthenticationDetailsProvider;
+OkeWorkloadIdentityAuthenticationDetailsProvider.KUBERNETES_SERVICE_HOST_ENV_VAR_NAME = "KUBERNETES_SERVICE_HOST";
+OkeWorkloadIdentityAuthenticationDetailsProvider.KUBERNETES_SERVICE_PORT_PROXYMUX_ENV_VAR_NAME = "KUBERNETES_SERVICE_PORT_PROXYMUX";
+OkeWorkloadIdentityAuthenticationDetailsProvider.DEFAULT_KUBERNETES_SERVICE_ACCOUNT_CERT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt";
+OkeWorkloadIdentityAuthenticationDetailsProvider.DEFAULT_DEFAULT_KUBERNETES_SERVICE_ACCOUNT_CERT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token";
+OkeWorkloadIdentityAuthenticationDetailsProvider.ClaimKeys = (_a = class ClaimsKey {
+    },
+    /**
+     * COMPARTMENT_ID is the claim name that the RPST holds for the resource compartment.
+     * This can be passed to {@link #getStringClaim} to retrieve the resource's compartment OCID.
+     */
+    _a.COMPARTMENT_ID_CLAIM_KEY = "res_compartment",
+    /**
+     * TENANT_ID_CLAIM_KEY is the claim name that the RPST holds for the resource tenancy.
+     * This can be passed to {@link #getStringClaim} to retrieve the resource's tenancy OCID.
+     */
+    _a.TENANT_ID_CLAIM_KEY = "res_tenant",
+    _a);
+/**
+ * Builder for OkeWorkloadIdentityAuthenticationDetailsProvider
+ */
+OkeWorkloadIdentityAuthenticationDetailsProvider.OkeWorkloadIdentityAuthenticationDetailsProviderBuilder = class OkeWorkloadIdentityAuthenticationDetailsProviderBuilder {
+    constructor(customKubernetesServiceAccountCertPath, customKubernetesServiceAccountTokenPath) {
+        this.kubernetesServiceAccountCertPath =
+            customKubernetesServiceAccountCertPath ||
+                OkeWorkloadIdentityAuthenticationDetailsProvider.DEFAULT_KUBERNETES_SERVICE_ACCOUNT_CERT_PATH;
+        this.kubernetesServiceAccountTokenPath =
+            customKubernetesServiceAccountTokenPath ||
+                OkeWorkloadIdentityAuthenticationDetailsProvider.DEFAULT_DEFAULT_KUBERNETES_SERVICE_ACCOUNT_CERT_PATH;
+    }
+    build() {
+        let federationClient;
+        let sessionKeySupplier;
+        const kubernetesServiceHost = process.env[OkeWorkloadIdentityAuthenticationDetailsProvider.KUBERNETES_SERVICE_HOST_ENV_VAR_NAME];
+        if (!kubernetesServiceHost) {
+            throw Error(`${OkeWorkloadIdentityAuthenticationDetailsProvider.KUBERNETES_SERVICE_HOST_ENV_VAR_NAME} environment variable is missing. ` +
+                OKE_WORKLOAD_IDENTITY_DEBUG_INFORMATION_LOG);
+        }
+        const kubernetesServiceProxymuxPort = process.env[OkeWorkloadIdentityAuthenticationDetailsProvider
+            .KUBERNETES_SERVICE_PORT_PROXYMUX_ENV_VAR_NAME];
+        if (!kubernetesServiceProxymuxPort) {
+            throw Error(`${OkeWorkloadIdentityAuthenticationDetailsProvider.KUBERNETES_SERVICE_PORT_PROXYMUX_ENV_VAR_NAME} environment variable is missing. ` +
+                OKE_WORKLOAD_IDENTITY_DEBUG_INFORMATION_LOG);
+        }
+        let kubernetesServiceAccountCert;
+        try {
+            kubernetesServiceAccountCert = load_from_file_1.loadFromFile(this.kubernetesServiceAccountCertPath);
+        }
+        catch (e) {
+            throw Error(`Failed to read ${this.kubernetesServiceAccountCertPath}. ` +
+                OKE_WORKLOAD_IDENTITY_DEBUG_INFORMATION_LOG);
+        }
+        let kubernetesServiceAccountToken;
+        try {
+            kubernetesServiceAccountToken = load_from_file_1.loadFromFile(this.kubernetesServiceAccountTokenPath);
+        }
+        catch (e) {
+            throw Error(`Failed to read ${this.kubernetesServiceAccountTokenPath}. ` +
+                OKE_WORKLOAD_IDENTITY_DEBUG_INFORMATION_LOG);
+        }
+        // Initialize everything
+        sessionKeySupplier = new session_key_supplier_1.default();
+        federationClient = new X509_federation_client_for_oke_workload_identity_1.default(`https://${kubernetesServiceHost}:${kubernetesServiceProxymuxPort}/resourcePrincipalSessionTokens`, kubernetesServiceAccountToken, kubernetesServiceAccountCert, sessionKeySupplier);
+        return new OkeWorkloadIdentityAuthenticationDetailsProvider(federationClient, sessionKeySupplier);
+    }
+};
+//# sourceMappingURL=oke-workload-identity-authentication-details-provider.js.map
 
 /***/ }),
 
@@ -37287,6 +37584,7 @@ const sshpk_1 = __nccwpck_require__(7022);
 const http_1 = __nccwpck_require__(6316);
 const certificate_and_privatekey_pair_1 = __importDefault(__nccwpck_require__(8873));
 const helper_1 = __nccwpck_require__(7621);
+const node_fetch_1 = __importDefault(__nccwpck_require__(467));
 /**
  * A class that retrieves certificate based on metadata service url
  */
@@ -37355,14 +37653,17 @@ class ResourceDetails {
         this.url = url;
         this.headers = headers;
         this.circuitBreaker = circuitBreaker;
+        this.METADATA_AUTH_HEADERS = "Bearer Oracle";
+        this.AUTHORIZATION = "Authorization";
     }
     send() {
         return __awaiter(this, void 0, void 0, function* () {
             const httpClient = new http_1.FetchHttpClient(null, this.circuitBreaker);
-            const response = yield httpClient.send({
-                uri: this.url,
+            const metaDataHeaders = {};
+            metaDataHeaders[this.AUTHORIZATION] = this.METADATA_AUTH_HEADERS;
+            const response = yield node_fetch_1.default(this.url, {
                 method: "GET",
-                headers: this.headers
+                headers: metaDataHeaders
             });
             return response;
         });
@@ -37698,6 +37999,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const helper_1 = __nccwpck_require__(7621);
 const retrier_1 = __nccwpck_require__(4922);
+const log_1 = __nccwpck_require__(6109);
 const Breaker = __nccwpck_require__(3857);
 function FetchWrapper(req, options, targetService, operationName, timestamp, endpoint, apiReferenceLink) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -37725,7 +38027,8 @@ function FetchWrapper(req, options, targetService, operationName, timestamp, end
     });
 }
 function defaultErrorFilterFunction(e) {
-    console.log("error from defaultErrorFunction: ", e);
+    if (log_1.LOG.logger)
+        log_1.LOG.logger.error("error from defaultErrorFunction: ", e);
     // Only consider client side errors or retry-able server errors
     if (e.code || (e.errorObject && retrier_1.DefaultRetryCondition.shouldBeRetried(e.errorObject))) {
         return false;
@@ -37745,13 +38048,20 @@ class CircuitBreaker {
             : new Breaker(FetchWrapper, CircuitBreaker.DefaultConfiguration);
         // Add emitters
         this.circuit.on("open", () => {
-            console.log("circuit breaker is now in OPEN state");
+            if (log_1.LOG.logger)
+                log_1.LOG.logger.debug("circuit breaker is now in OPEN state");
         });
         this.circuit.on("halfOpen", () => {
-            console.log("circuit breaker is now in HALF OPEN state");
+            if (log_1.LOG.logger)
+                log_1.LOG.logger.debug("circuit breaker is now in HALF OPEN state");
         });
         this.circuit.on("close", () => {
-            console.log("circuit breaker is now in CLOSE state");
+            if (log_1.LOG.logger)
+                log_1.LOG.logger.debug("circuit breaker is now in CLOSE state");
+        });
+        this.circuit.on("shutdown", () => {
+            if (log_1.LOG.logger)
+                log_1.LOG.logger.debug("circuit breaker is now SHUTDOWN");
         });
     }
     static get envVariableCheckForDefaultCircuitBreaker() {
@@ -37983,7 +38293,9 @@ exports.ConfigAccumulator = ConfigAccumulator;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BooleanString = void 0;
 const Constants = {
-    APPLICATION_JSON: "application/json"
+    APPLICATION_JSON: "application/json",
+    CONTENT_TYPE_HEADER: "content-type",
+    SERVER_SIDE_EVENT_TEXT_STREAM: "text/event-stream"
 };
 var BooleanString;
 (function (BooleanString) {
@@ -37992,6 +38304,151 @@ var BooleanString;
 })(BooleanString = exports.BooleanString || (exports.BooleanString = {}));
 exports["default"] = Constants;
 //# sourceMappingURL=constants.js.map
+
+/***/ }),
+
+/***/ 6505:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/*
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates. All rights reserved.
+ * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
+ */
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.reInitialize = exports.useOnlyDeveloperToolConfigurationRegions = exports.doesDeveloperToolConfigurationFileExist = exports.isociAllowOnlyDeveloperToolConfigurationRegionsEnabled = exports.isServiceEnabled = exports.developerToolConfiguration = exports.getDeveloperToolConfigurationFilePath = void 0;
+const path_1 = __importDefault(__nccwpck_require__(1017));
+const region_1 = __nccwpck_require__(263);
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const realm_1 = __nccwpck_require__(3755);
+const config_file_reader_1 = __nccwpck_require__(7407);
+const log_1 = __nccwpck_require__(6109);
+const OCI_DEVELOPER_TOOL_CONFIGURATION_FILE_PATH = "OCI_DEVELOPER_TOOL_CONFIGURATION_FILE_PATH";
+const OCI_ALLOW_ONLY_DEVELOPER_TOOL_CONFIGURATION_REGIONS = "OCI_ALLOW_ONLY_DEVELOPER_TOOL_CONFIGURATION_REGIONS";
+const DEFAULT_DEVELOPER_TOOL_CONFIGURATION_FILE_PATH = config_file_reader_1.ConfigFileReader.expandUserHome(path_1.default.join("~", ".oci", "developer-tool-configuration.json"));
+let ociAllowOnlyDeveloperToolConfigurationvRegions;
+let developerToolConfigurationProvider;
+let ociEnabledServiceSet;
+let developerToolConfigurationRegions;
+function getParsedServiceName(serviceName) {
+    return serviceName.toLowerCase().replace("/[^a-z]/", "");
+}
+function getDeveloperToolConfigurationFilePath() {
+    var _a;
+    return ((_a = process.env.OCI_DEVELOPER_TOOL_CONFIGURATION_FILE_PATH) !== null && _a !== void 0 ? _a : DEFAULT_DEVELOPER_TOOL_CONFIGURATION_FILE_PATH);
+}
+exports.getDeveloperToolConfigurationFilePath = getDeveloperToolConfigurationFilePath;
+function initializedeveloperToolConfiguration() {
+    var _a, _b;
+    // Initialize the OciEnabledServiceSet
+    ociEnabledServiceSet = new Set();
+    developerToolConfigurationRegions = new Array();
+    developerToolConfigurationProvider = "";
+    ociAllowOnlyDeveloperToolConfigurationvRegions = false;
+    if (!doesDeveloperToolConfigurationFileExist())
+        return;
+    let configFilePath = getDeveloperToolConfigurationFilePath();
+    try {
+        let content = fs_1.default.readFileSync(configFilePath, "utf8");
+        if (!content) {
+            return;
+        }
+        let developerToolConfig;
+        try {
+            developerToolConfig = JSON.parse(content);
+        }
+        catch (error) {
+            if (log_1.LOG.logger)
+                log_1.LOG.logger.error("Failure while parsing DeveloperToolConfiguration config file: " +
+                    configFilePath +
+                    " ex:" +
+                    error);
+        }
+        if (developerToolConfig !== undefined) {
+            // Add configured services to OciEnabledServiceSet
+            (_a = developerToolConfig === null || developerToolConfig === void 0 ? void 0 : developerToolConfig.services) === null || _a === void 0 ? void 0 : _a.forEach((service) => {
+                ociEnabledServiceSet.add(getParsedServiceName(service));
+            });
+            // Add configured Regions to developerToolConfigurationRegions
+            (_b = developerToolConfig === null || developerToolConfig === void 0 ? void 0 : developerToolConfig.regions) === null || _b === void 0 ? void 0 : _b.forEach((region) => {
+                developerToolConfigurationRegions.push(region);
+            });
+            // Initialize DeveloperToolConfiguration provider
+            if (developerToolConfig.developerToolConfigurationProvider !== null) {
+                developerToolConfigurationProvider = developerToolConfig.developerToolConfigurationProvider;
+            }
+            // Initialize ociAllowOnlyDeveloperToolConfigurationvRegions from DeveloperToolConfiguration config
+            if (developerToolConfig.allowOnlyDeveloperToolConfigurationRegions !== null) {
+                ociAllowOnlyDeveloperToolConfigurationvRegions = Boolean(developerToolConfig.allowOnlyDeveloperToolConfigurationRegions);
+            }
+        }
+    }
+    catch (error) {
+        if (error.code === "ENOENT") {
+            if (log_1.LOG.logger)
+                log_1.LOG.logger.error("DeveloperToolConfiguration config file not found at " +
+                    configFilePath +
+                    ", enabling all OCI services as default");
+            return;
+        }
+        else {
+            if (log_1.LOG.logger)
+                log_1.LOG.logger.error("Enabling all OCI services as failsafe. There was an exception while trying to read or de-serialize the DeveloperToolConfiguration config file at: " +
+                    configFilePath +
+                    " ex:" +
+                    error);
+        }
+    }
+}
+function developerToolConfiguration() {
+    initializedeveloperToolConfiguration();
+}
+exports.developerToolConfiguration = developerToolConfiguration;
+function isServiceEnabled(service) {
+    // Convert the service name to lower case to avoid match failure in list
+    service = getParsedServiceName(service);
+    if (ociEnabledServiceSet == null) {
+        initializedeveloperToolConfiguration();
+    }
+    // If OciEnabledServiceSet is empty then we enable all services.
+    if (ociEnabledServiceSet.size == 0) {
+        if (log_1.LOG.logger)
+            log_1.LOG.logger.debug("The OciEnabledServiceSet is empty, all OCI services are enabled");
+        return true;
+    }
+    return ociEnabledServiceSet.has(service);
+}
+exports.isServiceEnabled = isServiceEnabled;
+function isociAllowOnlyDeveloperToolConfigurationRegionsEnabled() {
+    var _a;
+    let ociAllowOnlyDeveloperToolConfigurationvRegionsFromEnvironmentVariable = Boolean((_a = process.env.OCI_ALLOW_ONLY_DEVELOPER_TOOL_CONFIGURATION_REGIONS) !== null && _a !== void 0 ? _a : false);
+    if (ociAllowOnlyDeveloperToolConfigurationvRegionsFromEnvironmentVariable != null) {
+        const result = Boolean(ociAllowOnlyDeveloperToolConfigurationvRegionsFromEnvironmentVariable);
+        return result;
+    }
+    return ociAllowOnlyDeveloperToolConfigurationvRegions;
+}
+exports.isociAllowOnlyDeveloperToolConfigurationRegionsEnabled = isociAllowOnlyDeveloperToolConfigurationRegionsEnabled;
+function doesDeveloperToolConfigurationFileExist() {
+    return fs_1.default.existsSync(getDeveloperToolConfigurationFilePath());
+}
+exports.doesDeveloperToolConfigurationFileExist = doesDeveloperToolConfigurationFileExist;
+function useOnlyDeveloperToolConfigurationRegions() {
+    return (!isociAllowOnlyDeveloperToolConfigurationRegionsEnabled() &&
+        (doesDeveloperToolConfigurationFileExist() || developerToolConfigurationRegions.length != 0));
+}
+exports.useOnlyDeveloperToolConfigurationRegions = useOnlyDeveloperToolConfigurationRegions;
+function reInitialize() {
+    region_1.Region.resetDeveloperToolConfiguration();
+    realm_1.Realm.resetDeveloperToolConfiguration();
+    initializedeveloperToolConfiguration();
+}
+exports.reInitialize = reInitialize;
+//# sourceMappingURL=developertoolconfiguration.js.map
 
 /***/ }),
 
@@ -38008,34 +38465,66 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.EndpointBuilder = void 0;
 const region_1 = __nccwpck_require__(263);
 const realm_1 = __nccwpck_require__(3755);
+const log_1 = __nccwpck_require__(6109);
 class EndpointBuilder {
-    static createEndpointFromRegion(template, region, endpointServiceName) {
+    static createEndpointFromRegion(template, region, endpointServiceName, serviceEndpointTemplatePerRealm, useRealmSpecificEndpointTemplate) {
         const regionId = region.regionId;
         const secondLevelDomain = region.realm.secondLevelDomain;
+        const templateToUse = EndpointBuilder.checkAndGetEndpointTemplateToUse(region.realm, template, serviceEndpointTemplatePerRealm, useRealmSpecificEndpointTemplate);
         // If regionId is a dotted region, call createEndpointForDottedRegion
         if (regionId.includes(".")) {
-            return EndpointBuilder.createEndpointForDottedRegion(template, regionId, endpointServiceName);
+            return EndpointBuilder.createEndpointForDottedRegion(templateToUse, regionId, endpointServiceName);
         }
         else {
             // Default to using regionId and secondLevelDomain
-            return EndpointBuilder.createEndpointFromRegionIdAndSecondLevelDomain(template, regionId, secondLevelDomain);
+            return EndpointBuilder.createEndpointFromRegionIdAndSecondLevelDomain(templateToUse, regionId, secondLevelDomain);
         }
     }
-    static createEndpointFromRegionId(template, regionId, endpointServiceName) {
+    static checkAndGetEndpointTemplateToUse(realm, defaultTemplate, serviceEndpointTemplatePerRealm, useRealmSpecificEndpointTemplate) {
+        let templateToUse = defaultTemplate;
+        if (useRealmSpecificEndpointTemplate) {
+            templateToUse = EndpointBuilder.getEndpointTemplateToUse(realm, defaultTemplate, serviceEndpointTemplatePerRealm);
+        }
+        else if (EndpointBuilder.isRealmSpecificEndpointTemplateEnabledViaEnv()) {
+            templateToUse = EndpointBuilder.getEndpointTemplateToUse(realm, defaultTemplate, serviceEndpointTemplatePerRealm);
+        }
+        return templateToUse;
+    }
+    static getEndpointTemplateToUse(realm, defaultTemplate, serviceEndpointTemplatePerRealm) {
+        const realmId = realm.realmId.toLowerCase();
+        if (serviceEndpointTemplatePerRealm) {
+            if (serviceEndpointTemplatePerRealm[realmId]) {
+                if (log_1.LOG.logger)
+                    log_1.LOG.logger.info(`Using ${serviceEndpointTemplatePerRealm[realmId]} as the realm specific endpoint template`);
+                return serviceEndpointTemplatePerRealm[realmId];
+            }
+        }
+        if (log_1.LOG.logger)
+            log_1.LOG.logger.info(`Realm specific endpoint template for realm ${realmId} does not exist. Falling back to endpoint template : ${defaultTemplate}`);
+        return defaultTemplate;
+    }
+    static createEndpointFromRegionId(template, regionId, endpointServiceName, serviceEndpointTemplatePerRealm, useRealmSpecificEndpointTemplate) {
         // If regionId is a dotted region, call createEndpointForDottedRegion
         if (regionId.includes("."))
             return EndpointBuilder.createEndpointForDottedRegion(template, regionId, endpointServiceName);
         const region = region_1.Region.fromRegionId(regionId);
-        if (region)
-            return EndpointBuilder.createEndpointFromRegion(template, region, endpointServiceName);
+        if (region) {
+            const templateToUse = EndpointBuilder.checkAndGetEndpointTemplateToUse(region.realm, template, serviceEndpointTemplatePerRealm, useRealmSpecificEndpointTemplate);
+            return EndpointBuilder.createEndpointFromRegion(templateToUse, region, endpointServiceName);
+        }
         // If regionId does not return a known region, check to see if there is a fallback second level domain from env.OCI_DEFAULT_REALM
         // If no fallback for second level domain, default it to OC1's second level domain.
         const fallbackSecondLevelDomain = process.env["OCI_DEFAULT_REALM"];
+        let templateToUse = template;
+        if (!fallbackSecondLevelDomain) {
+            templateToUse = EndpointBuilder.checkAndGetEndpointTemplateToUse(realm_1.Realm.OC1, template, serviceEndpointTemplatePerRealm, useRealmSpecificEndpointTemplate);
+        }
         let secondLevelDomain = fallbackSecondLevelDomain
             ? fallbackSecondLevelDomain
             : realm_1.Realm.OC1.secondLevelDomain;
-        console.log(`Unknown regionId [${regionId}], falling back to using ${secondLevelDomain} as the second level domain.`);
-        return EndpointBuilder.createEndpointFromRegionIdAndSecondLevelDomain(template, regionId, secondLevelDomain);
+        if (log_1.LOG.logger)
+            log_1.LOG.logger.info(`Unknown regionId [${regionId}], falling back to using ${secondLevelDomain} as the second level domain.`);
+        return EndpointBuilder.createEndpointFromRegionIdAndSecondLevelDomain(templateToUse, regionId, secondLevelDomain);
     }
     static createEndpointFromRegionIdAndSecondLevelDomain(template, regionId, secondLevelDomain) {
         if (!template)
@@ -38055,6 +38544,48 @@ class EndpointBuilder {
             const serviceName = template.substring(template.lastIndexOf("/") + 1, template.indexOf(".")); // Extract service name
             return `https://${serviceName}.${regionId}`;
         }
+    }
+    static populateServiceParamsInEndpoint(endpoint, pathParams, queryParams, requiredParams) {
+        if (!/\{.*\}/.test(endpoint))
+            return endpoint;
+        const regexForParameters = /\{([^}]+)\}/g;
+        let paramFromEndpoint;
+        let populatedEndpoint = endpoint;
+        while ((paramFromEndpoint = regexForParameters.exec(endpoint))) {
+            let appendDotInEndpointTemplate = false;
+            let paramName = paramFromEndpoint[1];
+            if (paramName.indexOf("+Dot") !== -1 || paramName.indexOf(".") !== -1) {
+                appendDotInEndpointTemplate = true;
+                paramName = paramFromEndpoint[1].replace("+Dot", "").replace(".", "");
+            }
+            let value = "";
+            if (requiredParams.has(paramName)) {
+                value = EndpointBuilder.getParameterValueFromPathAndQueryParams(paramName, pathParams, queryParams);
+            }
+            if (value) {
+                if (appendDotInEndpointTemplate)
+                    value += ".";
+                populatedEndpoint = populatedEndpoint.replace(paramFromEndpoint[0], value);
+            }
+            else {
+                populatedEndpoint = populatedEndpoint.replace(paramFromEndpoint[0], "");
+            }
+        }
+        return populatedEndpoint;
+    }
+    static getParameterValueFromPathAndQueryParams(parameterName, pathParams, queryParams) {
+        let paramNameForPath = `{${parameterName}}`;
+        if (pathParams[paramNameForPath] && typeof pathParams[paramNameForPath] === "string")
+            return pathParams[paramNameForPath];
+        if (queryParams[parameterName] && typeof queryParams[parameterName] === "string")
+            return queryParams[parameterName];
+        return "";
+    }
+    static isRealmSpecificEndpointTemplateEnabledViaEnv() {
+        if (process.env.OCI_REALM_SPECIFIC_SERVICE_ENDPOINT_TEMPLATE_ENABLED === "true") {
+            return true;
+        }
+        return false;
     }
 }
 exports.EndpointBuilder = EndpointBuilder;
@@ -38538,7 +39069,7 @@ const helper_1 = __nccwpck_require__(7621);
 const Breaker = __nccwpck_require__(3857);
 promise.polyfill();
 class FetchHttpClient {
-    constructor(signer, circuitBreaker, httpOptions) {
+    constructor(signer, circuitBreaker, httpOptions, bodyDuplexMode) {
         this.signer = signer;
         this.circuitBreaker = null;
         this.httpOptions = undefined;
@@ -38547,6 +39078,8 @@ class FetchHttpClient {
         }
         if (httpOptions)
             this.httpOptions = httpOptions;
+        if (bodyDuplexMode)
+            this.bodyDuplexMode = bodyDuplexMode;
     }
     send(req, forceExcludeBody = false, targetService = "", operationName = "", timestamp = new Date().toISOString(), endpoint = "", apiReferenceLink = "") {
         return __awaiter(this, void 0, void 0, function* () {
@@ -38561,11 +39094,18 @@ class FetchHttpClient {
                     body: body.signerBody
                 }, forceExcludeBody);
             }
-            const request = new Request(req.uri, {
+            const reqInit = {
                 method: req.method,
                 headers: req.headers,
                 body: body.requestBody
-            });
+            };
+            if (body.requestBody) {
+                reqInit[FetchHttpClient.BODY_DUPLEX_KEY] = this.bodyDuplexMode
+                    ? this.bodyDuplexMode
+                    : FetchHttpClient.DEFAULT_DUPLEX_VALUE;
+            }
+            const request = new Request(req.uri, reqInit);
+            // Send Request
             // Need to convert to type RequestInit for Fetch() type compatibility
             let options = this.httpOptions;
             if (this.circuitBreaker) {
@@ -38594,6 +39134,8 @@ class FetchHttpClient {
     }
 }
 exports.FetchHttpClient = FetchHttpClient;
+FetchHttpClient.BODY_DUPLEX_KEY = "duplex";
+FetchHttpClient.DEFAULT_DUPLEX_VALUE = "half";
 //# sourceMappingURL=http.js.map
 
 /***/ }),
@@ -38921,7 +39463,7 @@ exports.Range = Range;
 /***/ }),
 
 /***/ 3755:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
@@ -38931,11 +39473,17 @@ exports.Range = Range;
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Realm = void 0;
+const developertoolconfiguration_1 = __nccwpck_require__(6505);
 class Realm {
-    constructor(realmId, secondLevelDomain) {
+    constructor(realmId, secondLevelDomain, isDeveloperToolConfigurationRealm = false) {
         this._secondLevelDomain = secondLevelDomain;
         this._realmId = realmId;
-        Realm.KNOWN_REALMS.set(realmId, this);
+        if (isDeveloperToolConfigurationRealm) {
+            Realm.DEVELOPER_TOOL_CONFIGURATION_REALMS.set(realmId, this);
+        }
+        else {
+            Realm.KNOWN_REALMS.set(realmId, this);
+        }
     }
     get secondLevelDomain() {
         return this._secondLevelDomain;
@@ -38943,14 +39491,24 @@ class Realm {
     get realmId() {
         return this._realmId;
     }
-    static register(realmId, secondLevelDomain) {
+    static values() {
+        if (developertoolconfiguration_1.useOnlyDeveloperToolConfigurationRegions()) {
+            return Array.from(this.DEVELOPER_TOOL_CONFIGURATION_REALMS.values());
+        }
+        var allowedRealms = Array.from(this.KNOWN_REALMS.values());
+        allowedRealms.concat(Array.from(this.DEVELOPER_TOOL_CONFIGURATION_REALMS.values()));
+        return allowedRealms;
+    }
+    static register(realmId, secondLevelDomain, isDeveloperToolConfigurationRealm = false) {
         if (!realmId)
             throw Error("Realm Id can not be empty or undefined");
         if (!secondLevelDomain)
             throw Error("secondLevelDomain can not be empty or undefined");
         realmId = realmId.trim().toLocaleLowerCase("en-US");
         secondLevelDomain = secondLevelDomain.trim().toLocaleLowerCase("en-US");
-        const realm = Realm.KNOWN_REALMS.get(realmId);
+        const realm = isDeveloperToolConfigurationRealm
+            ? Realm.DEVELOPER_TOOL_CONFIGURATION_REALMS.get(realmId)
+            : Realm.KNOWN_REALMS.get(realmId);
         if (realm) {
             if (realm.secondLevelDomain !== secondLevelDomain) {
                 throw Error("RealmId " +
@@ -38961,11 +39519,15 @@ class Realm {
             }
             return realm;
         }
-        return new Realm(realmId, secondLevelDomain);
+        return new Realm(realmId, secondLevelDomain, isDeveloperToolConfigurationRealm);
+    }
+    static resetDeveloperToolConfiguration() {
+        Realm.DEVELOPER_TOOL_CONFIGURATION_REALMS.clear();
     }
 }
 exports.Realm = Realm;
 Realm.KNOWN_REALMS = new Map();
+Realm.DEVELOPER_TOOL_CONFIGURATION_REALMS = new Map();
 Realm.OC1 = Realm.register("oc1", "oraclecloud.com");
 Realm.OC2 = Realm.register("oc2", "oraclegovcloud.com");
 Realm.OC3 = Realm.register("oc3", "oraclegovcloud.com");
@@ -38974,6 +39536,12 @@ Realm.OC8 = Realm.register("oc8", "oraclecloud8.com");
 Realm.OC9 = Realm.register("oc9", "oraclecloud9.com");
 Realm.OC10 = Realm.register("oc10", "oraclecloud10.com");
 Realm.OC14 = Realm.register("oc14", "oraclecloud14.com");
+Realm.OC20 = Realm.register("oc20", "oraclecloud20.com");
+Realm.OC19 = Realm.register("oc19", "oraclecloud.eu");
+Realm.OC24 = Realm.register("oc24", "oraclecloud24.com");
+Realm.OC21 = Realm.register("oc21", "oraclecloud21.com");
+Realm.OC26 = Realm.register("oc26", "oraclecloud26.com");
+Realm.OC15 = Realm.register("oc15", "oraclecloud15.com");
 //# sourceMappingURL=realm.js.map
 
 /***/ }),
@@ -39022,6 +39590,25 @@ var RegionMetadataSchema;
  * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -39038,13 +39625,21 @@ const config_file_reader_1 = __nccwpck_require__(7407);
 const fs_1 = __nccwpck_require__(7147);
 const region_metadata_schema_1 = __nccwpck_require__(4389);
 const http_1 = __nccwpck_require__(6316);
+const developerToolConfiguration = __importStar(__nccwpck_require__(6505));
+const log_1 = __nccwpck_require__(6109);
 class Region {
-    constructor(regionId, realm, regionCode) {
+    constructor(regionId, realm, regionCode, isDeveloperToolConfigurationRegion = false) {
         this._realm = realm;
         this._regionId = regionId;
         if (regionCode)
             this._regionCode = regionCode;
-        Region.KNOWN_REGIONS.set(regionId, this);
+        developerToolConfiguration.developerToolConfiguration();
+        if (isDeveloperToolConfigurationRegion) {
+            Region.DEVELOPER_TOOL_CONFIGURATION_REGIONS.set(regionId, this);
+        }
+        else {
+            Region.KNOWN_REGIONS.set(regionId, this);
+        }
     }
     get realm() {
         return this._realm;
@@ -39056,25 +39651,34 @@ class Region {
         return this._regionCode;
     }
     /**
-     * Return all known Regions in this version of the SDK, except possibly the region returned by IMDS (Instance Metadata
-     * Service, only available on OCI instances), since IMDS is not automatically contacted by this method.
-     *
-     * To ensure that this method also returns the region provided by IMDS, call {@link Region#enableInstanceMetadata()}
-     * explicitly before calling {@link Region#values()}.
-     *
-     */
+   * Return all known Regions in this version of the SDK, except possibly the region returned by IMDS (Instance Metadata
+   * Service, only available on OCI instances), since IMDS is not automatically contacted by this method.
+   *
+   * To ensure that this method also returns the region provided by IMDS, call {@link Region#enableInstanceMetadata()}
+   * explicitly before calling {@link Region#values()}.
+   *
+   */
     static values() {
         if (!Region.hasCalledForImds && !Region.hasWarnedAboutValuesWithoutInstanceMetadataService) {
-            console.log("Call to Regions.values() without having contacted IMDS (Instance Metadata Service, only available on OCI instances); if you do need the region from IMDS, call Region.enableInstanceMetadata() before calling Region.values()");
+            if (log_1.LOG.logger)
+                log_1.LOG.logger.info("Call to Regions.values() without having contacted IMDS (Instance Metadata Service, only available on OCI instances); if you do need the region from IMDS, call Region.enableInstanceMetadata() before calling Region.values()");
             Region.hasWarnedAboutValuesWithoutInstanceMetadataService = true;
         }
         Region.registerAllRegions();
-        return Array.from(this.KNOWN_REGIONS.values());
+        if (developerToolConfiguration.useOnlyDeveloperToolConfigurationRegions()) {
+            return Array.from(this.DEVELOPER_TOOL_CONFIGURATION_REGIONS.values());
+        }
+        var allowedRegions = Array.from(this.KNOWN_REGIONS.values());
+        allowedRegions.concat(Array.from(this.DEVELOPER_TOOL_CONFIGURATION_REGIONS.values()));
+        return allowedRegions;
     }
     /**
-     *  Register all regions and sets status
-     */
+   *  Register all regions and sets status
+   */
     static registerAllRegions() {
+        if (!Region._hasUsedDeveloperToolConfigFile) {
+            Region.addRegionsFromDeveloperToolConfigFile();
+        }
         if (!Region._hasUsedConfigFile) {
             Region.addRegionsFromConfigFile();
         }
@@ -39092,6 +39696,12 @@ class Region {
         if (!regionId)
             throw Error("RegionId can not be empty or undefined");
         regionId = regionId.trim().toLocaleLowerCase("en-US");
+        if (!this._hasUsedDeveloperToolConfigFile && developerToolConfiguration.doesDeveloperToolConfigurationFileExist()) {
+            Region.addRegionsFromDeveloperToolConfigFile();
+            let foundRegion = Region.DEVELOPER_TOOL_CONFIGURATION_REGIONS.get(regionId);
+            if (foundRegion)
+                return foundRegion;
+        }
         let foundRegion = Region.KNOWN_REGIONS.get(regionId);
         if (!foundRegion) {
             Region.addRegionsFromConfigFile();
@@ -39107,11 +39717,35 @@ class Region {
         }
         return foundRegion;
     }
+    // Adds regions from the alloy config file
+    static addRegionsFromDeveloperToolConfigFile() {
+        if (!Region._hasUsedDeveloperToolConfigFile) {
+            Region._hasUsedDeveloperToolConfigFile = true;
+            const expandedRegionConfigFilePath = config_file_reader_1.ConfigFileReader.expandUserHome(developerToolConfiguration.getDeveloperToolConfigurationFilePath());
+            if (config_file_reader_1.ConfigFileReader.fileExists(expandedRegionConfigFilePath)) {
+                try {
+                    const fileContent = fs_1.readFileSync(expandedRegionConfigFilePath, "utf8");
+                    const regionMetadata = JSON.parse(fileContent);
+                    if (regionMetadata && regionMetadata.length > 0 && Array.isArray(regionMetadata)) {
+                        regionMetadata.map(metadata => {
+                            if (region_metadata_schema_1.RegionMetadataSchema.isValidSchema(metadata)) {
+                                Region.register(metadata.regionIdentifier, realm_1.Realm.register(metadata.realmKey, metadata.realmDomainComponent), metadata.regionKey, true);
+                            }
+                        });
+                    }
+                }
+                catch (error) {
+                    if (log_1.LOG.logger)
+                        log_1.LOG.logger.error("error reading or parsing region developertoolConfiguration file");
+                }
+            }
+        }
+    }
     // Adds regions from the config file
     static addRegionsFromConfigFile() {
         if (!Region._hasUsedConfigFile) {
             Region._hasUsedConfigFile = true;
-            let expandedRegionConfigFilePath = config_file_reader_1.ConfigFileReader.expandUserHome(Region.REGIONS_CONFIG_FILE_PATH);
+            const expandedRegionConfigFilePath = config_file_reader_1.ConfigFileReader.expandUserHome(Region.REGIONS_CONFIG_FILE_PATH);
             if (config_file_reader_1.ConfigFileReader.fileExists(expandedRegionConfigFilePath)) {
                 try {
                     const fileContent = fs_1.readFileSync(expandedRegionConfigFilePath, "utf8");
@@ -39125,7 +39759,8 @@ class Region {
                     }
                 }
                 catch (error) {
-                    console.log("error reading or parsing region config file");
+                    if (log_1.LOG.logger)
+                        log_1.LOG.logger.error("error reading or parsing region config file");
                 }
             }
         }
@@ -39143,7 +39778,8 @@ class Region {
                     }
                 }
                 catch (error) {
-                    console.log("error reading or parsing region metadata env var config file");
+                    if (log_1.LOG.logger)
+                        log_1.LOG.logger.error("error reading or parsing region metadata env var config file");
                 }
             }
         }
@@ -39156,15 +39792,15 @@ class Region {
         }
     }
     /*
-     * Enable instance metadata lookup for region info
-     */
+   * Enable instance metadata lookup for region info
+   */
     static enableInstanceMetadata() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!Region.hasCalledForImds) {
                 Region.hasCalledForImds = true;
                 try {
                     const url = Region.IMDS_BASE_URL + "instance/regionInfo/";
-                    let headers = new Headers();
+                    const headers = new Headers();
                     headers.append(Region.CONTENT_TYPE_HEADER, Region.CONTENT_TYPE_HEADER_VALUE);
                     headers.append(Region.AUTHORIZATION, Region.METADATA_AUTH_HEADERS);
                     const httpClient = new http_1.FetchHttpClient(null);
@@ -39179,16 +39815,17 @@ class Region {
                     }
                 }
                 catch (error) {
-                    console.log("Unable to retrieve region metadata from instance metadata service, reason :" + error);
+                    if (log_1.LOG.logger)
+                        log_1.LOG.logger.error("Unable to retrieve region metadata from instance metadata service, reason :" + error);
                 }
             }
         });
     }
-    static register(regionId, realm, regionCode) {
+    static register(regionId, realm, regionCode, isDeveloperToolConfigurationRegion = false) {
         if (!regionId)
             throw Error("RegionId can not be empty or undefined");
         regionId = regionId.trim().toLocaleLowerCase("en-US");
-        const region = Region.KNOWN_REGIONS.get(regionId);
+        const region = isDeveloperToolConfigurationRegion ? Region.DEVELOPER_TOOL_CONFIGURATION_REGIONS.get(regionId) : Region.KNOWN_REGIONS.get(regionId);
         if (region) {
             if (region.realm.secondLevelDomain !== realm.secondLevelDomain) {
                 throw Error(" Region " +
@@ -39202,14 +39839,14 @@ class Region {
         if (regionCode) {
             regionCode = regionCode.trim().toLocaleLowerCase("en-US");
         }
-        return new Region(regionId, realm, regionCode);
+        return new Region(regionId, realm, regionCode, isDeveloperToolConfigurationRegion);
     }
     /**
-     * Function to get regionId based regionStr: regionStr can be a short code or regionId
-     * if it is a shortCode then we want to return the corresponding regionId
-     * @param regionStr
-     * @return regionId
-     */
+   * Function to get regionId based regionStr: regionStr can be a short code or regionId
+   * if it is a shortCode then we want to return the corresponding regionId
+   * @param regionStr
+   * @return regionId
+   */
     static getRegionIdFromShortCode(regionStr) {
         regionStr = regionStr.toLocaleLowerCase();
         let region = Region.values().find(r => r.regionCode === regionStr);
@@ -39233,16 +39870,31 @@ class Region {
         if (region) {
             return region.regionId;
         }
+        // else add regions from the regions alloy config file
+        Region.addRegionsFromDeveloperToolConfigFile();
+        region = Region.values().find(r => r.regionCode === regionStr);
+        if (region) {
+            return region.regionId;
+        }
         return regionStr;
     }
     static set hasUsedConfigFile(bool) {
         Region._hasUsedConfigFile = bool;
     }
+    static set hasUsedDeveloperToolConfigFile(bool) {
+        Region._hasUsedDeveloperToolConfigFile = bool;
+    }
+    static resetDeveloperToolConfiguration() {
+        this._hasUsedDeveloperToolConfigFile = false;
+        Region.DEVELOPER_TOOL_CONFIGURATION_REGIONS.clear();
+    }
 }
 exports.Region = Region;
 Region.KNOWN_REGIONS = new Map();
+Region.DEVELOPER_TOOL_CONFIGURATION_REGIONS = new Map();
 Region.hasCalledForImds = false;
 Region._hasUsedConfigFile = false;
+Region._hasUsedDeveloperToolConfigFile = false;
 Region.hasUsedEnvVar = false;
 Region.hasWarnedAboutValuesWithoutInstanceMetadataService = false;
 Region.REGIONS_CONFIG_FILE_PATH = "~/.oci/regions-config.json";
@@ -39252,6 +39904,8 @@ Region.METADATA_AUTH_HEADERS = "Bearer Oracle";
 Region.AUTHORIZATION = "Authorization";
 Region.CONTENT_TYPE_HEADER = "Content-Type";
 Region.CONTENT_TYPE_HEADER_VALUE = "application/json";
+Region.REGION_ID_STRING = "regionId";
+Region.REGION_STRING = "region";
 // OC1
 Region.AP_CHUNCHEON_1 = Region.register("ap-chuncheon-1", realm_1.Realm.OC1, "yny");
 Region.AP_MUMBAI_1 = Region.register("ap-mumbai-1", realm_1.Realm.OC1, "bom");
@@ -39287,6 +39941,10 @@ Region.EU_PARIS_1 = Region.register("eu-paris-1", realm_1.Realm.OC1, "cdg");
 Region.MX_QUERETARO_1 = Region.register("mx-queretaro-1", realm_1.Realm.OC1, "qro");
 Region.EU_MADRID_1 = Region.register("eu-madrid-1", realm_1.Realm.OC1, "mad");
 Region.US_CHICAGO_1 = Region.register("us-chicago-1", realm_1.Realm.OC1, "ord");
+Region.MX_MONTERREY_1 = Region.register("mx-monterrey-1", realm_1.Realm.OC1, "mty");
+Region.US_SALTLAKE_2 = Region.register("us-saltlake-2", realm_1.Realm.OC1, "aga");
+Region.SA_BOGOTA_1 = Region.register("sa-bogota-1", realm_1.Realm.OC1, "bog");
+Region.SA_VALPARAISO_1 = Region.register("sa-valparaiso-1", realm_1.Realm.OC1, "vap");
 // OC2
 Region.US_LANGLEY_1 = Region.register("us-langley-1", realm_1.Realm.OC2, "lfi");
 Region.US_LUKE_1 = Region.register("us-luke-1", realm_1.Realm.OC2, "luf");
@@ -39311,6 +39969,19 @@ Region.EU_DCC_DUBLIN_2 = Region.register("eu-dcc-dublin-2", realm_1.Realm.OC14, 
 Region.EU_DCC_RATING_2 = Region.register("eu-dcc-rating-2", realm_1.Realm.OC14, "dtm");
 Region.EU_DCC_RATING_1 = Region.register("eu-dcc-rating-1", realm_1.Realm.OC14, "dus");
 Region.EU_DCC_DUBLIN_1 = Region.register("eu-dcc-dublin-1", realm_1.Realm.OC14, "ork");
+// OC20
+Region.EU_JOVANOVAC_1 = Region.register("eu-jovanovac-1", realm_1.Realm.OC20, "beg");
+// OC19
+Region.EU_MADRID_2 = Region.register("eu-madrid-2", realm_1.Realm.OC19, "vll");
+Region.EU_FRANKFURT_2 = Region.register("eu-frankfurt-2", realm_1.Realm.OC19, "str");
+// OC24
+Region.EU_DCC_ZURICH_1 = Region.register("eu-dcc-zurich-1", realm_1.Realm.OC24, "avz");
+// OC21
+Region.ME_DCC_DOHA_1 = Region.register("me-dcc-doha-1", realm_1.Realm.OC21, "doh");
+// OC26
+Region.ME_ABUDHABI_3 = Region.register("me-abudhabi-3", realm_1.Realm.OC26, "ahu");
+// OC15
+Region.AP_DCC_GAZIPUR_1 = Region.register("ap-dcc-gazipur-1", realm_1.Realm.OC15, "dac");
 //# sourceMappingURL=region.js.map
 
 /***/ }),
@@ -39545,6 +40216,8 @@ const NO_RETRY_MAXIMUM_NUMBER_OF_ATTEMPTS = 1;
 const NO_RETRY_MAXIMUM_DELAY_IN_SECONDS = 30;
 const OCI_SDK_DEFAULT_RETRY_MAXIMUM_NUMBER_OF_ATTEMPTS = 8;
 const OCI_SDK_DEFAULT_RETRY_MAXIMUM_DELAY_IN_SECONDS = 30;
+const CONTENT_TYPE_HEADER = "content-type";
+const SERVER_SIDE_EVENT_TEXT_STREAM = "text/event-stream";
 exports.NoRetryConfigurationDetails = {
     terminationStrategy: new waiter_1.MaxAttemptsTerminationStrategy(NO_RETRY_MAXIMUM_NUMBER_OF_ATTEMPTS),
     delayStrategy: new waiter_1.ExponentialBackoffDelayStrategyWithJitter(NO_RETRY_MAXIMUM_DELAY_IN_SECONDS),
@@ -40113,14 +40786,14 @@ exports.genericWaiter = genericWaiter;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -40165,14 +40838,14 @@ exports.IdentityWaiter = identity_waiter.IdentityWaiter;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -40210,6 +40883,7 @@ const model = __importStar(__nccwpck_require__(7268));
 const oci_common_1 = __nccwpck_require__(5049);
 const identity_waiter_1 = __nccwpck_require__(1271);
 const oci_common_2 = __nccwpck_require__(5049);
+const Breaker = __nccwpck_require__(3857);
 // ===============================================
 // This file is autogenerated - Please do not edit
 // ===============================================
@@ -40221,11 +40895,15 @@ var IdentityApiKeys;
  */
 class IdentityClient {
     constructor(params, clientConfiguration) {
+        this["_realmSpecificEndpointTemplateEnabled"] = undefined;
         this["_endpoint"] = "";
         this["_defaultHeaders"] = {};
         this._circuitBreaker = null;
         this._httpOptions = undefined;
+        this._bodyDuplexMode = undefined;
         this.targetService = "Identity";
+        this._regionId = "";
+        this._lastSetRegionOrRegionId = "";
         const requestSigner = params.authenticationDetailsProvider
             ? new common.DefaultRequestSigner(params.authenticationDetailsProvider)
             : null;
@@ -40237,6 +40915,13 @@ class IdentityClient {
             this._httpOptions = clientConfiguration.httpOptions
                 ? clientConfiguration.httpOptions
                 : undefined;
+            this._bodyDuplexMode = clientConfiguration.bodyDuplexMode
+                ? clientConfiguration.bodyDuplexMode
+                : undefined;
+        }
+        if (!oci_common_2.developerToolConfiguration.isServiceEnabled("identity")) {
+            let errmsg = "The developerToolConfiguration configuration disabled this service, this behavior is controlled by developerToolConfiguration.ociEnabledServiceSet variable. Please check if your local developer_tool_configuration file has configured the service you're targeting or contact the cloud provider on the availability of this service : ";
+            throw errmsg.concat("identity");
         }
         // if circuit breaker is not created, check if circuit breaker system is enabled to use default circuit breaker
         const specCircuitBreakerEnabled = true;
@@ -40247,7 +40932,7 @@ class IdentityClient {
         }
         this._httpClient =
             params.httpClient ||
-                new common.FetchHttpClient(requestSigner, this._circuitBreaker, this._httpOptions);
+                new common.FetchHttpClient(requestSigner, this._circuitBreaker, this._httpOptions, this._bodyDuplexMode);
         if (params.authenticationDetailsProvider &&
             common.isRegionProvider(params.authenticationDetailsProvider)) {
             const provider = params.authenticationDetailsProvider;
@@ -40276,12 +40961,30 @@ class IdentityClient {
         return common.LOG.logger;
     }
     /**
+     * Determines whether realm specific endpoint should be used or not.
+     * Set realmSpecificEndpointTemplateEnabled to "true" if the user wants to enable use of realm specific endpoint template, otherwise set it to "false"
+     * @param realmSpecificEndpointTemplateEnabled flag to enable the use of realm specific endpoint template
+     */
+    set useRealmSpecificEndpointTemplate(realmSpecificEndpointTemplateEnabled) {
+        this._realmSpecificEndpointTemplateEnabled = realmSpecificEndpointTemplateEnabled;
+        if (this.logger)
+            this.logger.info(`realmSpecificEndpointTemplateEnabled set to ${this._realmSpecificEndpointTemplateEnabled}`);
+        if (this._lastSetRegionOrRegionId === common.Region.REGION_STRING) {
+            this.endpoint = common.EndpointBuilder.createEndpointFromRegion(IdentityClient.serviceEndpointTemplate, this._region, IdentityClient.endpointServiceName);
+        }
+        else if (this._lastSetRegionOrRegionId === common.Region.REGION_ID_STRING) {
+            this.endpoint = common.EndpointBuilder.createEndpointFromRegionId(IdentityClient.serviceEndpointTemplate, this._regionId, IdentityClient.endpointServiceName);
+        }
+    }
+    /**
      * Sets the region to call (ex, Region.US_PHOENIX_1).
      * Note, this will call {@link #endpoint(String) endpoint} after resolving the endpoint.
      * @param region The region of the service.
      */
     set region(region) {
+        this._region = region;
         this.endpoint = common.EndpointBuilder.createEndpointFromRegion(IdentityClient.serviceEndpointTemplate, region, IdentityClient.endpointServiceName);
+        this._lastSetRegionOrRegionId = common.Region.REGION_STRING;
     }
     /**
      * Sets the regionId to call (ex, 'us-phoenix-1').
@@ -40292,7 +40995,9 @@ class IdentityClient {
      * @param regionId The public region ID.
      */
     set regionId(regionId) {
+        this._regionId = regionId;
         this.endpoint = common.EndpointBuilder.createEndpointFromRegionId(IdentityClient.serviceEndpointTemplate, regionId, IdentityClient.endpointServiceName);
+        this._lastSetRegionOrRegionId = common.Region.REGION_ID_STRING;
     }
     /**
      * Creates a new IdentityWaiter for resources for this service.
@@ -40316,6 +41021,20 @@ class IdentityClient {
         throw Error("Waiters do not exist. Please create waiters.");
     }
     /**
+     * Shutdown the circuit breaker used by the client when it is no longer needed
+     */
+    shutdownCircuitBreaker() {
+        if (this._circuitBreaker) {
+            this._circuitBreaker.shutdown();
+        }
+    }
+    /**
+     * Close the client once it is no longer needed
+     */
+    close() {
+        this.shutdownCircuitBreaker();
+    }
+    /**
        * (For tenancies that support identity domains) Activates a deactivated identity domain. You can only activate identity domains that your user account is not a part of.
   * <p>
   After you send the request, the `lifecycleDetails` of the identity domain is set to ACTIVATING. When the operation completes, the
@@ -40328,7 +41047,7 @@ class IdentityClient {
        * @param ActivateDomainRequest
        * @return ActivateDomainResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ActivateDomain.ts.html |here} to see how to use ActivateDomain API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ActivateDomain.ts.html |here} to see how to use ActivateDomain API.
        */
     activateDomain(activateDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40390,7 +41109,7 @@ class IdentityClient {
      * @param ActivateMfaTotpDeviceRequest
      * @return ActivateMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ActivateMfaTotpDevice.ts.html |here} to see how to use ActivateMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ActivateMfaTotpDevice.ts.html |here} to see how to use ActivateMfaTotpDevice API.
      */
     activateMfaTotpDevice(activateMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40457,7 +41176,7 @@ class IdentityClient {
      * @param AddTagDefaultLockRequest
      * @return AddTagDefaultLockResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/AddTagDefaultLock.ts.html |here} to see how to use AddTagDefaultLock API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/AddTagDefaultLock.ts.html |here} to see how to use AddTagDefaultLock API.
      */
     addTagDefaultLock(addTagDefaultLockRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40524,7 +41243,7 @@ class IdentityClient {
      * @param AddTagNamespaceLockRequest
      * @return AddTagNamespaceLockResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/AddTagNamespaceLock.ts.html |here} to see how to use AddTagNamespaceLock API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/AddTagNamespaceLock.ts.html |here} to see how to use AddTagNamespaceLock API.
      */
     addTagNamespaceLock(addTagNamespaceLockRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40594,7 +41313,7 @@ class IdentityClient {
        * @param AddUserToGroupRequest
        * @return AddUserToGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/AddUserToGroup.ts.html |here} to see how to use AddUserToGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/AddUserToGroup.ts.html |here} to see how to use AddUserToGroup API.
        */
     addUserToGroup(addUserToGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40660,7 +41379,7 @@ class IdentityClient {
      * @param AssembleEffectiveTagSetRequest
      * @return AssembleEffectiveTagSetResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/AssembleEffectiveTagSet.ts.html |here} to see how to use AssembleEffectiveTagSet API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/AssembleEffectiveTagSet.ts.html |here} to see how to use AssembleEffectiveTagSet API.
      */
     assembleEffectiveTagSet(assembleEffectiveTagSetRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40728,7 +41447,7 @@ class IdentityClient {
      * @param BulkDeleteResourcesRequest
      * @return BulkDeleteResourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/BulkDeleteResources.ts.html |here} to see how to use BulkDeleteResources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/BulkDeleteResources.ts.html |here} to see how to use BulkDeleteResources API.
      */
     bulkDeleteResources(bulkDeleteResourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40788,8 +41507,8 @@ class IdentityClient {
   * tags from all resources in your tenancy. The tag key definitions must be within the same tag namespace.
   * <p>
   The following actions happen immediately:
-  * \u00A0
-  *   * If the tag is a cost-tracking tag, the tag no longer counts against your
+  * <p>
+    * If the tag is a cost-tracking tag, the tag no longer counts against your
   *   10 cost-tracking tags limit, even if you do not disable the tag before running this operation.
   *   * If the tag is used with dynamic groups, the rules that contain the tag are no longer
   *   evaluated against the tag.
@@ -40810,7 +41529,7 @@ class IdentityClient {
        * @param BulkDeleteTagsRequest
        * @return BulkDeleteTagsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/BulkDeleteTags.ts.html |here} to see how to use BulkDeleteTags API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/BulkDeleteTags.ts.html |here} to see how to use BulkDeleteTags API.
        */
     bulkDeleteTags(bulkDeleteTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40885,7 +41604,7 @@ class IdentityClient {
        * @param BulkEditTagsRequest
        * @return BulkEditTagsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/BulkEditTags.ts.html |here} to see how to use BulkEditTags API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/BulkEditTags.ts.html |here} to see how to use BulkEditTags API.
        */
     bulkEditTags(bulkEditTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -40949,7 +41668,7 @@ class IdentityClient {
      * @param BulkMoveResourcesRequest
      * @return BulkMoveResourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/BulkMoveResources.ts.html |here} to see how to use BulkMoveResources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/BulkMoveResources.ts.html |here} to see how to use BulkMoveResources API.
      */
     bulkMoveResources(bulkMoveResourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41029,7 +41748,7 @@ class IdentityClient {
        * @param CascadeDeleteTagNamespaceRequest
        * @return CascadeDeleteTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CascadeDeleteTagNamespace.ts.html |here} to see how to use CascadeDeleteTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CascadeDeleteTagNamespace.ts.html |here} to see how to use CascadeDeleteTagNamespace API.
        */
     cascadeDeleteTagNamespace(cascadeDeleteTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41096,7 +41815,7 @@ class IdentityClient {
        * @param ChangeDomainCompartmentRequest
        * @return ChangeDomainCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ChangeDomainCompartment.ts.html |here} to see how to use ChangeDomainCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ChangeDomainCompartment.ts.html |here} to see how to use ChangeDomainCompartment API.
        */
     changeDomainCompartment(changeDomainCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41167,7 +41886,7 @@ class IdentityClient {
        * @param ChangeDomainLicenseTypeRequest
        * @return ChangeDomainLicenseTypeResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ChangeDomainLicenseType.ts.html |here} to see how to use ChangeDomainLicenseType API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ChangeDomainLicenseType.ts.html |here} to see how to use ChangeDomainLicenseType API.
        */
     changeDomainLicenseType(changeDomainLicenseTypeRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41235,7 +41954,7 @@ class IdentityClient {
        * @param ChangeTagNamespaceCompartmentRequest
        * @return ChangeTagNamespaceCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ChangeTagNamespaceCompartment.ts.html |here} to see how to use ChangeTagNamespaceCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ChangeTagNamespaceCompartment.ts.html |here} to see how to use ChangeTagNamespaceCompartment API.
        */
     changeTagNamespaceCompartment(changeTagNamespaceCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41302,7 +42021,7 @@ class IdentityClient {
        * @param CreateAuthTokenRequest
        * @return CreateAuthTokenResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateAuthToken.ts.html |here} to see how to use CreateAuthToken API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateAuthToken.ts.html |here} to see how to use CreateAuthToken API.
        */
     createAuthToken(createAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41383,7 +42102,7 @@ class IdentityClient {
        * @param CreateCompartmentRequest
        * @return CreateCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateCompartment.ts.html |here} to see how to use CreateCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateCompartment.ts.html |here} to see how to use CreateCompartment API.
        */
     createCompartment(createCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41456,7 +42175,7 @@ class IdentityClient {
        * @param CreateCustomerSecretKeyRequest
        * @return CreateCustomerSecretKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateCustomerSecretKey.ts.html |here} to see how to use CreateCustomerSecretKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateCustomerSecretKey.ts.html |here} to see how to use CreateCustomerSecretKey API.
        */
     createCustomerSecretKey(createCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41521,7 +42240,7 @@ class IdentityClient {
      * @param CreateDbCredentialRequest
      * @return CreateDbCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateDbCredential.ts.html |here} to see how to use CreateDbCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateDbCredential.ts.html |here} to see how to use CreateDbCredential API.
      */
     createDbCredential(createDbCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41594,7 +42313,7 @@ class IdentityClient {
        * @param CreateDomainRequest
        * @return CreateDomainResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateDomain.ts.html |here} to see how to use CreateDomain API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateDomain.ts.html |here} to see how to use CreateDomain API.
        */
     createDomain(createDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41671,7 +42390,7 @@ class IdentityClient {
        * @param CreateDynamicGroupRequest
        * @return CreateDynamicGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateDynamicGroup.ts.html |here} to see how to use CreateDynamicGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateDynamicGroup.ts.html |here} to see how to use CreateDynamicGroup API.
        */
     createDynamicGroup(createDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41754,7 +42473,7 @@ class IdentityClient {
        * @param CreateGroupRequest
        * @return CreateGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateGroup.ts.html |here} to see how to use CreateGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateGroup.ts.html |here} to see how to use CreateGroup API.
        */
     createGroup(createGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41836,7 +42555,7 @@ class IdentityClient {
        * @param CreateIdentityProviderRequest
        * @return CreateIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateIdentityProvider.ts.html |here} to see how to use CreateIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateIdentityProvider.ts.html |here} to see how to use CreateIdentityProvider API.
        */
     createIdentityProvider(createIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41902,7 +42621,7 @@ class IdentityClient {
        * @param CreateIdpGroupMappingRequest
        * @return CreateIdpGroupMappingResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateIdpGroupMapping.ts.html |here} to see how to use CreateIdpGroupMapping API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateIdpGroupMapping.ts.html |here} to see how to use CreateIdpGroupMapping API.
        */
     createIdpGroupMapping(createIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -41967,7 +42686,7 @@ class IdentityClient {
      * @param CreateMfaTotpDeviceRequest
      * @return CreateMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateMfaTotpDevice.ts.html |here} to see how to use CreateMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateMfaTotpDevice.ts.html |here} to see how to use CreateMfaTotpDevice API.
      */
     createMfaTotpDevice(createMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42051,7 +42770,7 @@ class IdentityClient {
        * @param CreateNetworkSourceRequest
        * @return CreateNetworkSourceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateNetworkSource.ts.html |here} to see how to use CreateNetworkSource API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateNetworkSource.ts.html |here} to see how to use CreateNetworkSource API.
        */
     createNetworkSource(createNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42114,7 +42833,7 @@ class IdentityClient {
      * @param CreateOAuthClientCredentialRequest
      * @return CreateOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateOAuthClientCredential.ts.html |here} to see how to use CreateOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateOAuthClientCredential.ts.html |here} to see how to use CreateOAuthClientCredential API.
      */
     createOAuthClientCredential(createOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42193,7 +42912,7 @@ class IdentityClient {
        * @param CreateOrResetUIPasswordRequest
        * @return CreateOrResetUIPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateOrResetUIPassword.ts.html |here} to see how to use CreateOrResetUIPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateOrResetUIPassword.ts.html |here} to see how to use CreateOrResetUIPassword API.
        */
     createOrResetUIPassword(createOrResetUIPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42273,7 +42992,7 @@ class IdentityClient {
        * @param CreatePolicyRequest
        * @return CreatePolicyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreatePolicy.ts.html |here} to see how to use CreatePolicy API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreatePolicy.ts.html |here} to see how to use CreatePolicy API.
        */
     createPolicy(createPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42336,7 +43055,7 @@ class IdentityClient {
      * @param CreateRegionSubscriptionRequest
      * @return CreateRegionSubscriptionResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateRegionSubscription.ts.html |here} to see how to use CreateRegionSubscription API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateRegionSubscription.ts.html |here} to see how to use CreateRegionSubscription API.
      */
     createRegionSubscription(createRegionSubscriptionRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42399,7 +43118,7 @@ class IdentityClient {
      * @param CreateSmtpCredentialRequest
      * @return CreateSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateSmtpCredential.ts.html |here} to see how to use CreateSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateSmtpCredential.ts.html |here} to see how to use CreateSmtpCredential API.
      */
     createSmtpCredential(createSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42475,7 +43194,7 @@ class IdentityClient {
        * @param CreateSwiftPasswordRequest
        * @return CreateSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateSwiftPassword.ts.html |here} to see how to use CreateSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateSwiftPassword.ts.html |here} to see how to use CreateSwiftPassword API.
        */
     createSwiftPassword(createSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42561,7 +43280,7 @@ class IdentityClient {
        * @param CreateTagRequest
        * @return CreateTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateTag.ts.html |here} to see how to use CreateTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateTag.ts.html |here} to see how to use CreateTag API.
        */
     createTag(createTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42635,7 +43354,7 @@ class IdentityClient {
        * @param CreateTagDefaultRequest
        * @return CreateTagDefaultResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateTagDefault.ts.html |here} to see how to use CreateTagDefault API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateTagDefault.ts.html |here} to see how to use CreateTagDefault API.
        */
     createTagDefault(createTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42712,7 +43431,7 @@ class IdentityClient {
        * @param CreateTagNamespaceRequest
        * @return CreateTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateTagNamespace.ts.html |here} to see how to use CreateTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateTagNamespace.ts.html |here} to see how to use CreateTagNamespace API.
        */
     createTagNamespace(createTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42804,7 +43523,7 @@ class IdentityClient {
        * @param CreateUserRequest
        * @return CreateUserResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/CreateUser.ts.html |here} to see how to use CreateUser API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/CreateUser.ts.html |here} to see how to use CreateUser API.
        */
     createUser(createUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42875,7 +43594,7 @@ class IdentityClient {
        * @param DeactivateDomainRequest
        * @return DeactivateDomainResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeactivateDomain.ts.html |here} to see how to use DeactivateDomain API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeactivateDomain.ts.html |here} to see how to use DeactivateDomain API.
        */
     deactivateDomain(deactivateDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42942,7 +43661,7 @@ class IdentityClient {
        * @param DeleteApiKeyRequest
        * @return DeleteApiKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteApiKey.ts.html |here} to see how to use DeleteApiKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteApiKey.ts.html |here} to see how to use DeleteApiKey API.
        */
     deleteApiKey(deleteApiKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -42998,7 +43717,7 @@ class IdentityClient {
      * @param DeleteAuthTokenRequest
      * @return DeleteAuthTokenResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteAuthToken.ts.html |here} to see how to use DeleteAuthToken API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteAuthToken.ts.html |here} to see how to use DeleteAuthToken API.
      */
     deleteAuthToken(deleteAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43054,7 +43773,7 @@ class IdentityClient {
      * @param DeleteCompartmentRequest
      * @return DeleteCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteCompartment.ts.html |here} to see how to use DeleteCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteCompartment.ts.html |here} to see how to use DeleteCompartment API.
      */
     deleteCompartment(deleteCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43114,7 +43833,7 @@ class IdentityClient {
      * @param DeleteCustomerSecretKeyRequest
      * @return DeleteCustomerSecretKeyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteCustomerSecretKey.ts.html |here} to see how to use DeleteCustomerSecretKey API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteCustomerSecretKey.ts.html |here} to see how to use DeleteCustomerSecretKey API.
      */
     deleteCustomerSecretKey(deleteCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43170,7 +43889,7 @@ class IdentityClient {
      * @param DeleteDbCredentialRequest
      * @return DeleteDbCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteDbCredential.ts.html |here} to see how to use DeleteDbCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteDbCredential.ts.html |here} to see how to use DeleteDbCredential API.
      */
     deleteDbCredential(deleteDbCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43233,7 +43952,7 @@ class IdentityClient {
      * @param DeleteDomainRequest
      * @return DeleteDomainResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteDomain.ts.html |here} to see how to use DeleteDomain API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteDomain.ts.html |here} to see how to use DeleteDomain API.
      */
     deleteDomain(deleteDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43294,7 +44013,7 @@ class IdentityClient {
      * @param DeleteDynamicGroupRequest
      * @return DeleteDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteDynamicGroup.ts.html |here} to see how to use DeleteDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteDynamicGroup.ts.html |here} to see how to use DeleteDynamicGroup API.
      */
     deleteDynamicGroup(deleteDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43349,7 +44068,7 @@ class IdentityClient {
      * @param DeleteGroupRequest
      * @return DeleteGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteGroup.ts.html |here} to see how to use DeleteGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteGroup.ts.html |here} to see how to use DeleteGroup API.
      */
     deleteGroup(deleteGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43407,7 +44126,7 @@ class IdentityClient {
        * @param DeleteIdentityProviderRequest
        * @return DeleteIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteIdentityProvider.ts.html |here} to see how to use DeleteIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteIdentityProvider.ts.html |here} to see how to use DeleteIdentityProvider API.
        */
     deleteIdentityProvider(deleteIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43464,7 +44183,7 @@ class IdentityClient {
        * @param DeleteIdpGroupMappingRequest
        * @return DeleteIdpGroupMappingResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteIdpGroupMapping.ts.html |here} to see how to use DeleteIdpGroupMapping API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteIdpGroupMapping.ts.html |here} to see how to use DeleteIdpGroupMapping API.
        */
     deleteIdpGroupMapping(deleteIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43520,7 +44239,7 @@ class IdentityClient {
      * @param DeleteMfaTotpDeviceRequest
      * @return DeleteMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteMfaTotpDevice.ts.html |here} to see how to use DeleteMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteMfaTotpDevice.ts.html |here} to see how to use DeleteMfaTotpDevice API.
      */
     deleteMfaTotpDevice(deleteMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43576,7 +44295,7 @@ class IdentityClient {
      * @param DeleteNetworkSourceRequest
      * @return DeleteNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteNetworkSource.ts.html |here} to see how to use DeleteNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteNetworkSource.ts.html |here} to see how to use DeleteNetworkSource API.
      */
     deleteNetworkSource(deleteNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43631,7 +44350,7 @@ class IdentityClient {
      * @param DeleteOAuthClientCredentialRequest
      * @return DeleteOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteOAuthClientCredential.ts.html |here} to see how to use DeleteOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteOAuthClientCredential.ts.html |here} to see how to use DeleteOAuthClientCredential API.
      */
     deleteOAuthClientCredential(deleteOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43686,7 +44405,7 @@ class IdentityClient {
      * @param DeletePolicyRequest
      * @return DeletePolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeletePolicy.ts.html |here} to see how to use DeletePolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeletePolicy.ts.html |here} to see how to use DeletePolicy API.
      */
     deletePolicy(deletePolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43741,7 +44460,7 @@ class IdentityClient {
      * @param DeleteSmtpCredentialRequest
      * @return DeleteSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteSmtpCredential.ts.html |here} to see how to use DeleteSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteSmtpCredential.ts.html |here} to see how to use DeleteSmtpCredential API.
      */
     deleteSmtpCredential(deleteSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43799,7 +44518,7 @@ class IdentityClient {
        * @param DeleteSwiftPasswordRequest
        * @return DeleteSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteSwiftPassword.ts.html |here} to see how to use DeleteSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteSwiftPassword.ts.html |here} to see how to use DeleteSwiftPassword API.
        */
     deleteSwiftPassword(deleteSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43874,7 +44593,7 @@ class IdentityClient {
        * @param DeleteTagRequest
        * @return DeleteTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteTag.ts.html |here} to see how to use DeleteTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteTag.ts.html |here} to see how to use DeleteTag API.
        */
     deleteTag(deleteTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43937,7 +44656,7 @@ class IdentityClient {
      * @param DeleteTagDefaultRequest
      * @return DeleteTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteTagDefault.ts.html |here} to see how to use DeleteTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteTagDefault.ts.html |here} to see how to use DeleteTagDefault API.
      */
     deleteTagDefault(deleteTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44001,7 +44720,7 @@ class IdentityClient {
        * @param DeleteTagNamespaceRequest
        * @return DeleteTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteTagNamespace.ts.html |here} to see how to use DeleteTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteTagNamespace.ts.html |here} to see how to use DeleteTagNamespace API.
        */
     deleteTagNamespace(deleteTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44058,7 +44777,7 @@ class IdentityClient {
      * @param DeleteUserRequest
      * @return DeleteUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/DeleteUser.ts.html |here} to see how to use DeleteUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/DeleteUser.ts.html |here} to see how to use DeleteUser API.
      */
     deleteUser(deleteUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44122,7 +44841,7 @@ class IdentityClient {
        * @param EnableReplicationToRegionRequest
        * @return EnableReplicationToRegionResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/EnableReplicationToRegion.ts.html |here} to see how to use EnableReplicationToRegion API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/EnableReplicationToRegion.ts.html |here} to see how to use EnableReplicationToRegion API.
        */
     enableReplicationToRegion(enableReplicationToRegionRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44185,7 +44904,7 @@ class IdentityClient {
      * @param GenerateTotpSeedRequest
      * @return GenerateTotpSeedResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GenerateTotpSeed.ts.html |here} to see how to use GenerateTotpSeed API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GenerateTotpSeed.ts.html |here} to see how to use GenerateTotpSeed API.
      */
     generateTotpSeed(generateTotpSeedRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44244,14 +44963,14 @@ class IdentityClient {
         });
     }
     /**
-     * Gets the authentication policy for the given tenancy. You must specify your tenant\u2019s OCID as the value for
+     * Gets the authentication policy for the given tenancy. You must specify your tenant's OCID as the value for
      * the compartment ID (remember that the tenancy is simply the root compartment).
      *
      * This operation uses {@link common.OciSdkDefaultRetryConfiguration} by default if no retry configuration is defined by the user.
      * @param GetAuthenticationPolicyRequest
      * @return GetAuthenticationPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetAuthenticationPolicy.ts.html |here} to see how to use GetAuthenticationPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetAuthenticationPolicy.ts.html |here} to see how to use GetAuthenticationPolicy API.
      */
     getAuthenticationPolicy(getAuthenticationPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44321,7 +45040,7 @@ class IdentityClient {
        * @param GetCompartmentRequest
        * @return GetCompartmentResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetCompartment.ts.html |here} to see how to use GetCompartment API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetCompartment.ts.html |here} to see how to use GetCompartment API.
        */
     getCompartment(getCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44384,7 +45103,7 @@ class IdentityClient {
      * @param GetDomainRequest
      * @return GetDomainResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetDomain.ts.html |here} to see how to use GetDomain API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetDomain.ts.html |here} to see how to use GetDomain API.
      */
     getDomain(getDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44448,7 +45167,7 @@ class IdentityClient {
      * @param GetDynamicGroupRequest
      * @return GetDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetDynamicGroup.ts.html |here} to see how to use GetDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetDynamicGroup.ts.html |here} to see how to use GetDynamicGroup API.
      */
     getDynamicGroup(getDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44515,7 +45234,7 @@ class IdentityClient {
        * @param GetGroupRequest
        * @return GetGroupResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetGroup.ts.html |here} to see how to use GetGroup API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetGroup.ts.html |here} to see how to use GetGroup API.
        */
     getGroup(getGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44578,7 +45297,7 @@ class IdentityClient {
      * @param GetIamWorkRequestRequest
      * @return GetIamWorkRequestResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetIamWorkRequest.ts.html |here} to see how to use GetIamWorkRequest API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetIamWorkRequest.ts.html |here} to see how to use GetIamWorkRequest API.
      */
     getIamWorkRequest(getIamWorkRequestRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44639,7 +45358,7 @@ class IdentityClient {
        * @param GetIdentityProviderRequest
        * @return GetIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetIdentityProvider.ts.html |here} to see how to use GetIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetIdentityProvider.ts.html |here} to see how to use GetIdentityProvider API.
        */
     getIdentityProvider(getIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44704,7 +45423,7 @@ class IdentityClient {
        * @param GetIdpGroupMappingRequest
        * @return GetIdpGroupMappingResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetIdpGroupMapping.ts.html |here} to see how to use GetIdpGroupMapping API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetIdpGroupMapping.ts.html |here} to see how to use GetIdpGroupMapping API.
        */
     getIdpGroupMapping(getIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44768,7 +45487,7 @@ class IdentityClient {
      * @param GetMfaTotpDeviceRequest
      * @return GetMfaTotpDeviceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetMfaTotpDevice.ts.html |here} to see how to use GetMfaTotpDevice API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetMfaTotpDevice.ts.html |here} to see how to use GetMfaTotpDevice API.
      */
     getMfaTotpDevice(getMfaTotpDeviceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44832,7 +45551,7 @@ class IdentityClient {
      * @param GetNetworkSourceRequest
      * @return GetNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetNetworkSource.ts.html |here} to see how to use GetNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetNetworkSource.ts.html |here} to see how to use GetNetworkSource API.
      */
     getNetworkSource(getNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44894,7 +45613,7 @@ class IdentityClient {
      * @param GetPolicyRequest
      * @return GetPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetPolicy.ts.html |here} to see how to use GetPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetPolicy.ts.html |here} to see how to use GetPolicy API.
      */
     getPolicy(getPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -44957,7 +45676,7 @@ class IdentityClient {
      * @param GetStandardTagTemplateRequest
      * @return GetStandardTagTemplateResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetStandardTagTemplate.ts.html |here} to see how to use GetStandardTagTemplate API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetStandardTagTemplate.ts.html |here} to see how to use GetStandardTagTemplate API.
      */
     getStandardTagTemplate(getStandardTagTemplateRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45016,7 +45735,7 @@ class IdentityClient {
      * @param GetTagRequest
      * @return GetTagResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetTag.ts.html |here} to see how to use GetTag API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetTag.ts.html |here} to see how to use GetTag API.
      */
     getTag(getTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45080,7 +45799,7 @@ class IdentityClient {
      * @param GetTagDefaultRequest
      * @return GetTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetTagDefault.ts.html |here} to see how to use GetTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetTagDefault.ts.html |here} to see how to use GetTagDefault API.
      */
     getTagDefault(getTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45143,7 +45862,7 @@ class IdentityClient {
      * @param GetTagNamespaceRequest
      * @return GetTagNamespaceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetTagNamespace.ts.html |here} to see how to use GetTagNamespace API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetTagNamespace.ts.html |here} to see how to use GetTagNamespace API.
      */
     getTagNamespace(getTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45202,7 +45921,7 @@ class IdentityClient {
      * @param GetTaggingWorkRequestRequest
      * @return GetTaggingWorkRequestResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetTaggingWorkRequest.ts.html |here} to see how to use GetTaggingWorkRequest API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetTaggingWorkRequest.ts.html |here} to see how to use GetTaggingWorkRequest API.
      */
     getTaggingWorkRequest(getTaggingWorkRequestRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45264,7 +45983,7 @@ class IdentityClient {
      * @param GetTenancyRequest
      * @return GetTenancyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetTenancy.ts.html |here} to see how to use GetTenancy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetTenancy.ts.html |here} to see how to use GetTenancy API.
      */
     getTenancy(getTenancyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45321,7 +46040,7 @@ class IdentityClient {
      * @param GetUserRequest
      * @return GetUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetUser.ts.html |here} to see how to use GetUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetUser.ts.html |here} to see how to use GetUser API.
      */
     getUser(getUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45383,7 +46102,7 @@ class IdentityClient {
      * @param GetUserGroupMembershipRequest
      * @return GetUserGroupMembershipResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetUserGroupMembership.ts.html |here} to see how to use GetUserGroupMembership API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetUserGroupMembership.ts.html |here} to see how to use GetUserGroupMembership API.
      */
     getUserGroupMembership(getUserGroupMembershipRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45447,7 +46166,7 @@ class IdentityClient {
      * @param GetUserUIPasswordInformationRequest
      * @return GetUserUIPasswordInformationResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetUserUIPasswordInformation.ts.html |here} to see how to use GetUserUIPasswordInformation API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetUserUIPasswordInformation.ts.html |here} to see how to use GetUserUIPasswordInformation API.
      */
     getUserUIPasswordInformation(getUserUIPasswordInformationRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45511,7 +46230,7 @@ class IdentityClient {
      * @param GetWorkRequestRequest
      * @return GetWorkRequestResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/GetWorkRequest.ts.html |here} to see how to use GetWorkRequest API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/GetWorkRequest.ts.html |here} to see how to use GetWorkRequest API.
      */
     getWorkRequest(getWorkRequestRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45575,7 +46294,7 @@ class IdentityClient {
      * @param ImportStandardTagsRequest
      * @return ImportStandardTagsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ImportStandardTags.ts.html |here} to see how to use ImportStandardTags API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ImportStandardTags.ts.html |here} to see how to use ImportStandardTags API.
      */
     importStandardTags(importStandardTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45639,7 +46358,7 @@ class IdentityClient {
        * @param ListAllowedDomainLicenseTypesRequest
        * @return ListAllowedDomainLicenseTypesResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListAllowedDomainLicenseTypes.ts.html |here} to see how to use ListAllowedDomainLicenseTypes API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListAllowedDomainLicenseTypes.ts.html |here} to see how to use ListAllowedDomainLicenseTypes API.
        */
     listAllowedDomainLicenseTypes(listAllowedDomainLicenseTypesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45706,7 +46425,7 @@ class IdentityClient {
        * @param ListApiKeysRequest
        * @return ListApiKeysResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListApiKeys.ts.html |here} to see how to use ListApiKeys API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListApiKeys.ts.html |here} to see how to use ListApiKeys API.
        */
     listApiKeys(listApiKeysRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45770,7 +46489,7 @@ class IdentityClient {
      * @param ListAuthTokensRequest
      * @return ListAuthTokensResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListAuthTokens.ts.html |here} to see how to use ListAuthTokens API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListAuthTokens.ts.html |here} to see how to use ListAuthTokens API.
      */
     listAuthTokens(listAuthTokensRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45837,7 +46556,7 @@ class IdentityClient {
      * @param ListAvailabilityDomainsRequest
      * @return ListAvailabilityDomainsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListAvailabilityDomains.ts.html |here} to see how to use ListAvailabilityDomains API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListAvailabilityDomains.ts.html |here} to see how to use ListAvailabilityDomains API.
      */
     listAvailabilityDomains(listAvailabilityDomainsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45906,7 +46625,7 @@ class IdentityClient {
      * @param ListBulkActionResourceTypesRequest
      * @return ListBulkActionResourceTypesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListBulkActionResourceTypes.ts.html |here} to see how to use ListBulkActionResourceTypes API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListBulkActionResourceTypes.ts.html |here} to see how to use ListBulkActionResourceTypes API.
      */
     listBulkActionResourceTypes(listBulkActionResourceTypesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -45971,7 +46690,7 @@ class IdentityClient {
      * @param ListBulkEditTagsResourceTypesRequest
      * @return ListBulkEditTagsResourceTypesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListBulkEditTagsResourceTypes.ts.html |here} to see how to use ListBulkEditTagsResourceTypes API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListBulkEditTagsResourceTypes.ts.html |here} to see how to use ListBulkEditTagsResourceTypes API.
      */
     listBulkEditTagsResourceTypes(listBulkEditTagsResourceTypesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46052,7 +46771,7 @@ class IdentityClient {
        * @param ListCompartmentsRequest
        * @return ListCompartmentsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListCompartments.ts.html |here} to see how to use ListCompartments API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListCompartments.ts.html |here} to see how to use ListCompartments API.
        */
     listCompartments(listCompartmentsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46164,7 +46883,7 @@ class IdentityClient {
      * @param ListCostTrackingTagsRequest
      * @return ListCostTrackingTagsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListCostTrackingTags.ts.html |here} to see how to use ListCostTrackingTags API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListCostTrackingTags.ts.html |here} to see how to use ListCostTrackingTags API.
      */
     listCostTrackingTags(listCostTrackingTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46270,7 +46989,7 @@ class IdentityClient {
      * @param ListCustomerSecretKeysRequest
      * @return ListCustomerSecretKeysResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListCustomerSecretKeys.ts.html |here} to see how to use ListCustomerSecretKeys API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListCustomerSecretKeys.ts.html |here} to see how to use ListCustomerSecretKeys API.
      */
     listCustomerSecretKeys(listCustomerSecretKeysRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46333,7 +47052,7 @@ class IdentityClient {
      * @param ListDbCredentialsRequest
      * @return ListDbCredentialsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListDbCredentials.ts.html |here} to see how to use ListDbCredentials API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListDbCredentials.ts.html |here} to see how to use ListDbCredentials API.
      */
     listDbCredentials(listDbCredentialsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46444,7 +47163,7 @@ class IdentityClient {
      * @param ListDomainsRequest
      * @return ListDomainsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListDomains.ts.html |here} to see how to use ListDomains API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListDomains.ts.html |here} to see how to use ListDomains API.
      */
     listDomains(listDomainsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46562,7 +47281,7 @@ class IdentityClient {
      * @param ListDynamicGroupsRequest
      * @return ListDynamicGroupsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListDynamicGroups.ts.html |here} to see how to use ListDynamicGroups API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListDynamicGroups.ts.html |here} to see how to use ListDynamicGroups API.
      */
     listDynamicGroups(listDynamicGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46673,7 +47392,7 @@ class IdentityClient {
      * @param ListFaultDomainsRequest
      * @return ListFaultDomainsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListFaultDomains.ts.html |here} to see how to use ListFaultDomains API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListFaultDomains.ts.html |here} to see how to use ListFaultDomains API.
      */
     listFaultDomains(listFaultDomainsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46734,7 +47453,7 @@ class IdentityClient {
      * @param ListGroupsRequest
      * @return ListGroupsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListGroups.ts.html |here} to see how to use ListGroups API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListGroups.ts.html |here} to see how to use ListGroups API.
      */
     listGroups(listGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46843,7 +47562,7 @@ class IdentityClient {
      * @param ListIamWorkRequestErrorsRequest
      * @return ListIamWorkRequestErrorsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListIamWorkRequestErrors.ts.html |here} to see how to use ListIamWorkRequestErrors API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListIamWorkRequestErrors.ts.html |here} to see how to use ListIamWorkRequestErrors API.
      */
     listIamWorkRequestErrors(listIamWorkRequestErrorsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -46951,7 +47670,7 @@ class IdentityClient {
      * @param ListIamWorkRequestLogsRequest
      * @return ListIamWorkRequestLogsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListIamWorkRequestLogs.ts.html |here} to see how to use ListIamWorkRequestLogs API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListIamWorkRequestLogs.ts.html |here} to see how to use ListIamWorkRequestLogs API.
      */
     listIamWorkRequestLogs(listIamWorkRequestLogsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47064,7 +47783,7 @@ class IdentityClient {
      * @param ListIamWorkRequestsRequest
      * @return ListIamWorkRequestsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListIamWorkRequests.ts.html |here} to see how to use ListIamWorkRequests API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListIamWorkRequests.ts.html |here} to see how to use ListIamWorkRequests API.
      */
     listIamWorkRequests(listIamWorkRequestsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47173,7 +47892,7 @@ class IdentityClient {
        * @param ListIdentityProviderGroupsRequest
        * @return ListIdentityProviderGroupsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListIdentityProviderGroups.ts.html |here} to see how to use ListIdentityProviderGroups API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListIdentityProviderGroups.ts.html |here} to see how to use ListIdentityProviderGroups API.
        */
     listIdentityProviderGroups(listIdentityProviderGroupsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47286,7 +48005,7 @@ class IdentityClient {
        * @param ListIdentityProvidersRequest
        * @return ListIdentityProvidersResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListIdentityProviders.ts.html |here} to see how to use ListIdentityProviders API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListIdentityProviders.ts.html |here} to see how to use ListIdentityProviders API.
        */
     listIdentityProviders(listIdentityProvidersRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47398,7 +48117,7 @@ class IdentityClient {
        * @param ListIdpGroupMappingsRequest
        * @return ListIdpGroupMappingsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListIdpGroupMappings.ts.html |here} to see how to use ListIdpGroupMappings API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListIdpGroupMappings.ts.html |here} to see how to use ListIdpGroupMappings API.
        */
     listIdpGroupMappings(listIdpGroupMappingsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47505,7 +48224,7 @@ class IdentityClient {
      * @param ListMfaTotpDevicesRequest
      * @return ListMfaTotpDevicesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListMfaTotpDevices.ts.html |here} to see how to use ListMfaTotpDevices API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListMfaTotpDevices.ts.html |here} to see how to use ListMfaTotpDevices API.
      */
     listMfaTotpDevices(listMfaTotpDevicesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47615,7 +48334,7 @@ class IdentityClient {
      * @param ListNetworkSourcesRequest
      * @return ListNetworkSourcesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListNetworkSources.ts.html |here} to see how to use ListNetworkSources API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListNetworkSources.ts.html |here} to see how to use ListNetworkSources API.
      */
     listNetworkSources(listNetworkSourcesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47724,7 +48443,7 @@ class IdentityClient {
      * @param ListOAuthClientCredentialsRequest
      * @return ListOAuthClientCredentialsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListOAuthClientCredentials.ts.html |here} to see how to use ListOAuthClientCredentials API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListOAuthClientCredentials.ts.html |here} to see how to use ListOAuthClientCredentials API.
      */
     listOAuthClientCredentials(listOAuthClientCredentialsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47835,7 +48554,7 @@ class IdentityClient {
        * @param ListPoliciesRequest
        * @return ListPoliciesResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListPolicies.ts.html |here} to see how to use ListPolicies API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListPolicies.ts.html |here} to see how to use ListPolicies API.
        */
     listPolicies(listPoliciesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -47943,7 +48662,7 @@ class IdentityClient {
      * @param ListRegionSubscriptionsRequest
      * @return ListRegionSubscriptionsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListRegionSubscriptions.ts.html |here} to see how to use ListRegionSubscriptions API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListRegionSubscriptions.ts.html |here} to see how to use ListRegionSubscriptions API.
      */
     listRegionSubscriptions(listRegionSubscriptionsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48000,7 +48719,7 @@ class IdentityClient {
      * @param ListRegionsRequest
      * @return ListRegionsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListRegions.ts.html |here} to see how to use ListRegions API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListRegions.ts.html |here} to see how to use ListRegions API.
      */
     listRegions(listRegionsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48057,7 +48776,7 @@ class IdentityClient {
      * @param ListSmtpCredentialsRequest
      * @return ListSmtpCredentialsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListSmtpCredentials.ts.html |here} to see how to use ListSmtpCredentials API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListSmtpCredentials.ts.html |here} to see how to use ListSmtpCredentials API.
      */
     listSmtpCredentials(listSmtpCredentialsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48120,7 +48839,7 @@ class IdentityClient {
      * @param ListStandardTagNamespacesRequest
      * @return ListStandardTagNamespacesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListStandardTagNamespaces.ts.html |here} to see how to use ListStandardTagNamespaces API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListStandardTagNamespaces.ts.html |here} to see how to use ListStandardTagNamespaces API.
      */
     listStandardTagNamespaces(listStandardTagNamespacesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48228,7 +48947,7 @@ class IdentityClient {
        * @param ListSwiftPasswordsRequest
        * @return ListSwiftPasswordsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListSwiftPasswords.ts.html |here} to see how to use ListSwiftPasswords API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListSwiftPasswords.ts.html |here} to see how to use ListSwiftPasswords API.
        */
     listSwiftPasswords(listSwiftPasswordsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48291,7 +49010,7 @@ class IdentityClient {
      * @param ListTagDefaultsRequest
      * @return ListTagDefaultsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListTagDefaults.ts.html |here} to see how to use ListTagDefaults API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListTagDefaults.ts.html |here} to see how to use ListTagDefaults API.
      */
     listTagDefaults(listTagDefaultsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48399,7 +49118,7 @@ class IdentityClient {
      * @param ListTagNamespacesRequest
      * @return ListTagNamespacesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListTagNamespaces.ts.html |here} to see how to use ListTagNamespaces API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListTagNamespaces.ts.html |here} to see how to use ListTagNamespaces API.
      */
     listTagNamespaces(listTagNamespacesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48506,7 +49225,7 @@ class IdentityClient {
      * @param ListTaggingWorkRequestErrorsRequest
      * @return ListTaggingWorkRequestErrorsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListTaggingWorkRequestErrors.ts.html |here} to see how to use ListTaggingWorkRequestErrors API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListTaggingWorkRequestErrors.ts.html |here} to see how to use ListTaggingWorkRequestErrors API.
      */
     listTaggingWorkRequestErrors(listTaggingWorkRequestErrorsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48617,7 +49336,7 @@ class IdentityClient {
      * @param ListTaggingWorkRequestLogsRequest
      * @return ListTaggingWorkRequestLogsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListTaggingWorkRequestLogs.ts.html |here} to see how to use ListTaggingWorkRequestLogs API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListTaggingWorkRequestLogs.ts.html |here} to see how to use ListTaggingWorkRequestLogs API.
      */
     listTaggingWorkRequestLogs(listTaggingWorkRequestLogsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48728,7 +49447,7 @@ class IdentityClient {
      * @param ListTaggingWorkRequestsRequest
      * @return ListTaggingWorkRequestsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListTaggingWorkRequests.ts.html |here} to see how to use ListTaggingWorkRequests API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListTaggingWorkRequests.ts.html |here} to see how to use ListTaggingWorkRequests API.
      */
     listTaggingWorkRequests(listTaggingWorkRequestsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48834,7 +49553,7 @@ class IdentityClient {
      * @param ListTagsRequest
      * @return ListTagsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListTags.ts.html |here} to see how to use ListTags API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListTags.ts.html |here} to see how to use ListTags API.
      */
     listTags(listTagsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -48950,7 +49669,7 @@ class IdentityClient {
        * @param ListUserGroupMembershipsRequest
        * @return ListUserGroupMembershipsResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListUserGroupMemberships.ts.html |here} to see how to use ListUserGroupMemberships API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListUserGroupMemberships.ts.html |here} to see how to use ListUserGroupMemberships API.
        */
     listUserGroupMemberships(listUserGroupMembershipsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49059,7 +49778,7 @@ class IdentityClient {
      * @param ListUsersRequest
      * @return ListUsersResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListUsers.ts.html |here} to see how to use ListUsers API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListUsers.ts.html |here} to see how to use ListUsers API.
      */
     listUsers(listUsersRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49170,7 +49889,7 @@ class IdentityClient {
      * @param ListWorkRequestsRequest
      * @return ListWorkRequestsResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ListWorkRequests.ts.html |here} to see how to use ListWorkRequests API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ListWorkRequests.ts.html |here} to see how to use ListWorkRequests API.
      */
     listWorkRequests(listWorkRequestsRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49283,7 +50002,7 @@ class IdentityClient {
      * @param MoveCompartmentRequest
      * @return MoveCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/MoveCompartment.ts.html |here} to see how to use MoveCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/MoveCompartment.ts.html |here} to see how to use MoveCompartment API.
      */
     moveCompartment(moveCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49346,7 +50065,7 @@ class IdentityClient {
      * @param RecoverCompartmentRequest
      * @return RecoverCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/RecoverCompartment.ts.html |here} to see how to use RecoverCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/RecoverCompartment.ts.html |here} to see how to use RecoverCompartment API.
      */
     recoverCompartment(recoverCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49411,7 +50130,7 @@ class IdentityClient {
      * @param RemoveTagDefaultLockRequest
      * @return RemoveTagDefaultLockResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/RemoveTagDefaultLock.ts.html |here} to see how to use RemoveTagDefaultLock API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/RemoveTagDefaultLock.ts.html |here} to see how to use RemoveTagDefaultLock API.
      */
     removeTagDefaultLock(removeTagDefaultLockRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49478,7 +50197,7 @@ class IdentityClient {
      * @param RemoveTagNamespaceLockRequest
      * @return RemoveTagNamespaceLockResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/RemoveTagNamespaceLock.ts.html |here} to see how to use RemoveTagNamespaceLock API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/RemoveTagNamespaceLock.ts.html |here} to see how to use RemoveTagNamespaceLock API.
      */
     removeTagNamespaceLock(removeTagNamespaceLockRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49544,7 +50263,7 @@ class IdentityClient {
      * @param RemoveUserFromGroupRequest
      * @return RemoveUserFromGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/RemoveUserFromGroup.ts.html |here} to see how to use RemoveUserFromGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/RemoveUserFromGroup.ts.html |here} to see how to use RemoveUserFromGroup API.
      */
     removeUserFromGroup(removeUserFromGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49599,7 +50318,7 @@ class IdentityClient {
      * @param ResetIdpScimClientRequest
      * @return ResetIdpScimClientResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/ResetIdpScimClient.ts.html |here} to see how to use ResetIdpScimClient API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/ResetIdpScimClient.ts.html |here} to see how to use ResetIdpScimClient API.
      */
     resetIdpScimClient(resetIdpScimClientRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49657,7 +50376,7 @@ class IdentityClient {
      * @param UpdateAuthTokenRequest
      * @return UpdateAuthTokenResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateAuthToken.ts.html |here} to see how to use UpdateAuthToken API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateAuthToken.ts.html |here} to see how to use UpdateAuthToken API.
      */
     updateAuthToken(updateAuthTokenRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49723,7 +50442,7 @@ class IdentityClient {
      * @param UpdateAuthenticationPolicyRequest
      * @return UpdateAuthenticationPolicyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateAuthenticationPolicy.ts.html |here} to see how to use UpdateAuthenticationPolicy API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateAuthenticationPolicy.ts.html |here} to see how to use UpdateAuthenticationPolicy API.
      */
     updateAuthenticationPolicy(updateAuthenticationPolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49787,7 +50506,7 @@ class IdentityClient {
      * @param UpdateCompartmentRequest
      * @return UpdateCompartmentResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateCompartment.ts.html |here} to see how to use UpdateCompartment API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateCompartment.ts.html |here} to see how to use UpdateCompartment API.
      */
     updateCompartment(updateCompartmentRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49852,7 +50571,7 @@ class IdentityClient {
      * @param UpdateCustomerSecretKeyRequest
      * @return UpdateCustomerSecretKeyResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateCustomerSecretKey.ts.html |here} to see how to use UpdateCustomerSecretKey API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateCustomerSecretKey.ts.html |here} to see how to use UpdateCustomerSecretKey API.
      */
     updateCustomerSecretKey(updateCustomerSecretKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49921,7 +50640,7 @@ class IdentityClient {
        * @param UpdateDomainRequest
        * @return UpdateDomainResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateDomain.ts.html |here} to see how to use UpdateDomain API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateDomain.ts.html |here} to see how to use UpdateDomain API.
        */
     updateDomain(updateDomainRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -49982,7 +50701,7 @@ class IdentityClient {
      * @param UpdateDynamicGroupRequest
      * @return UpdateDynamicGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateDynamicGroup.ts.html |here} to see how to use UpdateDynamicGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateDynamicGroup.ts.html |here} to see how to use UpdateDynamicGroup API.
      */
     updateDynamicGroup(updateDynamicGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50046,7 +50765,7 @@ class IdentityClient {
      * @param UpdateGroupRequest
      * @return UpdateGroupResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateGroup.ts.html |here} to see how to use UpdateGroup API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateGroup.ts.html |here} to see how to use UpdateGroup API.
      */
     updateGroup(updateGroupRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50113,7 +50832,7 @@ class IdentityClient {
        * @param UpdateIdentityProviderRequest
        * @return UpdateIdentityProviderResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateIdentityProvider.ts.html |here} to see how to use UpdateIdentityProvider API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateIdentityProvider.ts.html |here} to see how to use UpdateIdentityProvider API.
        */
     updateIdentityProvider(updateIdentityProviderRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50180,7 +50899,7 @@ class IdentityClient {
        * @param UpdateIdpGroupMappingRequest
        * @return UpdateIdpGroupMappingResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateIdpGroupMapping.ts.html |here} to see how to use UpdateIdpGroupMapping API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateIdpGroupMapping.ts.html |here} to see how to use UpdateIdpGroupMapping API.
        */
     updateIdpGroupMapping(updateIdpGroupMappingRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50246,7 +50965,7 @@ class IdentityClient {
      * @param UpdateNetworkSourceRequest
      * @return UpdateNetworkSourceResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateNetworkSource.ts.html |here} to see how to use UpdateNetworkSource API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateNetworkSource.ts.html |here} to see how to use UpdateNetworkSource API.
      */
     updateNetworkSource(updateNetworkSourceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50311,7 +51030,7 @@ class IdentityClient {
      * @param UpdateOAuthClientCredentialRequest
      * @return UpdateOAuthClientCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateOAuthClientCredential.ts.html |here} to see how to use UpdateOAuthClientCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateOAuthClientCredential.ts.html |here} to see how to use UpdateOAuthClientCredential API.
      */
     updateOAuthClientCredential(updateOAuthClientCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50379,7 +51098,7 @@ class IdentityClient {
        * @param UpdatePolicyRequest
        * @return UpdatePolicyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdatePolicy.ts.html |here} to see how to use UpdatePolicy API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdatePolicy.ts.html |here} to see how to use UpdatePolicy API.
        */
     updatePolicy(updatePolicyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50444,7 +51163,7 @@ class IdentityClient {
      * @param UpdateSmtpCredentialRequest
      * @return UpdateSmtpCredentialResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateSmtpCredential.ts.html |here} to see how to use UpdateSmtpCredential API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateSmtpCredential.ts.html |here} to see how to use UpdateSmtpCredential API.
      */
     updateSmtpCredential(updateSmtpCredentialRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50512,7 +51231,7 @@ class IdentityClient {
        * @param UpdateSwiftPasswordRequest
        * @return UpdateSwiftPasswordResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateSwiftPassword.ts.html |here} to see how to use UpdateSwiftPassword API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateSwiftPassword.ts.html |here} to see how to use UpdateSwiftPassword API.
        */
     updateSwiftPassword(updateSwiftPasswordRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50587,7 +51306,7 @@ class IdentityClient {
        * @param UpdateTagRequest
        * @return UpdateTagResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateTag.ts.html |here} to see how to use UpdateTag API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateTag.ts.html |here} to see how to use UpdateTag API.
        */
     updateTag(updateTagRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50660,7 +51379,7 @@ class IdentityClient {
      * @param UpdateTagDefaultRequest
      * @return UpdateTagDefaultResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateTagDefault.ts.html |here} to see how to use UpdateTagDefault API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateTagDefault.ts.html |here} to see how to use UpdateTagDefault API.
      */
     updateTagDefault(updateTagDefaultRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50736,7 +51455,7 @@ class IdentityClient {
        * @param UpdateTagNamespaceRequest
        * @return UpdateTagNamespaceResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateTagNamespace.ts.html |here} to see how to use UpdateTagNamespace API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateTagNamespace.ts.html |here} to see how to use UpdateTagNamespace API.
        */
     updateTagNamespace(updateTagNamespaceRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50796,7 +51515,7 @@ class IdentityClient {
      * @param UpdateUserRequest
      * @return UpdateUserResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateUser.ts.html |here} to see how to use UpdateUser API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateUser.ts.html |here} to see how to use UpdateUser API.
      */
     updateUser(updateUserRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50861,7 +51580,7 @@ class IdentityClient {
      * @param UpdateUserCapabilitiesRequest
      * @return UpdateUserCapabilitiesResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateUserCapabilities.ts.html |here} to see how to use UpdateUserCapabilities API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateUserCapabilities.ts.html |here} to see how to use UpdateUserCapabilities API.
      */
     updateUserCapabilities(updateUserCapabilitiesRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -50926,7 +51645,7 @@ class IdentityClient {
      * @param UpdateUserStateRequest
      * @return UpdateUserStateResponse
      * @throws OciError when an error occurs
-     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UpdateUserState.ts.html |here} to see how to use UpdateUserState API.
+     * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UpdateUserState.ts.html |here} to see how to use UpdateUserState API.
      */
     updateUserState(updateUserStateRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -51005,7 +51724,7 @@ class IdentityClient {
        * @param UploadApiKeyRequest
        * @return UploadApiKeyResponse
        * @throws OciError when an error occurs
-       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.57.0/identity/UploadApiKey.ts.html |here} to see how to use UploadApiKey API.
+       * @example Click {@link https://docs.cloud.oracle.com/en-us/iaas/tools/typescript-sdk-examples/2.88.2/identity/UploadApiKey.ts.html |here} to see how to use UploadApiKey API.
        */
     uploadApiKey(uploadApiKeyRequest) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -51078,14 +51797,14 @@ IdentityClient.endpointServiceName = "";
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -51315,14 +52034,14 @@ exports.IdentityWaiter = IdentityWaiter;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51356,14 +52075,14 @@ var AddLockDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51392,14 +52111,14 @@ var AddUserToGroupDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51428,14 +52147,14 @@ var AllowedDomainLicenseTypeSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51477,14 +52196,14 @@ var ApiKey;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51526,14 +52245,14 @@ var AuthToken;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -51596,14 +52315,14 @@ var AuthenticationPolicy;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51632,14 +52351,14 @@ var AvailabilityDomain;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -51711,14 +52430,14 @@ var BaseTagDefinitionValidator;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -51779,14 +52498,14 @@ var BulkActionResourceTypeCollection;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51815,14 +52534,14 @@ var BulkActionResourceType;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51851,14 +52570,14 @@ var BulkActionResource;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -51919,14 +52638,14 @@ var BulkDeleteResourcesDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51955,14 +52674,14 @@ var BulkDeleteTagsDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -51998,14 +52717,14 @@ var BulkEditOperationDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52034,14 +52753,14 @@ var BulkEditResource;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -52112,14 +52831,14 @@ var BulkEditTagsDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -52180,14 +52899,14 @@ var BulkEditTagsResourceTypeCollection;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52216,14 +52935,14 @@ var BulkEditTagsResourceType;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -52284,14 +53003,14 @@ var BulkMoveResourcesDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52320,14 +53039,14 @@ var ChangeDomainCompartmentDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52356,14 +53075,14 @@ var ChangeDomainLicenseTypeDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52392,14 +53111,14 @@ var ChangeTagNamespaceCompartmentDetail;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52428,14 +53147,14 @@ var ChangeTasDomainLicenseTypeDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52477,14 +53196,14 @@ var Compartment;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52513,14 +53232,14 @@ var CreateApiKeyDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52549,14 +53268,14 @@ var CreateAuthTokenDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52585,14 +53304,14 @@ var CreateCompartmentDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52621,14 +53340,14 @@ var CreateCustomerSecretKeyDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52657,14 +53376,14 @@ var CreateDbCredentialDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52693,14 +53412,14 @@ var CreateDomainDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52729,14 +53448,14 @@ var CreateDynamicGroupDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52765,14 +53484,14 @@ var CreateGroupDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -52845,14 +53564,14 @@ var CreateIdentityProviderDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -52881,14 +53600,14 @@ var CreateIdpGroupMappingDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -52949,14 +53668,14 @@ var CreateNetworkSourceDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -53017,14 +53736,14 @@ var CreateOAuth2ClientCredentialDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53053,14 +53772,14 @@ var CreatePolicyDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53089,14 +53808,14 @@ var CreateRegionSubscriptionDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -53150,14 +53869,14 @@ var CreateSaml2IdentityProviderDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53186,14 +53905,14 @@ var CreateSmtpCredentialDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53222,14 +53941,14 @@ var CreateSwiftPasswordDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -53290,14 +54009,14 @@ var CreateTagDefaultDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -53354,14 +54073,14 @@ var CreateTagDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -53422,14 +54141,14 @@ var CreateTagNamespaceDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53458,14 +54177,14 @@ var CreateUserDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53507,14 +54226,14 @@ var CustomerSecretKeySummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53556,14 +54275,14 @@ var CustomerSecretKey;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53592,14 +54311,14 @@ var DbCredentialSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53640,14 +54359,14 @@ var DbCredential;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -53701,14 +54420,14 @@ var DefaultTagDefinitionValidator;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -53745,14 +54464,14 @@ var DomainReplicationStates;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -53813,14 +54532,14 @@ var DomainReplication;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -53914,14 +54633,14 @@ var DomainSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -54015,14 +54734,14 @@ var Domain;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54064,14 +54783,14 @@ var DynamicGroup;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54100,14 +54819,14 @@ var EnableReplicationToRegionDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -54161,14 +54880,14 @@ var EnumTagDefinitionValidator;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54197,14 +54916,14 @@ var FaultDomain;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54233,14 +54952,14 @@ var FullyQualifiedScope;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54282,14 +55001,14 @@ var Group;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54318,14 +55037,14 @@ var IamWorkRequestErrorSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54354,14 +55073,14 @@ var IamWorkRequestLogSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54403,14 +55122,14 @@ var IamWorkRequestResource;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -54501,14 +55220,14 @@ var IamWorkRequestSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -54599,14 +55318,14 @@ var IamWorkRequest;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54635,14 +55354,14 @@ var IdentityProviderGroupSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -54723,14 +55442,14 @@ var IdentityProvider;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54772,14 +55491,14 @@ var IdpGroupMapping;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -54808,14 +55527,14 @@ var ImportStandardTagsDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -55063,7 +55782,7 @@ const UpdateGroupDetails = __importStar(__nccwpck_require__(1254));
 exports.UpdateGroupDetails = UpdateGroupDetails.UpdateGroupDetails;
 const UpdateIdentityProviderDetails = __importStar(__nccwpck_require__(8889));
 exports.UpdateIdentityProviderDetails = UpdateIdentityProviderDetails.UpdateIdentityProviderDetails;
-const UpdateIdpGroupMappingDetails = __importStar(__nccwpck_require__(8896));
+const UpdateIdpGroupMappingDetails = __importStar(__nccwpck_require__(898));
 exports.UpdateIdpGroupMappingDetails = UpdateIdpGroupMappingDetails.UpdateIdpGroupMappingDetails;
 const UpdateNetworkSourceDetails = __importStar(__nccwpck_require__(2396));
 exports.UpdateNetworkSourceDetails = UpdateNetworkSourceDetails.UpdateNetworkSourceDetails;
@@ -55124,14 +55843,14 @@ exports.UpdateSaml2IdentityProviderDetails = UpdateSaml2IdentityProviderDetails.
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55173,14 +55892,14 @@ var MfaTotpDeviceSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55222,14 +55941,14 @@ var MfaTotpDevice;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55258,14 +55977,14 @@ var MfaTotpToken;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55294,14 +56013,14 @@ var MoveCompartmentDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55330,14 +56049,14 @@ var NetworkPolicy;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -55398,14 +56117,14 @@ var NetworkSourcesSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -55479,14 +56198,14 @@ var NetworkSources;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55515,14 +56234,14 @@ var NetworkSourcesVirtualSourceList;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -55596,14 +56315,14 @@ var OAuth2ClientCredentialSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -55677,14 +56396,14 @@ var OAuth2ClientCredential;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55713,14 +56432,14 @@ var PasswordPolicy;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55762,14 +56481,14 @@ var Policy;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55808,14 +56527,14 @@ var RegionSubscription;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55844,14 +56563,14 @@ var Region;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55885,14 +56604,14 @@ var RemoveLockDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55934,14 +56653,14 @@ var ReplicatedRegionDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -55980,14 +56699,14 @@ var ResourceLock;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56041,14 +56760,14 @@ var Saml2IdentityProvider;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56077,14 +56796,14 @@ var ScimClientCredentials;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56126,14 +56845,14 @@ var SmtpCredentialSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56175,14 +56894,14 @@ var SmtpCredential;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56232,14 +56951,14 @@ var StandardTagDefinitionTemplate;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56268,14 +56987,14 @@ var StandardTagNamespaceTemplateSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56336,14 +57055,14 @@ var StandardTagNamespaceTemplate;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56385,14 +57104,14 @@ var SwiftPassword;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56462,14 +57181,14 @@ var TagDefaultSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56539,14 +57258,14 @@ var TagDefault;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56607,14 +57326,14 @@ var TagNamespaceSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56687,14 +57406,14 @@ var TagNamespace;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56723,14 +57442,14 @@ var TagSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56799,14 +57518,14 @@ var Tag;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56835,14 +57554,14 @@ var TaggingWorkRequestErrorSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -56871,14 +57590,14 @@ var TaggingWorkRequestLogSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -56967,14 +57686,14 @@ var TaggingWorkRequestSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -57063,14 +57782,14 @@ var TaggingWorkRequest;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57099,14 +57818,14 @@ var Tenancy;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57148,14 +57867,14 @@ var UIPasswordInformation;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57197,14 +57916,14 @@ var UIPassword;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57233,14 +57952,14 @@ var UpdateAuthTokenDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -57303,14 +58022,14 @@ var UpdateAuthenticationPolicyDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57339,14 +58058,14 @@ var UpdateCompartmentDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57375,14 +58094,14 @@ var UpdateCustomerSecretKeyDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57411,14 +58130,14 @@ var UpdateDomainDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57447,14 +58166,14 @@ var UpdateDynamicGroupDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57483,14 +58202,14 @@ var UpdateGroupDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -57551,21 +58270,21 @@ var UpdateIdentityProviderDetails;
 
 /***/ }),
 
-/***/ 8896:
+/***/ 898:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57594,14 +58313,14 @@ var UpdateIdpGroupMappingDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -57662,14 +58381,14 @@ var UpdateNetworkSourceDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -57730,14 +58449,14 @@ var UpdateOAuth2ClientCredentialDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57766,14 +58485,14 @@ var UpdatePolicyDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -57827,14 +58546,14 @@ var UpdateSaml2IdentityProviderDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57863,14 +58582,14 @@ var UpdateSmtpCredentialDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57899,14 +58618,14 @@ var UpdateStateDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57935,14 +58654,14 @@ var UpdateSwiftPasswordDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -57971,14 +58690,14 @@ var UpdateTagDefaultDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -58035,14 +58754,14 @@ var UpdateTagDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58071,14 +58790,14 @@ var UpdateTagNamespaceDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58107,14 +58826,14 @@ var UpdateUserCapabilitiesDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58143,14 +58862,14 @@ var UpdateUserDetails;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58179,14 +58898,14 @@ var UserCapabilities;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58228,14 +58947,14 @@ var UserGroupMembership;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -58305,14 +59024,14 @@ var User;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58341,14 +59060,14 @@ var WorkRequestError;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58377,14 +59096,14 @@ var WorkRequestLogEntry;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58427,14 +59146,14 @@ var WorkRequestResource;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -58529,14 +59248,14 @@ var WorkRequestSummary;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -58641,14 +59360,14 @@ var WorkRequest;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -58716,7 +59435,7 @@ exports.ListUsersRequest = ListUsersRequest.ListUsersRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58747,7 +59466,7 @@ var ListBulkActionResourceTypesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58788,7 +59507,7 @@ var ListCompartmentsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58824,7 +59543,7 @@ var ListDbCredentialsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58860,7 +59579,7 @@ var ListDomainsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58896,7 +59615,7 @@ var ListDynamicGroupsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58932,7 +59651,7 @@ var ListGroupsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58963,7 +59682,7 @@ var ListIamWorkRequestErrorsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -58994,17 +59713,13 @@ var ListIamWorkRequestLogsRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ListIdentityProvidersRequest = void 0;
 var ListIdentityProvidersRequest;
 (function (ListIdentityProvidersRequest) {
-    let Protocol;
-    (function (Protocol) {
-        Protocol["Saml2"] = "SAML2";
-    })(Protocol = ListIdentityProvidersRequest.Protocol || (ListIdentityProvidersRequest.Protocol = {}));
     let SortBy;
     (function (SortBy) {
         SortBy["Timecreated"] = "TIMECREATED";
@@ -59034,7 +59749,7 @@ var ListIdentityProvidersRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -59070,7 +59785,7 @@ var ListMfaTotpDevicesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -59106,7 +59821,7 @@ var ListNetworkSourcesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -59142,7 +59857,7 @@ var ListPoliciesRequest;
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -59171,14 +59886,14 @@ var ListUsersRequest;
 
 /**
  * Identity and Access Management Service API
- * APIs for managing users, groups, compartments, policies, and identity domains.
+ * Use the Identity and Access Management Service API to manage users, groups, identity domains, compartments, policies, tagging, and limits. For information about managing users, groups, compartments, and policies, see [Identity and Access Management (without identity domains)](/iaas/Content/Identity/Concepts/overview.htm). For information about tagging and service limits, see [Tagging](/iaas/Content/Tagging/Concepts/taggingoverview.htm) and [Service Limits](/iaas/Content/General/Concepts/servicelimits.htm). For information about creating, modifying, and deleting identity domains, see [Identity and Access Management (with identity domains)](/iaas/Content/Identity/home.htm).
  * OpenAPI spec version: 20160918
  *
  *
  * NOTE: This class is auto generated by OracleSDKGenerator.
  * Do not edit the class manually.
  *
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2020, 2024, Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
@@ -60363,6 +61078,7 @@ class Comparator {
       }
     }
 
+    comp = comp.trim().split(/\s+/).join(' ')
     debug('comparator', comp, options)
     this.options = options
     this.loose = !!options.loose
@@ -60480,7 +61196,7 @@ class Comparator {
 module.exports = Comparator
 
 const parseOptions = __nccwpck_require__(785)
-const { re, t } = __nccwpck_require__(9523)
+const { safeRe: re, t } = __nccwpck_require__(9523)
 const cmp = __nccwpck_require__(5098)
 const debug = __nccwpck_require__(106)
 const SemVer = __nccwpck_require__(8088)
@@ -60520,9 +61236,16 @@ class Range {
     this.loose = !!options.loose
     this.includePrerelease = !!options.includePrerelease
 
-    // First, split based on boolean or ||
+    // First reduce all whitespace as much as possible so we do not have to rely
+    // on potentially slow regexes like \s*. This is then stored and used for
+    // future error messages as well.
     this.raw = range
-    this.set = range
+      .trim()
+      .split(/\s+/)
+      .join(' ')
+
+    // First, split on ||
+    this.set = this.raw
       .split('||')
       // map the range to a 2d array of comparators
       .map(r => this.parseRange(r.trim()))
@@ -60532,7 +61255,7 @@ class Range {
       .filter(c => c.length)
 
     if (!this.set.length) {
-      throw new TypeError(`Invalid SemVer Range: ${range}`)
+      throw new TypeError(`Invalid SemVer Range: ${this.raw}`)
     }
 
     // if we have any that are not the null set, throw out null sets.
@@ -60558,9 +61281,7 @@ class Range {
 
   format () {
     this.range = this.set
-      .map((comps) => {
-        return comps.join(' ').trim()
-      })
+      .map((comps) => comps.join(' ').trim())
       .join('||')
       .trim()
     return this.range
@@ -60571,8 +61292,6 @@ class Range {
   }
 
   parseRange (range) {
-    range = range.trim()
-
     // memoize range parsing for performance.
     // this is a very hot path, and fully deterministic.
     const memoOpts =
@@ -60589,18 +61308,18 @@ class Range {
     const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE]
     range = range.replace(hr, hyphenReplace(this.options.includePrerelease))
     debug('hyphen replace', range)
+
     // `> 1.2.3 < 1.2.5` => `>1.2.3 <1.2.5`
     range = range.replace(re[t.COMPARATORTRIM], comparatorTrimReplace)
     debug('comparator trim', range)
 
     // `~ 1.2.3` => `~1.2.3`
     range = range.replace(re[t.TILDETRIM], tildeTrimReplace)
+    debug('tilde trim', range)
 
     // `^ 1.2.3` => `^1.2.3`
     range = range.replace(re[t.CARETTRIM], caretTrimReplace)
-
-    // normalize spaces
-    range = range.split(/\s+/).join(' ')
+    debug('caret trim', range)
 
     // At this point, the range is completely trimmed and
     // ready to be split into comparators.
@@ -60689,15 +61408,15 @@ class Range {
 
 module.exports = Range
 
-const LRU = __nccwpck_require__(7129)
-const cache = new LRU({ max: 1000 })
+const LRU = __nccwpck_require__(5339)
+const cache = new LRU()
 
 const parseOptions = __nccwpck_require__(785)
 const Comparator = __nccwpck_require__(1532)
 const debug = __nccwpck_require__(106)
 const SemVer = __nccwpck_require__(8088)
 const {
-  re,
+  safeRe: re,
   t,
   comparatorTrimReplace,
   tildeTrimReplace,
@@ -60751,10 +61470,13 @@ const isX = id => !id || id.toLowerCase() === 'x' || id === '*'
 // ~1.2.3, ~>1.2.3 --> >=1.2.3 <1.3.0-0
 // ~1.2.0, ~>1.2.0 --> >=1.2.0 <1.3.0-0
 // ~0.0.1 --> >=0.0.1 <0.1.0-0
-const replaceTildes = (comp, options) =>
-  comp.trim().split(/\s+/).map((c) => {
-    return replaceTilde(c, options)
-  }).join(' ')
+const replaceTildes = (comp, options) => {
+  return comp
+    .trim()
+    .split(/\s+/)
+    .map((c) => replaceTilde(c, options))
+    .join(' ')
+}
 
 const replaceTilde = (comp, options) => {
   const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE]
@@ -60792,10 +61514,13 @@ const replaceTilde = (comp, options) => {
 // ^1.2.0 --> >=1.2.0 <2.0.0-0
 // ^0.0.1 --> >=0.0.1 <0.0.2-0
 // ^0.1.0 --> >=0.1.0 <0.2.0-0
-const replaceCarets = (comp, options) =>
-  comp.trim().split(/\s+/).map((c) => {
-    return replaceCaret(c, options)
-  }).join(' ')
+const replaceCarets = (comp, options) => {
+  return comp
+    .trim()
+    .split(/\s+/)
+    .map((c) => replaceCaret(c, options))
+    .join(' ')
+}
 
 const replaceCaret = (comp, options) => {
   debug('caret', comp, options)
@@ -60852,9 +61577,10 @@ const replaceCaret = (comp, options) => {
 
 const replaceXRanges = (comp, options) => {
   debug('replaceXRanges', comp, options)
-  return comp.split(/\s+/).map((c) => {
-    return replaceXRange(c, options)
-  }).join(' ')
+  return comp
+    .split(/\s+/)
+    .map((c) => replaceXRange(c, options))
+    .join(' ')
 }
 
 const replaceXRange = (comp, options) => {
@@ -60937,12 +61663,15 @@ const replaceXRange = (comp, options) => {
 const replaceStars = (comp, options) => {
   debug('replaceStars', comp, options)
   // Looseness is ignored here.  star is always as loose as it gets!
-  return comp.trim().replace(re[t.STAR], '')
+  return comp
+    .trim()
+    .replace(re[t.STAR], '')
 }
 
 const replaceGTE0 = (comp, options) => {
   debug('replaceGTE0', comp, options)
-  return comp.trim()
+  return comp
+    .trim()
     .replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], '')
 }
 
@@ -60951,9 +61680,10 @@ const replaceGTE0 = (comp, options) => {
 // 1.2 - 3.4.5 => >=1.2.0 <=3.4.5
 // 1.2.3 - 3.4 => >=1.2.0 <3.5.0-0 Any 3.4.x will do
 // 1.2 - 3.4 => >=1.2.0 <3.5.0-0
+// TODO build?
 const hyphenReplace = incPr => ($0,
   from, fM, fm, fp, fpr, fb,
-  to, tM, tm, tp, tpr, tb) => {
+  to, tM, tm, tp, tpr) => {
   if (isX(fM)) {
     from = ''
   } else if (isX(fm)) {
@@ -60980,7 +61710,7 @@ const hyphenReplace = incPr => ($0,
     to = `<=${to}`
   }
 
-  return (`${from} ${to}`).trim()
+  return `${from} ${to}`.trim()
 }
 
 const testSet = (set, version, options) => {
@@ -61027,7 +61757,7 @@ const testSet = (set, version, options) => {
 
 const debug = __nccwpck_require__(106)
 const { MAX_LENGTH, MAX_SAFE_INTEGER } = __nccwpck_require__(2293)
-const { re, t } = __nccwpck_require__(9523)
+const { safeRe: re, t } = __nccwpck_require__(9523)
 
 const parseOptions = __nccwpck_require__(785)
 const { compareIdentifiers } = __nccwpck_require__(2463)
@@ -61043,7 +61773,7 @@ class SemVer {
         version = version.version
       }
     } else if (typeof version !== 'string') {
-      throw new TypeError(`Invalid Version: ${(__nccwpck_require__(3837).inspect)(version)}`)
+      throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version}".`)
     }
 
     if (version.length > MAX_LENGTH) {
@@ -61185,7 +61915,7 @@ class SemVer {
     do {
       const a = this.build[i]
       const b = other.build[i]
-      debug('prerelease compare', i, a, b)
+      debug('build compare', i, a, b)
       if (a === undefined && b === undefined) {
         return 0
       } else if (b === undefined) {
@@ -61318,8 +62048,10 @@ class SemVer {
       default:
         throw new Error(`invalid increment argument: ${release}`)
     }
-    this.format()
-    this.raw = this.version
+    this.raw = this.format()
+    if (this.build.length) {
+      this.raw += `+${this.build.join('.')}`
+    }
     return this
   }
 }
@@ -61406,7 +62138,7 @@ module.exports = cmp
 
 const SemVer = __nccwpck_require__(8088)
 const parse = __nccwpck_require__(5925)
-const { re, t } = __nccwpck_require__(9523)
+const { safeRe: re, t } = __nccwpck_require__(9523)
 
 const coerce = (version, options) => {
   if (version instanceof SemVer) {
@@ -61425,35 +62157,43 @@ const coerce = (version, options) => {
 
   let match = null
   if (!options.rtl) {
-    match = version.match(re[t.COERCE])
+    match = version.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE])
   } else {
     // Find the right-most coercible string that does not share
     // a terminus with a more left-ward coercible string.
     // Eg, '1.2.3.4' wants to coerce '2.3.4', not '3.4' or '4'
+    // With includePrerelease option set, '1.2.3.4-rc' wants to coerce '2.3.4-rc', not '2.3.4'
     //
     // Walk through the string checking with a /g regexp
     // Manually set the index so as to pick up overlapping matches.
     // Stop when we get a match that ends at the string end, since no
     // coercible string can be more right-ward without the same terminus.
+    const coerceRtlRegex = options.includePrerelease ? re[t.COERCERTLFULL] : re[t.COERCERTL]
     let next
-    while ((next = re[t.COERCERTL].exec(version)) &&
+    while ((next = coerceRtlRegex.exec(version)) &&
         (!match || match.index + match[0].length !== version.length)
     ) {
       if (!match ||
             next.index + next[0].length !== match.index + match[0].length) {
         match = next
       }
-      re[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length
+      coerceRtlRegex.lastIndex = next.index + next[1].length + next[2].length
     }
     // leave it in a clean state
-    re[t.COERCERTL].lastIndex = -1
+    coerceRtlRegex.lastIndex = -1
   }
 
   if (match === null) {
     return null
   }
 
-  return parse(`${match[2]}.${match[3] || '0'}.${match[4] || '0'}`, options)
+  const major = match[2]
+  const minor = match[3] || '0'
+  const patch = match[4] || '0'
+  const prerelease = options.includePrerelease && match[5] ? `-${match[5]}` : ''
+  const build = options.includePrerelease && match[6] ? `+${match[6]}` : ''
+
+  return parse(`${major}.${minor}.${patch}${prerelease}${build}`, options)
 }
 module.exports = coerce
 
@@ -61514,6 +62254,35 @@ const diff = (version1, version2) => {
   const highVersion = v1Higher ? v1 : v2
   const lowVersion = v1Higher ? v2 : v1
   const highHasPre = !!highVersion.prerelease.length
+  const lowHasPre = !!lowVersion.prerelease.length
+
+  if (lowHasPre && !highHasPre) {
+    // Going from prerelease -> no prerelease requires some special casing
+
+    // If the low version has only a major, then it will always be a major
+    // Some examples:
+    // 1.0.0-1 -> 1.0.0
+    // 1.0.0-1 -> 1.1.1
+    // 1.0.0-1 -> 2.0.0
+    if (!lowVersion.patch && !lowVersion.minor) {
+      return 'major'
+    }
+
+    // Otherwise it can be determined by checking the high version
+
+    if (highVersion.patch) {
+      // anything higher than a patch bump would result in the wrong version
+      return 'patch'
+    }
+
+    if (highVersion.minor) {
+      // anything higher than a minor bump would result in the wrong version
+      return 'minor'
+    }
+
+    // bumping major/minor/patch all have same result
+    return 'major'
+  }
 
   // add the `pre` prefix if we are going to a prerelease version
   const prefix = highHasPre ? 'pre' : ''
@@ -61530,26 +62299,8 @@ const diff = (version1, version2) => {
     return prefix + 'patch'
   }
 
-  // at this point we know stable versions match but overall versions are not equal,
-  // so either they are both prereleases, or the lower version is a prerelease
-
-  if (highHasPre) {
-    // high and low are preleases
-    return 'prerelease'
-  }
-
-  if (lowVersion.patch) {
-    // anything higher than a patch bump would result in the wrong version
-    return 'patch'
-  }
-
-  if (lowVersion.minor) {
-    // anything higher than a minor bump would result in the wrong version
-    return 'minor'
-  }
-
-  // bumping major/minor/patch all have same result
-  return 'major'
+  // high and low are preleases
+  return 'prerelease'
 }
 
 module.exports = diff
@@ -61879,6 +62630,10 @@ const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER ||
 // Max safe segment length for coercion.
 const MAX_SAFE_COMPONENT_LENGTH = 16
 
+// Max safe length for a build identifier. The max length minus 6 characters for
+// the shortest version with a build 0.0.0+BUILD.
+const MAX_SAFE_BUILD_LENGTH = MAX_LENGTH - 6
+
 const RELEASE_TYPES = [
   'major',
   'premajor',
@@ -61892,6 +62647,7 @@ const RELEASE_TYPES = [
 module.exports = {
   MAX_LENGTH,
   MAX_SAFE_COMPONENT_LENGTH,
+  MAX_SAFE_BUILD_LENGTH,
   MAX_SAFE_INTEGER,
   RELEASE_TYPES,
   SEMVER_SPEC_VERSION,
@@ -61948,6 +62704,53 @@ module.exports = {
 
 /***/ }),
 
+/***/ 5339:
+/***/ ((module) => {
+
+class LRUCache {
+  constructor () {
+    this.max = 1000
+    this.map = new Map()
+  }
+
+  get (key) {
+    const value = this.map.get(key)
+    if (value === undefined) {
+      return undefined
+    } else {
+      // Remove the key from the map and add it to the end
+      this.map.delete(key)
+      this.map.set(key, value)
+      return value
+    }
+  }
+
+  delete (key) {
+    return this.map.delete(key)
+  }
+
+  set (key, value) {
+    const deleted = this.delete(key)
+
+    if (!deleted && value !== undefined) {
+      // If cache is full, delete the least recently used item
+      if (this.map.size >= this.max) {
+        const firstKey = this.map.keys().next().value
+        this.delete(firstKey)
+      }
+
+      this.map.set(key, value)
+    }
+
+    return this
+  }
+}
+
+module.exports = LRUCache
+
+
+/***/ }),
+
 /***/ 785:
 /***/ ((module) => {
 
@@ -61973,22 +62776,52 @@ module.exports = parseOptions
 /***/ 9523:
 /***/ ((module, exports, __nccwpck_require__) => {
 
-const { MAX_SAFE_COMPONENT_LENGTH } = __nccwpck_require__(2293)
+const {
+  MAX_SAFE_COMPONENT_LENGTH,
+  MAX_SAFE_BUILD_LENGTH,
+  MAX_LENGTH,
+} = __nccwpck_require__(2293)
 const debug = __nccwpck_require__(106)
 exports = module.exports = {}
 
 // The actual regexps go on exports.re
 const re = exports.re = []
+const safeRe = exports.safeRe = []
 const src = exports.src = []
 const t = exports.t = {}
 let R = 0
 
+const LETTERDASHNUMBER = '[a-zA-Z0-9-]'
+
+// Replace some greedy regex tokens to prevent regex dos issues. These regex are
+// used internally via the safeRe object since all inputs in this library get
+// normalized first to trim and collapse all extra whitespace. The original
+// regexes are exported for userland consumption and lower level usage. A
+// future breaking change could export the safer regex only with a note that
+// all input should have extra whitespace removed.
+const safeRegexReplacements = [
+  ['\\s', 1],
+  ['\\d', MAX_LENGTH],
+  [LETTERDASHNUMBER, MAX_SAFE_BUILD_LENGTH],
+]
+
+const makeSafeRegex = (value) => {
+  for (const [token, max] of safeRegexReplacements) {
+    value = value
+      .split(`${token}*`).join(`${token}{0,${max}}`)
+      .split(`${token}+`).join(`${token}{1,${max}}`)
+  }
+  return value
+}
+
 const createToken = (name, value, isGlobal) => {
+  const safe = makeSafeRegex(value)
   const index = R++
   debug(name, index, value)
   t[name] = index
   src[index] = value
   re[index] = new RegExp(value, isGlobal ? 'g' : undefined)
+  safeRe[index] = new RegExp(safe, isGlobal ? 'g' : undefined)
 }
 
 // The following Regular Expressions can be used for tokenizing,
@@ -61998,13 +62831,13 @@ const createToken = (name, value, isGlobal) => {
 // A single `0`, or a non-zero digit followed by zero or more digits.
 
 createToken('NUMERICIDENTIFIER', '0|[1-9]\\d*')
-createToken('NUMERICIDENTIFIERLOOSE', '[0-9]+')
+createToken('NUMERICIDENTIFIERLOOSE', '\\d+')
 
 // ## Non-numeric Identifier
 // Zero or more digits, followed by a letter or hyphen, and then zero or
 // more letters, digits, or hyphens.
 
-createToken('NONNUMERICIDENTIFIER', '\\d*[a-zA-Z-][a-zA-Z0-9-]*')
+createToken('NONNUMERICIDENTIFIER', `\\d*[a-zA-Z-]${LETTERDASHNUMBER}*`)
 
 // ## Main Version
 // Three dot-separated numeric identifiers.
@@ -62039,7 +62872,7 @@ createToken('PRERELEASELOOSE', `(?:-?(${src[t.PRERELEASEIDENTIFIERLOOSE]
 // ## Build Metadata Identifier
 // Any combination of digits, letters, or hyphens.
 
-createToken('BUILDIDENTIFIER', '[0-9A-Za-z-]+')
+createToken('BUILDIDENTIFIER', `${LETTERDASHNUMBER}+`)
 
 // ## Build Metadata
 // Plus sign, followed by one or more period-separated build metadata
@@ -62099,12 +62932,17 @@ createToken('XRANGELOOSE', `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`)
 
 // Coercion.
 // Extract anything that could conceivably be a part of a valid semver
-createToken('COERCE', `${'(^|[^\\d])' +
+createToken('COERCEPLAIN', `${'(^|[^\\d])' +
               '(\\d{1,'}${MAX_SAFE_COMPONENT_LENGTH}})` +
               `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
-              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
+              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?`)
+createToken('COERCE', `${src[t.COERCEPLAIN]}(?:$|[^\\d])`)
+createToken('COERCEFULL', src[t.COERCEPLAIN] +
+              `(?:${src[t.PRERELEASE]})?` +
+              `(?:${src[t.BUILD]})?` +
               `(?:$|[^\\d])`)
 createToken('COERCERTL', src[t.COERCE], true)
+createToken('COERCERTLFULL', src[t.COERCEFULL], true)
 
 // Tilde ranges.
 // Meaning is "reasonably at or greater than"
@@ -75116,452 +75954,90 @@ module.exports.implForWrapper = function (wrapper) {
 
 /***/ }),
 
-/***/ 4091:
-/***/ ((module) => {
+/***/ 399:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
-module.exports = function (Yallist) {
-  Yallist.prototype[Symbol.iterator] = function* () {
-    for (let walker = this.head; walker; walker = walker.next) {
-      yield walker.value
+/* Copyright (c) 2021, 2024, Oracle and/or its affiliates.
+ * Licensed under the Universal Permissive License v1.0 as shown at https://oss.oracle.com/licenses/upl.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
-  }
-}
-
-
-/***/ }),
-
-/***/ 665:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-module.exports = Yallist
-
-Yallist.Node = Node
-Yallist.create = Yallist
-
-function Yallist (list) {
-  var self = this
-  if (!(self instanceof Yallist)) {
-    self = new Yallist()
-  }
-
-  self.tail = null
-  self.head = null
-  self.length = 0
-
-  if (list && typeof list.forEach === 'function') {
-    list.forEach(function (item) {
-      self.push(item)
-    })
-  } else if (arguments.length > 0) {
-    for (var i = 0, l = arguments.length; i < l; i++) {
-      self.push(arguments[i])
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getOcirRepo = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const artifacts = __importStar(__nccwpck_require__(5758));
+const identity = __importStar(__nccwpck_require__(6408));
+const oci_common_1 = __nccwpck_require__(5049);
+async function getOcirRepo() {
+    try {
+        // Required environment variables
+        const tenancy = process.env.OCI_CLI_TENANCY || '';
+        const user = process.env.OCI_CLI_USER || '';
+        const fingerprint = process.env.OCI_CLI_FINGERPRINT || '';
+        const privateKey = process.env.OCI_CLI_KEY_CONTENT || '';
+        const region = oci_common_1.Region.fromRegionId(process.env.OCI_CLI_REGION || '');
+        const authProvider = new oci_common_1.SimpleAuthenticationDetailsProvider(tenancy, user, fingerprint, privateKey, null, region);
+        const ac = new artifacts.ArtifactsClient({ authenticationDetailsProvider: authProvider });
+        const ic = new identity.IdentityClient({ authenticationDetailsProvider: authProvider });
+        const compartmentId = core.getInput('compartment', { required: true });
+        const displayName = core.getInput('name', { required: true });
+        const namespace = (await ac.getContainerConfiguration({ compartmentId })).containerConfiguration.namespace;
+        const regionCode = (await ic.listRegions({})).items
+            .find(x => x.name === authProvider.getRegion().regionId)
+            ?.key?.toLocaleLowerCase();
+        const ocir = regionCode ? `${regionCode}.ocir.io` : '';
+        if (ocir) {
+            const repo = (await ac.listContainerRepositories({ compartmentId })).containerRepositoryCollection.items.find(x => x.displayName === displayName);
+            if (repo) {
+                core.setOutput('repo_path', `${ocir}/${namespace}/${repo.displayName}`);
+                core.setOutput('repo_ocid', `${repo.id}`);
+            }
+            else {
+                const containerRepository = (await ac.createContainerRepository({
+                    createContainerRepositoryDetails: {
+                        compartmentId,
+                        displayName,
+                        isImmutable: false,
+                        isPublic: false
+                    }
+                })).containerRepository;
+                core.setOutput('repo_path', `${ocir}/${namespace}/${containerRepository.displayName}`);
+                core.setOutput('repo_ocid', `${containerRepository.id}`);
+            }
+        }
+        else {
+            core.setFailed('Failed to identify OCIR endpoint.');
+        }
     }
-  }
-
-  return self
+    catch (error) {
+        if (error instanceof Error)
+            core.setFailed(error.message);
+    }
 }
-
-Yallist.prototype.removeNode = function (node) {
-  if (node.list !== this) {
-    throw new Error('removing node which does not belong to this list')
-  }
-
-  var next = node.next
-  var prev = node.prev
-
-  if (next) {
-    next.prev = prev
-  }
-
-  if (prev) {
-    prev.next = next
-  }
-
-  if (node === this.head) {
-    this.head = next
-  }
-  if (node === this.tail) {
-    this.tail = prev
-  }
-
-  node.list.length--
-  node.next = null
-  node.prev = null
-  node.list = null
-
-  return next
-}
-
-Yallist.prototype.unshiftNode = function (node) {
-  if (node === this.head) {
-    return
-  }
-
-  if (node.list) {
-    node.list.removeNode(node)
-  }
-
-  var head = this.head
-  node.list = this
-  node.next = head
-  if (head) {
-    head.prev = node
-  }
-
-  this.head = node
-  if (!this.tail) {
-    this.tail = node
-  }
-  this.length++
-}
-
-Yallist.prototype.pushNode = function (node) {
-  if (node === this.tail) {
-    return
-  }
-
-  if (node.list) {
-    node.list.removeNode(node)
-  }
-
-  var tail = this.tail
-  node.list = this
-  node.prev = tail
-  if (tail) {
-    tail.next = node
-  }
-
-  this.tail = node
-  if (!this.head) {
-    this.head = node
-  }
-  this.length++
-}
-
-Yallist.prototype.push = function () {
-  for (var i = 0, l = arguments.length; i < l; i++) {
-    push(this, arguments[i])
-  }
-  return this.length
-}
-
-Yallist.prototype.unshift = function () {
-  for (var i = 0, l = arguments.length; i < l; i++) {
-    unshift(this, arguments[i])
-  }
-  return this.length
-}
-
-Yallist.prototype.pop = function () {
-  if (!this.tail) {
-    return undefined
-  }
-
-  var res = this.tail.value
-  this.tail = this.tail.prev
-  if (this.tail) {
-    this.tail.next = null
-  } else {
-    this.head = null
-  }
-  this.length--
-  return res
-}
-
-Yallist.prototype.shift = function () {
-  if (!this.head) {
-    return undefined
-  }
-
-  var res = this.head.value
-  this.head = this.head.next
-  if (this.head) {
-    this.head.prev = null
-  } else {
-    this.tail = null
-  }
-  this.length--
-  return res
-}
-
-Yallist.prototype.forEach = function (fn, thisp) {
-  thisp = thisp || this
-  for (var walker = this.head, i = 0; walker !== null; i++) {
-    fn.call(thisp, walker.value, i, this)
-    walker = walker.next
-  }
-}
-
-Yallist.prototype.forEachReverse = function (fn, thisp) {
-  thisp = thisp || this
-  for (var walker = this.tail, i = this.length - 1; walker !== null; i--) {
-    fn.call(thisp, walker.value, i, this)
-    walker = walker.prev
-  }
-}
-
-Yallist.prototype.get = function (n) {
-  for (var i = 0, walker = this.head; walker !== null && i < n; i++) {
-    // abort out of the list early if we hit a cycle
-    walker = walker.next
-  }
-  if (i === n && walker !== null) {
-    return walker.value
-  }
-}
-
-Yallist.prototype.getReverse = function (n) {
-  for (var i = 0, walker = this.tail; walker !== null && i < n; i++) {
-    // abort out of the list early if we hit a cycle
-    walker = walker.prev
-  }
-  if (i === n && walker !== null) {
-    return walker.value
-  }
-}
-
-Yallist.prototype.map = function (fn, thisp) {
-  thisp = thisp || this
-  var res = new Yallist()
-  for (var walker = this.head; walker !== null;) {
-    res.push(fn.call(thisp, walker.value, this))
-    walker = walker.next
-  }
-  return res
-}
-
-Yallist.prototype.mapReverse = function (fn, thisp) {
-  thisp = thisp || this
-  var res = new Yallist()
-  for (var walker = this.tail; walker !== null;) {
-    res.push(fn.call(thisp, walker.value, this))
-    walker = walker.prev
-  }
-  return res
-}
-
-Yallist.prototype.reduce = function (fn, initial) {
-  var acc
-  var walker = this.head
-  if (arguments.length > 1) {
-    acc = initial
-  } else if (this.head) {
-    walker = this.head.next
-    acc = this.head.value
-  } else {
-    throw new TypeError('Reduce of empty list with no initial value')
-  }
-
-  for (var i = 0; walker !== null; i++) {
-    acc = fn(acc, walker.value, i)
-    walker = walker.next
-  }
-
-  return acc
-}
-
-Yallist.prototype.reduceReverse = function (fn, initial) {
-  var acc
-  var walker = this.tail
-  if (arguments.length > 1) {
-    acc = initial
-  } else if (this.tail) {
-    walker = this.tail.prev
-    acc = this.tail.value
-  } else {
-    throw new TypeError('Reduce of empty list with no initial value')
-  }
-
-  for (var i = this.length - 1; walker !== null; i--) {
-    acc = fn(acc, walker.value, i)
-    walker = walker.prev
-  }
-
-  return acc
-}
-
-Yallist.prototype.toArray = function () {
-  var arr = new Array(this.length)
-  for (var i = 0, walker = this.head; walker !== null; i++) {
-    arr[i] = walker.value
-    walker = walker.next
-  }
-  return arr
-}
-
-Yallist.prototype.toArrayReverse = function () {
-  var arr = new Array(this.length)
-  for (var i = 0, walker = this.tail; walker !== null; i++) {
-    arr[i] = walker.value
-    walker = walker.prev
-  }
-  return arr
-}
-
-Yallist.prototype.slice = function (from, to) {
-  to = to || this.length
-  if (to < 0) {
-    to += this.length
-  }
-  from = from || 0
-  if (from < 0) {
-    from += this.length
-  }
-  var ret = new Yallist()
-  if (to < from || to < 0) {
-    return ret
-  }
-  if (from < 0) {
-    from = 0
-  }
-  if (to > this.length) {
-    to = this.length
-  }
-  for (var i = 0, walker = this.head; walker !== null && i < from; i++) {
-    walker = walker.next
-  }
-  for (; walker !== null && i < to; i++, walker = walker.next) {
-    ret.push(walker.value)
-  }
-  return ret
-}
-
-Yallist.prototype.sliceReverse = function (from, to) {
-  to = to || this.length
-  if (to < 0) {
-    to += this.length
-  }
-  from = from || 0
-  if (from < 0) {
-    from += this.length
-  }
-  var ret = new Yallist()
-  if (to < from || to < 0) {
-    return ret
-  }
-  if (from < 0) {
-    from = 0
-  }
-  if (to > this.length) {
-    to = this.length
-  }
-  for (var i = this.length, walker = this.tail; walker !== null && i > to; i--) {
-    walker = walker.prev
-  }
-  for (; walker !== null && i > from; i--, walker = walker.prev) {
-    ret.push(walker.value)
-  }
-  return ret
-}
-
-Yallist.prototype.splice = function (start, deleteCount, ...nodes) {
-  if (start > this.length) {
-    start = this.length - 1
-  }
-  if (start < 0) {
-    start = this.length + start;
-  }
-
-  for (var i = 0, walker = this.head; walker !== null && i < start; i++) {
-    walker = walker.next
-  }
-
-  var ret = []
-  for (var i = 0; walker && i < deleteCount; i++) {
-    ret.push(walker.value)
-    walker = this.removeNode(walker)
-  }
-  if (walker === null) {
-    walker = this.tail
-  }
-
-  if (walker !== this.head && walker !== this.tail) {
-    walker = walker.prev
-  }
-
-  for (var i = 0; i < nodes.length; i++) {
-    walker = insert(this, walker, nodes[i])
-  }
-  return ret;
-}
-
-Yallist.prototype.reverse = function () {
-  var head = this.head
-  var tail = this.tail
-  for (var walker = head; walker !== null; walker = walker.prev) {
-    var p = walker.prev
-    walker.prev = walker.next
-    walker.next = p
-  }
-  this.head = tail
-  this.tail = head
-  return this
-}
-
-function insert (self, node, value) {
-  var inserted = node === self.head ?
-    new Node(value, null, node, self) :
-    new Node(value, node, node.next, self)
-
-  if (inserted.next === null) {
-    self.tail = inserted
-  }
-  if (inserted.prev === null) {
-    self.head = inserted
-  }
-
-  self.length++
-
-  return inserted
-}
-
-function push (self, item) {
-  self.tail = new Node(item, self.tail, null, self)
-  if (!self.head) {
-    self.head = self.tail
-  }
-  self.length++
-}
-
-function unshift (self, item) {
-  self.head = new Node(item, null, self.head, self)
-  if (!self.tail) {
-    self.tail = self.head
-  }
-  self.length++
-}
-
-function Node (value, prev, next, list) {
-  if (!(this instanceof Node)) {
-    return new Node(value, prev, next, list)
-  }
-
-  this.list = list
-  this.value = value
-
-  if (prev) {
-    prev.next = this
-    this.prev = prev
-  } else {
-    this.prev = null
-  }
-
-  if (next) {
-    next.prev = this
-    this.next = next
-  } else {
-    this.next = null
-  }
-}
-
-try {
-  // add if support for Symbol.iterator is present
-  __nccwpck_require__(4091)(Yallist)
-} catch (er) {}
+exports.getOcirRepo = getOcirRepo;
 
 
 /***/ }),
@@ -75706,7 +76182,7 @@ module.exports = require("zlib");
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"oci-common","version":"2.57.0","description":"OCI Common module for NodeJS","repository":{"type":"git","url":"https://github.com/oracle/oci-typescript-sdk"},"main":"./index.js","typings":"./index","scripts":{},"author":{"name":"Oracle Cloud Infrastructure","email":""},"license":"(UPL-1.0 OR Apache-2.0)","dependencies":{"@types/isomorphic-fetch":"0.0.35","@types/jsonwebtoken":"9.0.0","@types/jssha":"2.0.0","@types/opossum":"4.1.1","@types/sshpk":"1.10.3","es6-promise":"4.2.6","http-signature":"1.3.1","isomorphic-fetch":"3.0.0","jsonwebtoken":"9.0.0","jssha":"2.4.1","opossum":"5.0.1","sshpk":"1.16.1","uuid":"3.3.3"},"devDependencies":{"@types/chai":"4.1.7","@types/node":"14.14.43","@types/mocha":"5.2.5","awesome-typescript-loader":"3.1.3","chai":"^4.2.0","mocha":"^5.2.0","source-map-loader":"0.2.1","ts-node":"^8.0.2","typescript":"4.1.3","webpack":"4.0.0","webpack-cli":"^3.3.0"},"publishConfig":{"registry":"https://registry.npmjs.org"},"contributors":["Jyoti Saini <jyoti.s.saini@oracle.com>","Joe Levy <joe.levy@oracle.com>","Walt Tran <walt.tran@oracle.com>"]}');
+module.exports = JSON.parse('{"name":"oci-common","version":"2.88.2","description":"OCI Common module for NodeJS","repository":{"type":"git","url":"https://github.com/oracle/oci-typescript-sdk"},"main":"./index.js","typings":"./index","scripts":{},"author":{"name":"Oracle Cloud Infrastructure","email":""},"license":"(UPL-1.0 OR Apache-2.0)","dependencies":{"@types/isomorphic-fetch":"0.0.35","@types/jsonwebtoken":"9.0.0","@types/jssha":"2.0.0","@types/opossum":"4.1.1","@types/sshpk":"1.10.3","es6-promise":"4.2.6","http-signature":"1.3.1","isomorphic-fetch":"3.0.0","jsonwebtoken":"9.0.0","jssha":"2.4.1","opossum":"5.0.1","sshpk":"1.16.1","uuid":"3.3.3"},"devDependencies":{"@types/chai":"4.1.7","@types/node":"14.14.43","@types/mocha":"5.2.5","@types/node-fetch":"2.6.5","awesome-typescript-loader":"3.1.3","chai":"^4.2.0","mocha":"^5.2.0","source-map-loader":"0.2.1","ts-node":"^8.0.2","typescript":"4.1.3","webpack":"4.0.0","webpack-cli":"^3.3.0","node-fetch":"2.6.5"},"publishConfig":{"registry":"https://registry.npmjs.org"},"contributors":["Jyoti Saini <jyoti.s.saini@oracle.com>","Joe Levy <joe.levy@oracle.com>","Walt Tran <walt.tran@oracle.com>"]}');
 
 /***/ }),
 
@@ -75754,46 +76230,6 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nccwpck_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__nccwpck_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__nccwpck_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__nccwpck_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/node module decorator */
 /******/ 	(() => {
 /******/ 		__nccwpck_require__.nmd = (module) => {
@@ -75812,81 +76248,19 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var oci_artifacts__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5758);
-/* harmony import */ var oci_artifacts__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(oci_artifacts__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var oci_identity__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(6408);
-/* harmony import */ var oci_identity__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(oci_identity__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var oci_common__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(5049);
-/* harmony import */ var oci_common__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__nccwpck_require__.n(oci_common__WEBPACK_IMPORTED_MODULE_3__);
-/* Copyright (c) 2021, 2022, Oracle and/or its affiliates.
+var exports = __webpack_exports__;
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+/* Copyright (c) 2024, Oracle and/or its affiliates.
  * Licensed under the Universal Permissive License v1.0 as shown at https://oss.oracle.com/licenses/upl.
  */
-var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-
-
-
-
-function getOcirRepo() {
-    var _a, _b;
-    return __awaiter(this, void 0, void 0, function* () {
-        // Required environment variables
-        const tenancy = process.env.OCI_CLI_TENANCY || '';
-        const user = process.env.OCI_CLI_USER || '';
-        const fingerprint = process.env.OCI_CLI_FINGERPRINT || '';
-        const privateKey = process.env.OCI_CLI_KEY_CONTENT || '';
-        const region = oci_common__WEBPACK_IMPORTED_MODULE_3__.Region.fromRegionId(process.env.OCI_CLI_REGION || '');
-        const authProvider = new oci_common__WEBPACK_IMPORTED_MODULE_3__.SimpleAuthenticationDetailsProvider(tenancy, user, fingerprint, privateKey, null, region);
-        const ac = new oci_artifacts__WEBPACK_IMPORTED_MODULE_1__.ArtifactsClient({ authenticationDetailsProvider: authProvider });
-        const ic = new oci_identity__WEBPACK_IMPORTED_MODULE_2__.IdentityClient({ authenticationDetailsProvider: authProvider });
-        const compartmentId = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('compartment', { required: true });
-        const displayName = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('name', { required: true });
-        const namespace = (yield ac.getContainerConfiguration({ compartmentId: compartmentId })).containerConfiguration
-            .namespace;
-        const regionCode = (_b = (_a = (yield ic.listRegions({})).items
-            .find(x => x.name === authProvider.getRegion().regionId)) === null || _a === void 0 ? void 0 : _a.key) === null || _b === void 0 ? void 0 : _b.toLocaleLowerCase();
-        const ocir = regionCode ? `${regionCode}.ocir.io` : '';
-        if (ocir) {
-            const repo = (yield ac.listContainerRepositories({ compartmentId: compartmentId })).containerRepositoryCollection.items.find(x => x.displayName === displayName);
-            if (repo) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('repo_path', `${ocir}/${namespace}/${repo.displayName}`);
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('repo_ocid', `${repo.id}`);
-            }
-            else {
-                const containerRepository = (yield ac.createContainerRepository({
-                    createContainerRepositoryDetails: {
-                        compartmentId: compartmentId,
-                        displayName: displayName,
-                        isImmutable: false,
-                        isPublic: false
-                    }
-                })).containerRepository;
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('repo_path', `${ocir}/${namespace}/${containerRepository.displayName}`);
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('repo_ocid', `${containerRepository.id}`);
-            }
-        }
-        else {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed('Failed to identify OCIR endpoint.');
-        }
-    });
-}
-getOcirRepo().catch(e => {
-    if (e instanceof Error)
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(e.message);
-});
+const main_1 = __nccwpck_require__(399);
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+(0, main_1.getOcirRepo)();
 
 })();
 
 module.exports = __webpack_exports__;
 /******/ })()
 ;
+//# sourceMappingURL=index.js.map
