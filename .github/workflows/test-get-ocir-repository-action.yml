@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Retrieve the OCID of a named compartment in tenancy
-        uses: oracle-actions/run-oci-cli-command@v1.2.0
+        uses: oracle-actions/run-oci-cli-command@v1.3.0
         id: find-compartment-id
         with:
           command: 'iam compartment list --compartment-id-in-subtree=true'
