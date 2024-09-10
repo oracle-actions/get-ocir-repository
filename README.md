@@ -29,8 +29,8 @@ values, consider [defining your environment variables][2] at the job or workflow
 ## Sample workflow
 
 This sample workflow will either create a repository named `oraclelinux` in the `OCI_COMPARTMENT_OCID` compartment or
-retrieve the path of an existing `oraclelinux` repository. The `repo_path` is then used by the `tag-and-push-image`
-step as the target image repository for the `docker push` command.
+retrieve the path of an existing `oraclelinux` repository. The `repo_path` is then used by the `tag-and-push-image` step
+as the target image repository for the `docker push` command.
 
 This example also uses the [`login-ocir`][3] action which provides a simple mechanism for logging into OCIR using an
 auth token.

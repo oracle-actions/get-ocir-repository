@@ -75986,7 +75986,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getOcirRepo = void 0;
+exports.getOcirRepo = getOcirRepo;
 const core = __importStar(__nccwpck_require__(2186));
 const artifacts = __importStar(__nccwpck_require__(5758));
 const identity = __importStar(__nccwpck_require__(6408));
@@ -76037,7 +76037,6 @@ async function getOcirRepo() {
             core.setFailed(error.message);
     }
 }
-exports.getOcirRepo = getOcirRepo;
 
 
 /***/ }),
